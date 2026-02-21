@@ -1,0 +1,50 @@
+import { HealthCheckResponseSchema } from '@schemas/health/health.schema.js'
+import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
+import { sql } from 'kysely'
+
+const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
+  fastify.get(
+    '/health',
+    {
+      schema: {
+        security: [],
+        summary: 'Health check endpoint',
+        operationId: 'getHealth',
+        description:
+          'Returns the health status of the application. Used by Docker HEALTHCHECK and orchestrators. Does not require authentication.',
+        response: {
+          200: HealthCheckResponseSchema,
+          503: HealthCheckResponseSchema,
+        },
+        tags: ['System'],
+      },
+    },
+    async (_request, reply) => {
+      const timestamp = new Date().toISOString()
+      let dbStatus: 'ok' | 'failed' = 'ok'
+
+      try {
+        await sql`SELECT 1`.execute(fastify.db)
+      } catch (error) {
+        fastify.log.error(
+          { error },
+          'Health check failed: database connectivity error',
+        )
+        dbStatus = 'failed'
+      }
+
+      const isHealthy = dbStatus === 'ok'
+      const statusCode = isHealthy ? 200 : 503
+
+      return reply.status(statusCode).send({
+        status: isHealthy ? 'healthy' : 'unhealthy',
+        timestamp,
+        checks: {
+          database: dbStatus,
+        },
+      })
+    },
+  )
+}
+
+export default plugin

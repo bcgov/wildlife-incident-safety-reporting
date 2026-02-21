@@ -1,0 +1,111 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "files": {
+    "maxSize": 2097152,
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/tests",
+      "!**/docs",
+      "!**/src/client/dist",
+      "!**/tmp",
+      "!**/coverage"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+  },
+  "javascript": {
+    "formatter": {
+      "semicolons": "asNeeded",
+      "quoteStyle": "single"
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": true
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "correctness": {
+        "noUnusedImports": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/docs/src/**/*.tsx", "**/docs/src/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/.github/renovate.json"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": [
+        "**/src/client/components/ui/**/*",
+        "**/src/client/hooks/**/*"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noForEach": "off",
+            "useOptionalChain": "off"
+          },
+          "correctness": {
+            "useExhaustiveDependencies": "off",
+            "noUnusedImports": "off"
+          },
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          },
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noArrayIndexKey": "off"
+          },
+          "a11y": {
+            "noSvgWithoutTitle": "off",
+            "useKeyWithClickEvents": "off",
+            "useSemanticElements": "off"
+          },
+          "style": {
+            "noUselessElse": "off",
+            "useSingleVarDeclarator": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUnknownAtRules": "off"
+          }
+        }
+      }
+    }
+  ]
+}

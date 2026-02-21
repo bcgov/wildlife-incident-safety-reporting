@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "allowSyntheticDefaultImports": true,
+    "composite": true,
+    "lib": ["es2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": "dist",
+    "removeComments": true,
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2022",
+    "types": ["bun-types"],
+    "baseUrl": "./src",
+    "paths": {
+      "@root/*": ["./*"],
+      "@routes/*": ["./routes/*"],
+      "@utils/*": ["./utils/*"],
+      "@schemas/*": ["./schemas/*"],
+      "@services/*": ["./services/*"],
+      "@/*": ["./client/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/client/**/*"]
+}

@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["bun-types"]
+  },
+  "include": ["./**/*"]
+}

@@ -212,8 +212,9 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Python distribution packaging (not JS lib dirs)
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -397,6 +398,9 @@ pyrightconfig.json
 **/config.prod.*
 **/*.p12
 **/*.pfx
+
+# Scratch/template reference (not part of the project)
+tmp/
 
 # IDE
 .codebuddy
