@@ -13,6 +13,23 @@ import type {
 const DRY_RUN = process.argv.includes('--dry-run')
 const db = createDatabase()
 
+interface GeoJsonFeature {
+  type: 'Feature'
+  properties: {
+    CONTRACT_AREA_NUMBER: number
+    CONTRACT_AREA_NAME: string
+  }
+  geometry: {
+    type: 'Polygon' | 'MultiPolygon'
+    coordinates: number[][][] | number[][][][]
+  }
+}
+
+interface GeoJsonCollection {
+  type: 'FeatureCollection'
+  features: GeoJsonFeature[]
+}
+
 interface CsvRow {
   'Accident.Date': string
   'Time.of.Kill': string
@@ -38,7 +55,6 @@ interface InsertRow {
   age: string | null
   comments: string | null
   quantity: number
-  service_area: number | null
   latitude: number | null
   longitude: number | null
   species_id: number
@@ -138,12 +154,6 @@ function parseFloatOrNull(raw: string): number | null {
   return Number.isNaN(n) ? null : n
 }
 
-function parseServiceArea(raw: string): number | null {
-  const n = parseIntOrNull(raw)
-  if (n === null || n < 1 || n > 28) return null
-  return n
-}
-
 function parseQuantity(raw: string): number {
   const n = parseIntOrNull(raw)
   return n !== null && n > 0 ? n : 1
@@ -155,25 +165,111 @@ function parseComments(raw: string): string | null {
   return raw.trim()
 }
 
+function resolveDataFile(root: string, filename: string): string {
+  const seedPath = path.join(root, 'data', 'seed', filename)
+  const samplePath = path.join(root, 'data', 'sample', filename)
+  const resolved = existsSync(seedPath) ? seedPath : samplePath
+  console.log(
+    `Using ${resolved === seedPath ? 'seed' : 'sample'} data for ${filename}`,
+  )
+  return resolved
+}
+
+async function seedServiceAreas(root: string): Promise<number> {
+  const geojsonPath = resolveDataFile(root, 'service-areas.geojson')
+  const raw = readFileSync(geojsonPath, 'utf-8')
+  const geojson: GeoJsonCollection = JSON.parse(raw)
+
+  console.log(`Parsed ${geojson.features.length} service area features`)
+
+  if (!DRY_RUN) {
+    await sql`TRUNCATE service_areas CASCADE`.execute(db)
+
+    for (const feature of geojson.features) {
+      const { CONTRACT_AREA_NUMBER, CONTRACT_AREA_NAME } = feature.properties
+      const geomJson = JSON.stringify(feature.geometry)
+
+      await sql`
+        INSERT INTO service_areas (contract_area_number, name, geom)
+        VALUES (
+          ${CONTRACT_AREA_NUMBER},
+          ${CONTRACT_AREA_NAME},
+          ST_Multi(ST_GeomFromGeoJSON(${geomJson}))
+        )
+      `.execute(db)
+    }
+
+    const { count } = await db
+      .selectFrom('service_areas')
+      .select(db.fn.countAll<number>().as('count'))
+      .executeTakeFirstOrThrow()
+
+    console.log(`Inserted ${count} service areas`)
+    return Number(count)
+  }
+
+  return geojson.features.length
+}
+
+async function runSpatialJoin(): Promise<void> {
+  if (DRY_RUN) return
+
+  const result = await sql<{ matched: number }>`
+    WITH updated AS (
+      UPDATE wars_incidents wi
+      SET service_area_id = sa.id
+      FROM service_areas sa
+      WHERE wi.geom IS NOT NULL
+        AND ST_Contains(sa.geom, wi.geom)
+      RETURNING wi.id
+    )
+    SELECT count(*)::int AS matched FROM updated
+  `.execute(db)
+
+  const matched = result.rows[0].matched
+
+  const { total } = await db
+    .selectFrom('wars_incidents')
+    .select(db.fn.countAll<number>().as('total'))
+    .executeTakeFirstOrThrow()
+
+  const { no_coords } = await db
+    .selectFrom('wars_incidents')
+    .select(db.fn.count<number>('id').as('no_coords'))
+    .where('geom', 'is', null)
+    .executeTakeFirstOrThrow()
+
+  const unmatched = Number(total) - matched - Number(no_coords)
+
+  console.log('\n--- Spatial Join ---')
+  console.log(`Matched to service area: ${matched}`)
+  console.log(`No coordinates (null geom): ${no_coords}`)
+  if (unmatched > 0) {
+    console.log(`Has coords but outside all polygons: ${unmatched}`)
+  }
+}
+
 async function seed() {
   console.log(DRY_RUN ? '=== DRY RUN (no DB writes) ===' : '=== SEED ===')
 
-  // Load species lookup from DB
+  const root = path.resolve(import.meta.dir, '..')
+
+  // 1. Seed service areas from GeoJSON
+  console.log('\n--- Service Areas ---')
+  await seedServiceAreas(root)
+
+  // 2. Load species lookup from DB
   const speciesRows = await db.selectFrom('species').selectAll().execute()
   const speciesMap = new Map<string, number>()
   for (const row of speciesRows) {
     speciesMap.set(row.name.toLowerCase(), row.id)
   }
-  console.log(`Loaded ${speciesRows.length} species from DB`)
+  console.log(`\nLoaded ${speciesRows.length} species from DB`)
 
   const match = buildMatcher(speciesMap)
 
-  // Parse CSV (fall back to sample data for development)
-  const root = path.resolve(import.meta.dir, '..')
-  const seedPath = path.join(root, 'data', 'seed', 'WARs.csv')
-  const samplePath = path.join(root, 'data', 'sample', 'WARs.csv')
-  const csvPath = existsSync(seedPath) ? seedPath : samplePath
-  console.log(`Using ${csvPath === seedPath ? 'seed' : 'sample'} data`)
+  // 3. Parse CSV
+  const csvPath = resolveDataFile(root, 'WARs.csv')
   const csvText = readFileSync(csvPath, 'utf-8')
   const parsed = Papa.parse<CsvRow>(csvText, {
     header: true,
@@ -196,7 +292,6 @@ async function seed() {
     override: 0,
     unknown: 0,
     missingYear: 0,
-    invalidServiceArea: 0,
   }
   const overrideDetails = new Map<string, { target: string; count: number }>()
   const unknownDetails = new Map<string, number>()
@@ -207,11 +302,6 @@ async function seed() {
     if (year === null) {
       stats.missingYear++
       continue
-    }
-
-    const serviceArea = parseServiceArea(row['Service.Area'])
-    if (row['Service.Area']?.trim() && serviceArea === null) {
-      stats.invalidServiceArea++
     }
 
     const comments = parseComments(row.Comments)
@@ -239,7 +329,6 @@ async function seed() {
       age: parseEnum(row.Age, VALID_AGE),
       comments,
       quantity: parseQuantity(row.Quantity),
-      service_area: serviceArea,
       latitude: parseFloatOrNull(row.Latitude),
       longitude: parseFloatOrNull(row.Longitude),
       species_id: result.speciesId,
@@ -253,7 +342,6 @@ async function seed() {
   console.log(`Override matches: ${stats.override}`)
   console.log(`Unknown:          ${stats.unknown}`)
   console.log(`Skipped (no year): ${stats.missingYear}`)
-  console.log(`Invalid service area (set to null): ${stats.invalidServiceArea}`)
 
   if (overrideDetails.size > 0) {
     console.log('\n  Override details:')
@@ -275,7 +363,7 @@ async function seed() {
 
   console.log(`\nTotal rows to insert: ${insertRows.length}`)
 
-  // Insert
+  // 4. Insert incidents
   if (!DRY_RUN) {
     const BATCH_SIZE = 1000
     const totalBatches = Math.ceil(insertRows.length / BATCH_SIZE)
@@ -304,7 +392,6 @@ async function seed() {
               age: r.age ? sql<Age>`${r.age}::age` : null,
               comments: r.comments,
               quantity: r.quantity,
-              service_area: r.service_area,
               latitude: r.latitude,
               longitude: r.longitude,
               species_id: r.species_id,
@@ -324,9 +411,13 @@ async function seed() {
       .select(db.fn.countAll<number>().as('count'))
       .executeTakeFirstOrThrow()
 
-    console.log(`\nDone! wars_incidents row count: ${count}`)
+    console.log(`\nInserted ${count} incidents`)
+
+    // 5. Spatial join - assign service areas
+    await runSpatialJoin()
   }
 
+  console.log('\n=== SEED COMPLETE ===')
   await db.destroy()
 }
 

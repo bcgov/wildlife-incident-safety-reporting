@@ -54,6 +54,41 @@ export async function up(db: Kysely<never>): Promise<void> {
       ('Wolf',            'Wolf',            '#8A5A7C')
   `.execute(db)
 
+  // Service areas reference table
+  await db.schema
+    .createTable('service_areas')
+    .addColumn('id', 'smallint', (col) =>
+      col.primaryKey().generatedAlwaysAsIdentity(),
+    )
+    .addColumn('contract_area_number', 'smallint', (col) =>
+      col.notNull().unique(),
+    )
+    .addColumn('name', 'text', (col) => col.notNull())
+    .addColumn('geom', sql`geometry(MultiPolygon, 4326)`, (col) =>
+      col.notNull(),
+    )
+    .addColumn('created_at', sql`timestamptz`, (col) =>
+      col.notNull().defaultTo(sql`now()`),
+    )
+    .addColumn('updated_at', sql`timestamptz`, (col) =>
+      col.notNull().defaultTo(sql`now()`),
+    )
+    .execute()
+
+  await db.schema
+    .createIndex('idx_service_areas_geom')
+    .on('service_areas')
+    .using('gist')
+    .column('geom')
+    .execute()
+
+  await sql`
+    CREATE TRIGGER trg_service_areas_updated_at
+    BEFORE UPDATE ON service_areas
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at()
+  `.execute(db)
+
   // Enums
   await db.schema
     .createType('time_of_kill')
@@ -90,8 +125,8 @@ export async function up(db: Kysely<never>): Promise<void> {
     .addColumn('species_id', 'smallint', (col) =>
       col.notNull().references('species.id'),
     )
-    .addColumn('service_area', 'smallint', (col) =>
-      col.check(sql`service_area BETWEEN 1 AND 28`),
+    .addColumn('service_area_id', 'smallint', (col) =>
+      col.references('service_areas.id'),
     )
     .addColumn('created_at', sql`timestamptz`, (col) =>
       col.notNull().defaultTo(sql`now()`),
@@ -152,9 +187,9 @@ export async function up(db: Kysely<never>): Promise<void> {
     .execute()
 
   await db.schema
-    .createIndex('idx_wars_incidents_service_area')
+    .createIndex('idx_wars_incidents_service_area_id')
     .on('wars_incidents')
-    .column('service_area')
+    .column('service_area_id')
     .execute()
 
   await db.schema
@@ -166,6 +201,7 @@ export async function up(db: Kysely<never>): Promise<void> {
 
 export async function down(db: Kysely<never>): Promise<void> {
   await db.schema.dropTable('wars_incidents').cascade().execute()
+  await db.schema.dropTable('service_areas').cascade().execute()
   await db.schema.dropTable('species').cascade().execute()
   await sql`DROP FUNCTION IF EXISTS wars_incidents_geom_trigger() CASCADE`.execute(
     db,

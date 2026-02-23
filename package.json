@@ -5,7 +5,7 @@
   "main": "build/server.js",
   "type": "module",
   "engines": {
-    "bun": ">=1.3.6"
+    "bun": ">=1.3.9"
   },
   "scripts": {
     "clean:client": "rimraf dist/client",
@@ -27,6 +27,7 @@
     "typecheck:tests": "tsc --noEmit -p test/tsconfig.json",
     "seed": "bun run --bun scripts/seed.ts",
     "seed:dry-run": "bun run --bun scripts/seed.ts --dry-run",
+    "seed:service-areas": "bun run --bun scripts/seed-service-areas.ts",
     "migrate": "bun run --bun migrations/migrate.ts && bun run db:codegen",
     "migrate:rollback": "bun run --bun migrations/rollback.ts && bun run db:codegen",
     "db:codegen": "DATABASE_URL=postgres://postgres:postgres@localhost:5432/wars bun run --bun kysely-codegen --dialect postgres --include-pattern 'public.*' --out-file src/services/database/types/database.ts"

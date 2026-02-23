@@ -40,6 +40,15 @@ export interface GeometryColumns {
   type: string | null
 }
 
+export interface ServiceAreas {
+  contract_area_number: number
+  created_at: Generated<Timestamp>
+  geom: string
+  id: Generated<number>
+  name: string
+  updated_at: Generated<Timestamp>
+}
+
 export interface SpatialRefSys {
   auth_name: string | null
   auth_srid: number | null
@@ -66,7 +75,7 @@ export interface WarsIncidents {
   longitude: Numeric | null
   nearest_town: string | null
   quantity: Generated<number>
-  service_area: number | null
+  service_area_id: number | null
   sex: Sex | null
   species_id: number
   time_of_kill: TimeOfKill | null
@@ -77,6 +86,7 @@ export interface WarsIncidents {
 export interface DB {
   geography_columns: GeographyColumns
   geometry_columns: GeometryColumns
+  service_areas: ServiceAreas
   spatial_ref_sys: SpatialRefSys
   species: Species
   wars_incidents: WarsIncidents
