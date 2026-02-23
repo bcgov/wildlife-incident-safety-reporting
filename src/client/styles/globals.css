@@ -1,3 +1,4 @@
+@import "@bcgov/bc-sans/css/BC_Sans.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -17,6 +18,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .maplibregl-popup-content {
+    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+  }
+  .maplibregl-popup-tip {
+    @apply hidden!;
   }
 }
 
@@ -90,6 +97,9 @@
 }
 
 @theme inline {
+  --font-sans: "BC Sans", "Noto Sans", system-ui, sans-serif;
+  --font-heading: "BC Sans", "Noto Sans", system-ui, sans-serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
