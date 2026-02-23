@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lint
+        run: biome ci .
+      - name: TypeScript Check - Server
+        run: bun run typecheck:server
+      - name: TypeScript Check - Client
+        run: bun run typecheck:client
+      - name: Build
+        run: bun run build

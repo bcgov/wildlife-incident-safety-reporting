@@ -3,6 +3,23 @@
  * Please do not edit it manually.
  */
 
+import type { ColumnType } from 'kysely'
+
+export type Age = 'ADULT' | 'UNKNOWN' | 'YOUNG'
+
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>
+
+export type Numeric = ColumnType<string, number | string, number | string>
+
+export type Sex = 'FEMALE' | 'MALE' | 'UNKNOWN'
+
+export type TimeOfKill = 'DARK' | 'DAWN' | 'DAY' | 'DUSK' | 'UNKNOWN'
+
+export type Timestamp = ColumnType<Date, Date | string, Date | string>
+
 export interface GeographyColumns {
   coord_dimension: number | null
   f_geography_column: string | null
@@ -31,8 +48,36 @@ export interface SpatialRefSys {
   srtext: string | null
 }
 
+export interface Species {
+  color: string
+  group_name: string
+  id: Generated<number>
+  name: string
+}
+
+export interface WarsIncidents {
+  accident_date: Timestamp | null
+  age: Age | null
+  comments: string | null
+  created_at: Generated<Timestamp>
+  geom: string | null
+  id: Generated<number>
+  latitude: Numeric | null
+  longitude: Numeric | null
+  nearest_town: string | null
+  quantity: Generated<number>
+  service_area: number | null
+  sex: Sex | null
+  species_id: number
+  time_of_kill: TimeOfKill | null
+  updated_at: Generated<Timestamp>
+  year: number
+}
+
 export interface DB {
   geography_columns: GeographyColumns
   geometry_columns: GeometryColumns
   spatial_ref_sys: SpatialRefSys
+  species: Species
+  wars_incidents: WarsIncidents
 }
