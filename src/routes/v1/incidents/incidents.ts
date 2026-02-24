@@ -1,3 +1,4 @@
+import { IncidentFiltersResponseSchema } from '@schemas/incidents/filters.schema.js'
 import {
   IncidentErrorSchema,
   IncidentsQuerySchema,
@@ -37,6 +38,33 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           message: 'Failed to query incidents',
         })
         return reply.internalServerError('Failed to query incidents')
+      }
+    },
+  )
+
+  fastify.get(
+    '/filters',
+    {
+      schema: {
+        summary: 'Get available incident filter options',
+        operationId: 'getIncidentFilters',
+        description:
+          'Returns all available filter values for populating frontend dropdowns.',
+        response: {
+          200: IncidentFiltersResponseSchema,
+          500: IncidentErrorSchema,
+        },
+        tags: ['Incidents'],
+      },
+    },
+    async (request, reply) => {
+      try {
+        return await fastify.db.findIncidentFilters()
+      } catch (error) {
+        logRouteError(fastify.log, request, error, {
+          message: 'Failed to fetch incident filters',
+        })
+        return reply.internalServerError('Failed to fetch incident filters')
       }
     },
   )

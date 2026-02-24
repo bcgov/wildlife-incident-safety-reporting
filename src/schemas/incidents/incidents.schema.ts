@@ -108,11 +108,11 @@ export const IncidentsQuerySchema = z.object({
         example: 'ADULT,YOUNG',
       },
     }),
-  startDate: z.string().date().optional().meta({
+  startDate: z.iso.date().optional().meta({
     description: 'Start date filter (inclusive, YYYY-MM-DD)',
     example: '2021-01-01',
   }),
-  endDate: z.string().date().optional().meta({
+  endDate: z.iso.date().optional().meta({
     description: 'End date filter (inclusive, YYYY-MM-DD)',
     example: '2021-12-31',
   }),

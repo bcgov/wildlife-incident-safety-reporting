@@ -1,3 +1,4 @@
+import type { IncidentFiltersResponse } from '@schemas/incidents/filters.schema.js'
 import type {
   Incident,
   IncidentsQuery,
@@ -124,6 +125,84 @@ export class DatabaseService {
     return {
       data: rows.map(toIncident),
       total: rows.length,
+    }
+  }
+
+  async findIncidentFilters(): Promise<IncidentFiltersResponse> {
+    const [
+      years,
+      species,
+      serviceAreas,
+      sexValues,
+      timeOfKillValues,
+      ageValues,
+      dateRange,
+    ] = await Promise.all([
+      this.kysely
+        .selectFrom('wars_incidents')
+        .select('year')
+        .distinct()
+        .orderBy('year', 'desc')
+        .execute(),
+      this.kysely
+        .selectFrom('species')
+        .select(['id', 'name', 'color', 'group_name'])
+        .orderBy('name')
+        .execute(),
+      this.kysely
+        .selectFrom('service_areas')
+        .select(['id', 'name', 'contract_area_number'])
+        .orderBy('name')
+        .execute(),
+      this.kysely
+        .selectFrom('wars_incidents')
+        .select('sex')
+        .distinct()
+        .where('sex', 'is not', null)
+        .execute(),
+      this.kysely
+        .selectFrom('wars_incidents')
+        .select('time_of_kill')
+        .distinct()
+        .where('time_of_kill', 'is not', null)
+        .execute(),
+      this.kysely
+        .selectFrom('wars_incidents')
+        .select('age')
+        .distinct()
+        .where('age', 'is not', null)
+        .execute(),
+      this.kysely
+        .selectFrom('wars_incidents')
+        .select([
+          sql<string | null>`min(accident_date)::date::text`.as('min'),
+          sql<string | null>`max(accident_date)::date::text`.as('max'),
+        ])
+        .executeTakeFirstOrThrow(),
+    ])
+
+    return {
+      years: years.map((r) => r.year),
+      species: species.map((r) => ({
+        id: r.id,
+        name: r.name,
+        color: r.color,
+        groupName: r.group_name,
+      })),
+      serviceAreas: serviceAreas.map((r) => ({
+        id: r.id,
+        name: r.name,
+        contractAreaNumber: r.contract_area_number,
+      })),
+      sex: sexValues.flatMap((r) => (r.sex ? [r.sex] : [])).sort(),
+      timeOfKill: timeOfKillValues
+        .flatMap((r) => (r.time_of_kill ? [r.time_of_kill] : []))
+        .sort(),
+      age: ageValues.flatMap((r) => (r.age ? [r.age] : [])).sort(),
+      dateRange: {
+        min: dateRange.min ?? null,
+        max: dateRange.max ?? null,
+      },
     }
   }
 }
