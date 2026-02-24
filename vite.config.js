@@ -26,8 +26,8 @@ export default {
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom', 'zustand'],
+          'ui-vendor': ['lucide-react', 'cmdk'],
           map: ['maplibre-gl'],
           query: ['@tanstack/react-query'],
           table: ['@tanstack/react-table'],

@@ -1,5 +1,5 @@
 import { createBrowserRouter, Outlet } from 'react-router-dom'
-import { MainContent } from '@/components/main-content'
+import { MapPage } from '@/features/map'
 import { AppLayout } from '@/layouts/app'
 import RootLayout from '@/layouts/root'
 
@@ -16,7 +16,7 @@ export const router = createBrowserRouter([
         index: true,
         element: (
           <AppLayout>
-            <MainContent />
+            <MapPage />
           </AppLayout>
         ),
       },

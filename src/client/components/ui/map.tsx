@@ -199,8 +199,10 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     [styles]
   );
 
-  // Expose the map instance to the parent component
-  useImperativeHandle(ref, () => mapInstance as MapLibreGL.Map, [mapInstance]);
+  // mapInstance is null before mount/after cleanup - ref consumers should
+  // only access it inside effects or callbacks where the map is guaranteed alive
+  // biome-ignore lint/style/noNonNullAssertion: React forwardRef types require non-null return
+  useImperativeHandle(ref, () => mapInstance!, [mapInstance]);
 
   const clearStyleTimeout = useCallback(() => {
     if (styleTimeoutRef.current) {
@@ -790,28 +792,29 @@ function MapControls({
   }, [map]);
 
   const handleLocate = useCallback(() => {
+    if (!("geolocation" in navigator)) return;
+
     setWaitingForLocation(true);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const coords = {
-            longitude: pos.coords.longitude,
-            latitude: pos.coords.latitude,
-          };
-          map?.flyTo({
-            center: [coords.longitude, coords.latitude],
-            zoom: 14,
-            duration: 1500,
-          });
-          onLocate?.(coords);
-          setWaitingForLocation(false);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setWaitingForLocation(false);
-        }
-      );
-    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = {
+          longitude: pos.coords.longitude,
+          latitude: pos.coords.latitude,
+        };
+        map?.flyTo({
+          center: [coords.longitude, coords.latitude],
+          zoom: 14,
+          duration: 1500,
+        });
+        onLocate?.(coords);
+        setWaitingForLocation(false);
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        setWaitingForLocation(false);
+      },
+      { timeout: 10000 },
+    );
   }, [map, onLocate]);
 
   const handleFullscreen = useCallback(() => {
@@ -1367,6 +1370,7 @@ function MapClusterLayer<
   // Handle click events
   useEffect(() => {
     if (!isLoaded || !map) return;
+    let disposed = false;
 
     // Cluster click handler - zoom into cluster
     const handleClusterClick = async (
@@ -1393,6 +1397,7 @@ function MapClusterLayer<
         // Default behavior: zoom to cluster expansion zoom
         const source = map.getSource(sourceId) as MapLibreGL.GeoJSONSource;
         const zoom = await source.getClusterExpansionZoom(clusterId);
+        if (disposed) return;
         map.easeTo({
           center: coordinates,
           zoom,
@@ -1448,6 +1453,7 @@ function MapClusterLayer<
     map.on("mouseleave", unclusteredLayerId, handleMouseLeavePoint);
 
     return () => {
+      disposed = true;
       map.off("click", clusterLayerId, handleClusterClick);
       map.off("click", unclusteredLayerId, handlePointClick);
       map.off("mouseenter", clusterLayerId, handleMouseEnterCluster);
