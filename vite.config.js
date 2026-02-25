@@ -43,7 +43,7 @@ export default {
   resolve: {
     alias: {
       '@': resolve(import.meta.dirname, 'src/client'),
-      '@root': resolve(import.meta.dirname, 'src'),
+      '@schemas': resolve(import.meta.dirname, 'src/schemas'),
     },
   },
   define: {

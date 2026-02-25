@@ -1,3 +1,8 @@
+import {
+  AgeEnum,
+  SexEnum,
+  TimeOfKillEnum,
+} from '@schemas/common/enums.schema.js'
 import { z } from 'zod'
 
 export const IncidentFiltersResponseSchema = z.object({
@@ -17,9 +22,9 @@ export const IncidentFiltersResponseSchema = z.object({
       contractAreaNumber: z.number(),
     }),
   ),
-  sex: z.array(z.string()),
-  timeOfKill: z.array(z.string()),
-  age: z.array(z.string()),
+  sex: z.array(SexEnum),
+  timeOfKill: z.array(TimeOfKillEnum),
+  age: z.array(AgeEnum),
   dateRange: z.object({
     min: z.iso.date().nullable(),
     max: z.iso.date().nullable(),

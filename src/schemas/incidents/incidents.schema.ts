@@ -1,4 +1,13 @@
+import {
+  AgeEnum,
+  SexEnum,
+  TimeOfKillEnum,
+} from '@schemas/common/enums.schema.js'
 import { ErrorSchema } from '@schemas/common/error.schema.js'
+import {
+  PaginationQuerySchema,
+  paginatedResponse,
+} from '@schemas/common/pagination.schema.js'
 import type { Geometry } from 'geojson'
 import { z } from 'zod'
 
@@ -21,10 +30,6 @@ const commaStrings = z.string().transform((s) =>
     .map((v) => v.trim())
     .filter((v) => v.length > 0),
 )
-
-const AgeEnum = z.enum(['ADULT', 'YOUNG', 'UNKNOWN'])
-const SexEnum = z.enum(['MALE', 'FEMALE', 'UNKNOWN'])
-const TimeOfKillEnum = z.enum(['DAY', 'DAWN', 'DUSK', 'DARK', 'UNKNOWN'])
 
 const geometryTypes = [
   'Point',
@@ -56,112 +61,105 @@ const geoJsonString = z
   )
   .transform((v) => v as unknown as Geometry)
 
-export const IncidentsQuerySchema = z.object({
-  year: commaNumbers.optional().meta({
-    override: {
-      type: 'string',
-      description: 'Comma-separated list of years (e.g. 2020,2021)',
-      example: '2020,2021',
-    },
-  }),
-  species: commaNumbers.optional().meta({
-    override: {
-      type: 'string',
-      description: 'Comma-separated list of species IDs (e.g. 10,18)',
-      example: '10,18',
-    },
-  }),
-  serviceArea: commaNumbers.optional().meta({
-    override: {
-      type: 'string',
-      description: 'Comma-separated list of service area IDs (e.g. 16,17)',
-      example: '16,17',
-    },
-  }),
-  sex: commaStrings
-    .pipe(z.array(SexEnum))
-    .optional()
-    .meta({
+export const IncidentsQuerySchema = z
+  .object({
+    year: commaNumbers.optional().meta({
       override: {
         type: 'string',
-        description: 'Comma-separated list: MALE, FEMALE, UNKNOWN',
-        example: 'MALE,FEMALE',
+        description: 'Comma-separated list of years (e.g. 2020,2021)',
+        example: '2020,2021',
       },
     }),
-  timeOfKill: commaStrings
-    .pipe(z.array(TimeOfKillEnum))
-    .optional()
-    .meta({
+    species: commaNumbers.optional().meta({
       override: {
         type: 'string',
-        description: 'Comma-separated list: DAY, DAWN, DUSK, DARK, UNKNOWN',
-        example: 'DAY,DAWN',
+        description: 'Comma-separated list of species IDs (e.g. 10,18)',
+        example: '10,18',
       },
     }),
-  age: commaStrings
-    .pipe(z.array(AgeEnum))
-    .optional()
-    .meta({
+    serviceArea: commaNumbers.optional().meta({
       override: {
         type: 'string',
-        description: 'Comma-separated list: ADULT, YOUNG, UNKNOWN',
-        example: 'ADULT,YOUNG',
+        description: 'Comma-separated list of service area IDs (e.g. 16,17)',
+        example: '16,17',
       },
     }),
-  startDate: z.iso.date().optional().meta({
-    description: 'Start date filter (inclusive, YYYY-MM-DD)',
-    example: '2021-01-01',
-  }),
-  endDate: z.iso.date().optional().meta({
-    description: 'End date filter (inclusive, YYYY-MM-DD)',
-    example: '2021-12-31',
-  }),
-  geometry: geoJsonString.optional().meta({
-    override: {
-      type: 'string',
-      description:
-        'GeoJSON geometry string for spatial filtering (e.g. Polygon)',
-      example:
-        '{"type":"Polygon","coordinates":[[[-123.2,49.2],[-123.0,49.2],[-123.0,49.3],[-123.2,49.3],[-123.2,49.2]]]}',
-    },
-  }),
-  limit: z.coerce.number().int().positive().max(1000).optional().meta({
-    description: 'Max results to return (1-1000). Omit to fetch all.',
-  }),
-  offset: z.coerce.number().int().nonnegative().default(0).meta({
-    description: 'Number of results to skip (used with limit)',
-  }),
-})
+    sex: commaStrings
+      .pipe(z.array(SexEnum))
+      .optional()
+      .meta({
+        override: {
+          type: 'string',
+          description: 'Comma-separated list: MALE, FEMALE, UNKNOWN',
+          example: 'MALE,FEMALE',
+        },
+      }),
+    timeOfKill: commaStrings
+      .pipe(z.array(TimeOfKillEnum))
+      .optional()
+      .meta({
+        override: {
+          type: 'string',
+          description: 'Comma-separated list: DAY, DAWN, DUSK, DARK, UNKNOWN',
+          example: 'DAY,DAWN',
+        },
+      }),
+    age: commaStrings
+      .pipe(z.array(AgeEnum))
+      .optional()
+      .meta({
+        override: {
+          type: 'string',
+          description: 'Comma-separated list: ADULT, YOUNG, UNKNOWN',
+          example: 'ADULT,YOUNG',
+        },
+      }),
+    startDate: z.iso.date().optional().meta({
+      description: 'Start date filter (inclusive, YYYY-MM-DD)',
+      example: '2021-01-01',
+    }),
+    endDate: z.iso.date().optional().meta({
+      description: 'End date filter (inclusive, YYYY-MM-DD)',
+      example: '2021-12-31',
+    }),
+    geometry: geoJsonString.optional().meta({
+      override: {
+        type: 'string',
+        description:
+          'GeoJSON geometry string for spatial filtering (e.g. Polygon)',
+        example:
+          '{"type":"Polygon","coordinates":[[[-123.2,49.2],[-123.0,49.2],[-123.0,49.3],[-123.2,49.3],[-123.2,49.2]]]}',
+      },
+    }),
+  })
+  .merge(PaginationQuerySchema)
 
 export type IncidentsQuery = z.infer<typeof IncidentsQuerySchema>
 
-export const IncidentSchema = z.object({
-  id: z.number(),
-  year: z.number(),
-  accidentDate: z.string().nullable(),
-  speciesId: z.number(),
-  speciesName: z.string(),
-  speciesColor: z.string(),
-  speciesGroupName: z.string(),
-  serviceAreaId: z.number().nullable(),
-  serviceAreaName: z.string().nullable(),
-  contractAreaNumber: z.number().nullable(),
-  sex: SexEnum.nullable(),
-  timeOfKill: TimeOfKillEnum.nullable(),
-  age: AgeEnum.nullable(),
-  quantity: z.number().int().positive(),
-  latitude: z.number().nullable(),
-  longitude: z.number().nullable(),
-  nearestTown: z.string().nullable(),
-})
+export const IncidentSchema = z
+  .object({
+    id: z.number(),
+    year: z.number(),
+    accidentDate: z.string().nullable(),
+    speciesId: z.number(),
+    speciesName: z.string(),
+    speciesColor: z.string(),
+    speciesGroupName: z.string(),
+    serviceAreaId: z.number().nullable(),
+    serviceAreaName: z.string().nullable(),
+    contractAreaNumber: z.number().nullable(),
+    sex: SexEnum.nullable(),
+    timeOfKill: TimeOfKillEnum.nullable(),
+    age: AgeEnum.nullable(),
+    quantity: z.number().int().positive(),
+    latitude: z.number().nullable(),
+    longitude: z.number().nullable(),
+    nearestTown: z.string().nullable(),
+  })
+  .meta({ id: 'Incident', description: 'A wildlife-vehicle collision record' })
 
 export type Incident = z.infer<typeof IncidentSchema>
 
-export const IncidentsResponseSchema = z.object({
-  data: z.array(IncidentSchema),
-  total: z.number().int().nonnegative(),
-  limit: z.number().int().positive().optional(),
-  offset: z.number().int().nonnegative(),
-})
+export const IncidentsResponseSchema = paginatedResponse(IncidentSchema)
 
 export const IncidentErrorSchema = ErrorSchema

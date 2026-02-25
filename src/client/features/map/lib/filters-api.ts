@@ -1,7 +1,7 @@
 import {
   type IncidentFiltersResponse,
   IncidentFiltersResponseSchema,
-} from '@root/schemas/incidents/filters.schema'
+} from '@schemas/incidents/filters.schema'
 import { apiClient } from '@/lib/apiClient'
 
 export const filtersQueryKey = ['incident-filters'] as const
