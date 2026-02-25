@@ -1,5 +1,6 @@
 "use client";
 
+import Spiderfy from "@nazka/map-gl-js-spiderfy";
 import MapLibreGL, { type MarkerOptions, type PopupOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Loader2, Locate, Maximize, Minus, Plus, X } from "lucide-react";
@@ -1181,19 +1182,27 @@ type MapClusterLayerProps<
   clusterColors?: [string, string, string];
   /** Point count thresholds for color/size steps: [medium, large] (default: [100, 750]) */
   clusterThresholds?: [number, number];
-  /** Color for unclustered individual points (default: "#3b82f6") */
-  pointColor?: string;
+  /** Map of icon names to image URLs for unclustered points */
+  icons?: Record<string, string>;
+  /** GeoJSON property name whose value matches icon keys (default: "icon") */
+  iconProperty?: string;
+  /** Icon display size scaling factor (default: 1) */
+  iconSize?: number;
   /** Callback when an unclustered point is clicked */
   onPointClick?: (
     feature: GeoJSON.Feature<GeoJSON.Point, P>,
     coordinates: [number, number]
   ) => void;
-  /** Callback when a cluster is clicked. If not provided, zooms into the cluster */
+  /** Callback when a cluster is clicked. If not provided, zooms into the cluster. Ignored when spiderfy is enabled. */
   onClusterClick?: (
     clusterId: number,
     coordinates: [number, number],
     pointCount: number
   ) => void;
+  /** Enable spiderfying for clusters that can't expand further (default: false) */
+  spiderfy?: boolean;
+  /** Spider leg color override. Defaults to a theme-aware gray. */
+  spiderLegColor?: string;
 };
 
 function MapClusterLayer<
@@ -1204,9 +1213,13 @@ function MapClusterLayer<
   clusterRadius = 50,
   clusterColors = ["#22c55e", "#eab308", "#ef4444"],
   clusterThresholds = [100, 750],
-  pointColor = "#3b82f6",
+  icons,
+  iconProperty = "icon",
+  iconSize = 1,
   onPointClick,
   onClusterClick,
+  spiderfy: spiderfyEnabled = false,
+  spiderLegColor,
 }: MapClusterLayerProps<P>) {
   const { map, isLoaded } = useMap();
   const id = useId();
@@ -1218,8 +1231,10 @@ function MapClusterLayer<
   const stylePropsRef = useRef({
     clusterColors,
     clusterThresholds,
-    pointColor,
   });
+
+  const onPointClickRef = useRef(onPointClick);
+  onPointClickRef.current = onPointClick;
 
   // Add source and layers on mount
   useEffect(() => {
@@ -1265,7 +1280,21 @@ function MapClusterLayer<
       },
     });
 
-    // Add cluster count text layer
+    // Add unclustered point layer (symbol for icon rendering)
+    map.addLayer({
+      id: unclusteredLayerId,
+      type: "symbol",
+      source: sourceId,
+      filter: ["!", ["has", "point_count"]],
+      layout: {
+        "icon-image": ["get", iconProperty],
+        "icon-size": iconSize,
+        "icon-allow-overlap": true,
+      },
+    });
+
+    // Add cluster count text layer last so it's the topmost layer.
+    // Spiderfy places legs below this layer, keeping them above circles and icons.
     map.addLayer({
       id: clusterCountLayerId,
       type: "symbol",
@@ -1278,20 +1307,6 @@ function MapClusterLayer<
       },
       paint: {
         "text-color": "#fff",
-      },
-    });
-
-    // Add unclustered point layer
-    map.addLayer({
-      id: unclusteredLayerId,
-      type: "circle",
-      source: sourceId,
-      filter: ["!", ["has", "point_count"]],
-      paint: {
-        "circle-color": pointColor,
-        "circle-radius": 5,
-        "circle-stroke-width": 2,
-        "circle-stroke-color": "#fff",
       },
     });
 
@@ -1309,6 +1324,49 @@ function MapClusterLayer<
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, map, sourceId]);
+
+  // Load icon images into the map style
+  useEffect(() => {
+    if (!isLoaded || !map || !icons) return;
+
+    const controller = new AbortController();
+    const loadedKeys: string[] = [];
+
+    const loadAll = async () => {
+      const entries = Object.entries(icons);
+      await Promise.all(
+        entries.map(async ([key, url]) => {
+          if (controller.signal.aborted || map.hasImage(key)) return;
+          const response = await fetch(url, { signal: controller.signal });
+          if (!response.ok)
+            throw new Error(`Failed to fetch icon "${key}": ${response.status}`);
+          const blob = await response.blob();
+          const bitmap = await createImageBitmap(blob);
+          if (controller.signal.aborted) return;
+          if (!map.hasImage(key)) {
+            map.addImage(key, bitmap);
+            loadedKeys.push(key);
+          }
+        }),
+      );
+    };
+
+    loadAll().catch((err) => {
+      if (!controller.signal.aborted)
+        console.error("[MapClusterLayer] Failed to load icons:", err);
+    });
+
+    return () => {
+      controller.abort();
+      for (const key of loadedKeys) {
+        try {
+          if (map.hasImage(key)) map.removeImage(key);
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [isLoaded, map, icons]);
 
   // Update source data when data prop changes (only for non-URL data)
   useEffect(() => {
@@ -1351,20 +1409,13 @@ function MapClusterLayer<
       ]);
     }
 
-    // Update unclustered point layer color
-    if (map.getLayer(unclusteredLayerId) && prev.pointColor !== pointColor) {
-      map.setPaintProperty(unclusteredLayerId, "circle-color", pointColor);
-    }
-
-    stylePropsRef.current = { clusterColors, clusterThresholds, pointColor };
+    stylePropsRef.current = { clusterColors, clusterThresholds };
   }, [
     isLoaded,
     map,
     clusterLayerId,
-    unclusteredLayerId,
     clusterColors,
     clusterThresholds,
-    pointColor,
   ]);
 
   // Handle click events
@@ -1378,6 +1429,9 @@ function MapClusterLayer<
         features?: MapLibreGL.MapGeoJSONFeature[];
       }
     ) => {
+      // At max cluster zoom, let spiderfy handle the click
+      if (spiderfyEnabled && map.getZoom() >= clusterMaxZoom) return;
+
       const features = map.queryRenderedFeatures(e.point, {
         layers: [clusterLayerId],
       });
@@ -1429,20 +1483,32 @@ function MapClusterLayer<
       );
     };
 
+    // Check if a spiderfied leaf is under the cursor
+    const hasSpiderLeafAt = (point: MapLibreGL.PointLike) =>
+      map
+        .queryRenderedFeatures(point)
+        .some((f) => f.layer.id.includes("-spiderfy-leaf"));
+
     // Cursor style handlers
     const handleMouseEnterCluster = () => {
       map.getCanvas().style.cursor = "pointer";
     };
-    const handleMouseLeaveCluster = () => {
-      map.getCanvas().style.cursor = "";
+    const handleMouseLeaveCluster = (
+      e: MapLibreGL.MapMouseEvent,
+    ) => {
+      if (!hasSpiderLeafAt(e.point))
+        map.getCanvas().style.cursor = "";
     };
     const handleMouseEnterPoint = () => {
       if (onPointClick) {
         map.getCanvas().style.cursor = "pointer";
       }
     };
-    const handleMouseLeavePoint = () => {
-      map.getCanvas().style.cursor = "";
+    const handleMouseLeavePoint = (
+      e: MapLibreGL.MapMouseEvent,
+    ) => {
+      if (!hasSpiderLeafAt(e.point))
+        map.getCanvas().style.cursor = "";
     };
 
     map.on("click", clusterLayerId, handleClusterClick);
@@ -1469,7 +1535,55 @@ function MapClusterLayer<
     sourceId,
     onClusterClick,
     onPointClick,
+    spiderfyEnabled,
+    clusterMaxZoom,
   ]);
+
+  // Spiderfy: fan out clusters that can't expand further
+  useEffect(() => {
+    if (!spiderfyEnabled || !isLoaded || !map) return;
+
+    const legColor =
+      spiderLegColor ??
+      (getDocumentTheme() === "dark" ? "#94a3b8" : "#64748b");
+
+    const instance = new Spiderfy(map, {
+      onLeafClick: (feature: GeoJSON.Feature) => {
+        if (!onPointClickRef.current) return;
+        const coords = (
+          feature.geometry as GeoJSON.Point
+        ).coordinates.slice() as [number, number];
+        onPointClickRef.current(
+          feature as GeoJSON.Feature<GeoJSON.Point, P>,
+          coords,
+        );
+      },
+      minZoomLevel: clusterMaxZoom,
+      zoomIncrement: 0,
+      closeOnLeafClick: false,
+      onLeafHover: (leaf: GeoJSON.Feature | null) => {
+        map.getCanvas().style.cursor = leaf ? "pointer" : "";
+      },
+      spiderLegsColor: legColor,
+      spiderLegsWidth: 1,
+      maxLeaves: 255,
+      spiderLeavesLayout: {
+        "icon-image": ["get", iconProperty],
+        "icon-size": iconSize,
+        "icon-allow-overlap": true,
+      },
+      spiderLeavesPaint: {},
+    });
+
+    // Spiderfy requires a symbol layer - use the cluster count text layer
+    // (same source, cluster filter, and symbol type). Custom spiderLeavesLayout
+    // above ensures spider leaves render with point icons, not text.
+    instance.applyTo(clusterCountLayerId);
+
+    return () => {
+      instance.unspiderfyAll();
+    };
+  }, [spiderfyEnabled, isLoaded, map, clusterCountLayerId, clusterMaxZoom, spiderLegColor, iconProperty, iconSize]);
 
   return null;
 }
