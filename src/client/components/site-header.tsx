@@ -1,3 +1,4 @@
+import { ModeToggle } from '@/components/mode-toggle'
 import { SearchAddress } from '@/components/search-address'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -9,6 +10,9 @@ export function SiteHeader() {
       <Separator orientation="vertical" className="mr-2 h-4! self-center!" />
       <h1 className="text-base font-medium">WARS</h1>
       <SearchAddress />
+      <div className="ml-auto">
+        <ModeToggle />
+      </div>
     </header>
   )
 }

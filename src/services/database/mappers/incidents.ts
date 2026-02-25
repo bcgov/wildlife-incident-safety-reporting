@@ -5,7 +5,7 @@ export function toIncident(row: IncidentRow): Incident {
   return {
     id: row.id,
     year: row.year,
-    accidentDate: row.accident_date?.toISOString() ?? null,
+    accidentDate: row.accident_date?.toISOString().slice(0, 10) ?? null,
     speciesId: row.species_id,
     speciesName: row.species_name,
     speciesColor: row.species_color,

@@ -162,4 +162,6 @@ export type Incident = z.infer<typeof IncidentSchema>
 
 export const IncidentsResponseSchema = paginatedResponse(IncidentSchema)
 
+export type IncidentsResponse = z.infer<typeof IncidentsResponseSchema>
+
 export const IncidentErrorSchema = ErrorSchema

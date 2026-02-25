@@ -1,3 +1,12 @@
+/*
+ * BC Gov Design System tokens mapped to shadcn/ui CSS variables.
+ * Approximated from the BC Gov Design Tokens (oklch) for use with
+ * Tailwind v4 + shadcn. Hex values in comments are for reference only.
+ *
+ * BC Gov token source: https://github.com/bcgov/design-tokens
+ * shadcn theming docs: https://ui.shadcn.com/docs/theming
+ */
+
 @import "./fonts.css";
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -11,7 +20,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: currentColor;
   }
   * {
     @apply border-border outline-ring/50;
@@ -51,75 +60,113 @@
   background-color: oklch(1 0 0 / 28%);
 }
 
+/* -- Light theme -- */
 :root {
   --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.488 0.243 264.376);
-  --primary-foreground: oklch(0.97 0.014 254.604);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.546 0.245 262.881);
-  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  --background: oklch(1 0 0); /* #FFFFFF */
+  --foreground: oklch(0.297 0 0); /* #2D2D2D */
+
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(0.297 0 0); /* #2D2D2D */
+  --popover: oklch(1 0 0); /* #FFFFFF */
+  --popover-foreground: oklch(0.297 0 0); /* #2D2D2D */
+
+  --primary: oklch(0.324 0.102 254.147); /* #013366 */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+
+  --secondary: oklch(0.962 0 0); /* #F3F2F1 */
+  --secondary-foreground: oklch(0.392 0.004 67.701); /* #474543 */
+
+  --muted: oklch(0.962 0 0); /* #F3F2F1 */
+  --muted-foreground: oklch(0.697 0.003 48.703); /* #9F9D9C */
+
+  --accent: oklch(0.962 0 0); /* #F3F2F1 */
+  --accent-foreground: oklch(0.297 0 0); /* #2D2D2D */
+
+  --destructive: oklch(0.574 0.182 26.615); /* #CE3E39 */
+  --destructive-foreground: oklch(1 0 0); /* #FFFFFF */
+
+  --border: oklch(0.882 0 0); /* #D8D8D8 */
+  --input: oklch(0.882 0 0); /* #D8D8D8 */
+  --ring: oklch(0.521 0.195 264.516); /* #2E5DD7 */
+
+  --chart-1: oklch(0.805 0.094 250.455); /* #91C4FA  Blue50 */
+  --chart-2: oklch(0.657 0.122 251.446); /* #5595D9  Blue70 */
+  --chart-3: oklch(0.537 0.12 252.535); /* #3470B1  Blue80 */
+  --chart-4: oklch(0.324 0.102 254.147); /* #013366  Blue100 */
+  --chart-5: oklch(0.431 0.107 253.36); /* #1E5189  Blue90 */
+
+  --info: oklch(0.329 0.092 251.388); /* #053662 */
+  --info-foreground: oklch(1 0 0); /* #FFFFFF */
+  --success: oklch(0.546 0.107 146.688); /* #42814A */
+  --success-foreground: oklch(1 0 0); /* #FFFFFF */
+  --warning: oklch(0.828 0.146 79.984); /* #F8BB47 */
+  --warning-foreground: oklch(0.297 0 0); /* #2D2D2D */
+
+  --sidebar: oklch(0.983 0 0); /* #FAF9F8 */
+  --sidebar-foreground: oklch(0.297 0 0); /* #2D2D2D */
+  --sidebar-primary: oklch(0.324 0.102 254.147); /* #013366 */
+  --sidebar-primary-foreground: oklch(1 0 0); /* #FFFFFF */
+  --sidebar-accent: oklch(0.941 0.003 67.782); /* #EDEBE9 */
+  --sidebar-accent-foreground: oklch(0.392 0.004 67.701); /* #474543 */
+  --sidebar-border: oklch(0.882 0 0); /* #D8D8D8 */
+  --sidebar-ring: oklch(0.521 0.195 264.516); /* #2E5DD7 */
 }
 
+/* -- Dark theme -- */
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.488 0.243 264.376);
-  --primary-foreground: oklch(0.97 0.014 254.604);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --background: oklch(0.261 0.002 67.722); /* #252423 */
+  --foreground: oklch(0.938 0.003 67.781); /* #ECEAE8 */
+
+  --card: oklch(0.326 0.002 67.746); /* #353433 */
+  --card-foreground: oklch(0.938 0.003 67.781); /* #ECEAE8 */
+  --popover: oklch(0.326 0.002 67.746); /* #353433 */
+  --popover-foreground: oklch(0.938 0.003 67.781); /* #ECEAE8 */
+
+  --primary: oklch(0.657 0.122 251.446); /* #5595D9  Blue70 */
+  --primary-foreground: oklch(0.261 0.002 67.722); /* #252423 */
+
+  --secondary: oklch(0.357 0.002 67.754); /* #3D3C3B */
+  --secondary-foreground: oklch(0.938 0.003 67.781); /* #ECEAE8 */
+
+  --muted: oklch(0.357 0.002 67.754); /* #3D3C3B */
+  --muted-foreground: oklch(0.824 0.003 84.561); /* #C6C5C3 */
+
+  --accent: oklch(0.357 0.002 67.754); /* #3D3C3B */
+  --accent-foreground: oklch(0.938 0.003 67.781); /* #ECEAE8 */
+
+  --destructive: oklch(0.704 0.191 22.216); /* lightened red */
+  --destructive-foreground: oklch(1 0 0); /* #FFFFFF */
+
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.623 0.214 259.815);
-  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.766 0.114 250.601); /* #7AB8F9  Blue60 */
+
+  --chart-1: oklch(0.805 0.094 250.455); /* #91C4FA  Blue50 */
+  --chart-2: oklch(0.766 0.114 250.601); /* #7AB8F9  Blue60 */
+  --chart-3: oklch(0.657 0.122 251.446); /* #5595D9  Blue70 */
+  --chart-4: oklch(0.828 0.167 81.962); /* #FCBA19  Gold100 */
+  --chart-5: oklch(0.868 0.118 82.083); /* #FACC75  Gold70 */
+
+  --info: oklch(0.657 0.122 251.446); /* #5595D9  Blue70 */
+  --info-foreground: oklch(1 0 0);
+  --success: oklch(0.65 0.14 146.688); /* lightened green */
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.828 0.146 79.984); /* #F8BB47 */
+  --warning-foreground: oklch(0.261 0.002 67.722); /* #252423 */
+
+  --sidebar: oklch(0.22 0.002 67.72);
+  --sidebar-foreground: oklch(0.938 0.003 67.781); /* #ECEAE8 */
+  --sidebar-primary: oklch(0.657 0.122 251.446); /* #5595D9  Blue70 */
+  --sidebar-primary-foreground: oklch(0.938 0.003 67.781);
+  --sidebar-accent: oklch(0.357 0.002 67.754); /* #3D3C3B */
+  --sidebar-accent-foreground: oklch(0.938 0.003 67.781);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar-ring: oklch(0.766 0.114 250.601); /* #7AB8F9  Blue60 */
 }
 
+/* -- Tailwind theme registration -- */
 @theme inline {
   --font-sans: "BC Sans", "Noto Sans", system-ui, sans-serif;
   --font-heading: "BC Sans", "Noto Sans", system-ui, sans-serif;
@@ -131,6 +178,8 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* shadcn semantic colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -146,6 +195,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -162,4 +212,57 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  /* BC Gov Gold - bg-gold-100, text-gold-60, etc. */
+  --color-gold-10: oklch(0.979 0.022 89.789); /* #FEF8E8 */
+  --color-gold-20: oklch(0.96 0.035 81.278); /* #FEF0D8 */
+  --color-gold-30: oklch(0.941 0.053 82.877); /* #FDE9C4 */
+  --color-gold-40: oklch(0.922 0.07 83.578); /* #FCE2B0 */
+  --color-gold-50: oklch(0.902 0.086 82.478); /* #FBDA9D */
+  --color-gold-60: oklch(0.885 0.103 82.113); /* #FBD389 */
+  --color-gold-70: oklch(0.868 0.118 82.083); /* #FACC75 */
+  --color-gold-80: oklch(0.849 0.13 80.82); /* #F9C462 */
+  --color-gold-90: oklch(0.826 0.146 79.36); /* #F8BA47 */
+  --color-gold-100: oklch(0.828 0.167 81.962); /* #FCBA19 */
+
+  /* BC Gov Blue - bg-blue-100, text-blue-70, etc. */
+  --color-blue-10: oklch(0.976 0.011 243.65); /* #F1F8FE */
+  --color-blue-20: oklch(0.929 0.032 249.624); /* #D8EAFD */
+  --color-blue-30: oklch(0.887 0.052 251.066); /* #C1DDFC */
+  --color-blue-40: oklch(0.844 0.074 250.549); /* #A8D0FB */
+  --color-blue-50: oklch(0.805 0.094 250.455); /* #91C4FA */
+  --color-blue-60: oklch(0.766 0.114 250.601); /* #7AB8F9 */
+  --color-blue-70: oklch(0.657 0.122 251.446); /* #5595D9 */
+  --color-blue-80: oklch(0.537 0.12 252.535); /* #3470B1 */
+  --color-blue-90: oklch(0.431 0.107 253.36); /* #1E5189 */
+  --color-blue-100: oklch(0.324 0.102 254.147); /* #013366 */
+
+  /* BC Gov Warm Gray - bg-gray-110, text-gray-70, etc. */
+  --color-gray-10: oklch(0.983 0 0); /* #FAF9F8 */
+  --color-gray-20: oklch(0.962 0 0); /* #F3F2F1 */
+  --color-gray-30: oklch(0.938 0.003 67.781); /* #ECEAE8 */
+  --color-gray-40: oklch(0.902 0.003 67.779); /* #E0DEDC */
+  --color-gray-50: oklch(0.856 0.004 67.776); /* #D1CFCD */
+  --color-gray-60: oklch(0.824 0.003 84.561); /* #C6C5C3 */
+  --color-gray-70: oklch(0.697 0.003 48.703); /* #9F9D9C */
+  --color-gray-80: oklch(0.483 0.004 67.729); /* #605E5C */
+  --color-gray-90: oklch(0.357 0.002 67.754); /* #3D3C3B */
+  --color-gray-100: oklch(0.326 0.002 67.746); /* #353433 */
+  --color-gray-110: oklch(0.261 0.002 67.722); /* #252423 */
+
+  /* Shadows (dual-layer, from BC Gov surface.shadow tokens) */
+  --shadow-2xs:
+    0 0.3px 0.9px 0 oklch(0 0 0 / 0.1), 0 1.6px 3.6px 0 oklch(0 0 0 / 0.13);
+  --shadow-xs:
+    0 0.6px 1.8px 0 oklch(0 0 0 / 0.1), 0 3.2px 7.2px 0 oklch(0 0 0 / 0.13);
+  --shadow-sm:
+    0 1.2px 3.6px 0 oklch(0 0 0 / 0.1), 0 6.4px 14.4px 0 oklch(0 0 0 / 0.13);
+  --shadow-md:
+    0 4.8px 14.4px 0 oklch(0 0 0 / 0.18), 0 25.6px 57.6px 0 oklch(0 0 0 / 0.22);
 }

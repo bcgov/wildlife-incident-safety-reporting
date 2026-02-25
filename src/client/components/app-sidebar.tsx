@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFilters } from '@/features/map/hooks/use-filters'
+import { useIncidents } from '@/features/map/hooks/use-incidents'
 import { useFilterStore } from '@/features/map/store/filter-store'
 
 function FilterSkeleton() {
@@ -79,6 +80,7 @@ function DatePicker({
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { data: filters, isLoading } = useFilters()
+  const { data: incidents } = useIncidents()
   const store = useFilterStore()
 
   const hasSelections =
@@ -259,7 +261,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <p className="px-2 text-xs text-muted-foreground">
-          0 observations match current filters
+          {incidents?.total.toLocaleString() ?? '...'} observations match
+          current filters
         </p>
       </SidebarFooter>
     </Sidebar>
