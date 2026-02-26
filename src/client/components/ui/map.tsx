@@ -1403,7 +1403,7 @@ function MapClusterLayer<
       layout: {
         "text-field": "{point_count_abbreviated}",
         "text-font": ["Open Sans"],
-        "text-size": 12,
+        "text-size": donutMode ? 40 : 12,
       },
       paint: {
         "text-color": "#fff",
@@ -1530,8 +1530,8 @@ function MapClusterLayer<
         features?: MapLibreGL.MapGeoJSONFeature[];
       }
     ) => {
-      // At max cluster zoom, let spiderfy handle the click
-      if (spiderfyEnabled && map.getZoom() >= clusterMaxZoom) return;
+      // Near max cluster zoom, let spiderfy handle the click
+      if (spiderfyEnabled && map.getZoom() >= clusterMaxZoom - 1) return;
 
       const features = map.queryRenderedFeatures(e.point, {
         layers: [clusterLayerId],
@@ -1659,7 +1659,7 @@ function MapClusterLayer<
           coords,
         );
       },
-      minZoomLevel: clusterMaxZoom,
+      minZoomLevel: clusterMaxZoom - 1,
       zoomIncrement: 0,
       closeOnLeafClick: false,
       onLeafHover: (leaf: GeoJSON.Feature | null) => {
@@ -1676,9 +1676,6 @@ function MapClusterLayer<
       spiderLeavesPaint: {},
     });
 
-    // Spiderfy requires a symbol layer - use the cluster count text layer
-    // (same source, cluster filter, and symbol type). Custom spiderLeavesLayout
-    // above ensures spider leaves render with point icons, not text.
     instance.applyTo(clusterCountLayerId);
 
     return () => {
@@ -1718,8 +1715,8 @@ function MapClusterLayer<
       const newMarkers: Record<number, MapLibreGL.Marker> = {};
       const features = map.querySourceFeatures(sourceId);
 
-      // At spiderfy zoom, disable pointer-events so clicks reach the canvas.
-      const atSpiderfyZoom = spiderfyEnabled && map.getZoom() >= clusterMaxZoom;
+      // Near spiderfy zoom, disable pointer-events so clicks reach the canvas.
+      const atSpiderfyZoom = spiderfyEnabled && map.getZoom() >= clusterMaxZoom - 1;
       const pointerEvents = atSpiderfyZoom ? "none" : "auto";
       const cursor = atSpiderfyZoom ? "" : "pointer";
 
