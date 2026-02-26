@@ -62,7 +62,7 @@
 
 /* -- Light theme -- */
 :root {
-  --radius: 0.65rem;
+  --radius: 0.375rem;
 
   --background: oklch(1 0 0); /* #FFFFFF */
   --foreground: oklch(0.297 0 0); /* #2D2D2D */
@@ -103,6 +103,11 @@
   --success-foreground: oklch(1 0 0); /* #FFFFFF */
   --warning: oklch(0.828 0.146 79.984); /* #F8BB47 */
   --warning-foreground: oklch(0.297 0 0); /* #2D2D2D */
+
+  --info-surface: oklch(0.981 0.005 258.324); /* #F7F9FC */
+  --destructive-surface: oklch(0.925 0.021 13.875); /* #F4E1E2 */
+  --success-surface: oklch(0.991 0.013 152.611); /* #F6FFF8 */
+  --warning-surface: oklch(0.962 0.036 83.778); /* #FEF1D8 */
 
   --sidebar: oklch(0.983 0 0); /* #FAF9F8 */
   --sidebar-foreground: oklch(0.297 0 0); /* #2D2D2D */
@@ -155,6 +160,11 @@
   --success-foreground: oklch(1 0 0);
   --warning: oklch(0.828 0.146 79.984); /* #F8BB47 */
   --warning-foreground: oklch(0.261 0.002 67.722); /* #252423 */
+
+  --info-surface: oklch(0.3 0.025 255);
+  --destructive-surface: oklch(0.3 0.035 15);
+  --success-surface: oklch(0.3 0.025 150);
+  --warning-surface: oklch(0.3 0.035 83);
 
   --sidebar: oklch(0.22 0.002 67.72);
   --sidebar-foreground: oklch(0.938 0.003 67.781); /* #ECEAE8 */
@@ -218,6 +228,10 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info-surface: var(--info-surface);
+  --color-destructive-surface: var(--destructive-surface);
+  --color-success-surface: var(--success-surface);
+  --color-warning-surface: var(--warning-surface);
 
   /* BC Gov Gold - bg-gold-100, text-gold-60, etc. */
   --color-gold-10: oklch(0.979 0.022 89.789); /* #FEF8E8 */

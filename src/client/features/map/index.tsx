@@ -8,7 +8,6 @@ import {
 } from '@/components/ui/map'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useIncidents } from './hooks/use-incidents'
-import { speciesColors } from './lib/species-colors'
 import { speciesIcons } from './lib/species-icons'
 
 type IncidentProperties = {
@@ -88,11 +87,11 @@ export function MapPage() {
         data={geojson}
         icons={speciesIcons}
         iconProperty="speciesGroupName"
-        categoryColors={speciesColors}
         clusterRadius={80}
         clusterMaxZoom={22}
         clusterThresholds={[50, 200]}
         spiderfy
+        clusterHull
         onPointClick={(feature, coordinates) =>
           setSelected({ coordinates, properties: feature.properties })
         }

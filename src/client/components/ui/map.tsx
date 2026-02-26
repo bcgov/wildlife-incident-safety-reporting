@@ -1,6 +1,7 @@
 "use client";
 
 import Spiderfy from "@nazka/map-gl-js-spiderfy";
+import convex from "@turf/convex";
 import MapLibreGL, { type MarkerOptions, type PopupOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Loader2, Locate, Maximize, Minus, Plus, X } from "lucide-react";
@@ -1283,6 +1284,8 @@ type MapClusterLayerProps<
   categoryColors?: Record<string, string>;
   /** GeoJSON property to aggregate by for donut charts. Defaults to iconProperty. */
   categoryProperty?: string;
+  /** Show a convex hull polygon on cluster hover showing the geographic extent of its points (default: false) */
+  clusterHull?: boolean;
 };
 
 function MapClusterLayer<
@@ -1302,6 +1305,7 @@ function MapClusterLayer<
   spiderLegColor,
   categoryColors,
   categoryProperty,
+  clusterHull = false,
 }: MapClusterLayerProps<P>) {
   const { map, isLoaded } = useMap();
   const id = useId();
@@ -1309,6 +1313,9 @@ function MapClusterLayer<
   const clusterLayerId = `clusters-${id}`;
   const clusterCountLayerId = `cluster-count-${id}`;
   const unclusteredLayerId = `unclustered-point-${id}`;
+  const hullSourceId = `cluster-hull-${id}`;
+  const hullFillLayerId = `cluster-hull-fill-${id}`;
+  const hullLineLayerId = `cluster-hull-line-${id}`;
 
   const stylePropsRef = useRef({
     clusterColors,
@@ -1346,6 +1353,38 @@ function MapClusterLayer<
       clusterRadius,
       ...(clusterPropertiesExpr && { clusterProperties: clusterPropertiesExpr }),
     });
+
+    // Hull source + layers (rendered below clusters)
+    if (clusterHull) {
+      const emptyFC: GeoJSON.FeatureCollection = {
+        type: "FeatureCollection",
+        features: [],
+      };
+      map.addSource(hullSourceId, { type: "geojson", data: emptyFC });
+      map.addLayer({
+        id: hullFillLayerId,
+        type: "fill",
+        source: hullSourceId,
+        paint: {
+          "fill-color":
+            getDocumentTheme() === "dark"
+              ? "rgba(148,163,184,0.15)"
+              : "rgba(100,116,139,0.12)",
+        },
+      });
+      map.addLayer({
+        id: hullLineLayerId,
+        type: "line",
+        source: hullSourceId,
+        paint: {
+          "line-color":
+            getDocumentTheme() === "dark"
+              ? "rgba(148,163,184,0.5)"
+              : "rgba(100,116,139,0.4)",
+          "line-width": 1.5,
+        },
+      });
+    }
 
     // Add cluster circles layer (invisible in donut mode, kept as click hit target)
     map.addLayer({
@@ -1418,6 +1457,9 @@ function MapClusterLayer<
         if (map.getLayer(unclusteredLayerId))
           map.removeLayer(unclusteredLayerId);
         if (map.getLayer(clusterLayerId)) map.removeLayer(clusterLayerId);
+        if (map.getLayer(hullLineLayerId)) map.removeLayer(hullLineLayerId);
+        if (map.getLayer(hullFillLayerId)) map.removeLayer(hullFillLayerId);
+        if (map.getSource(hullSourceId)) map.removeSource(hullSourceId);
         if (map.getSource(sourceId)) map.removeSource(sourceId);
       } catch {
         // ignore
@@ -1590,15 +1632,76 @@ function MapClusterLayer<
         .queryRenderedFeatures(point)
         .some((f) => f.layer.id.includes("-spiderfy-leaf"));
 
+    // Hull hover state - debounce the clear so moving between circle/text
+    // sub-layers within the same cluster doesn't flicker.
+    let hoveredClusterId: number | null = null;
+    let hullClearTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const clearHull = () => {
+      if (hullClearTimer) {
+        clearTimeout(hullClearTimer);
+        hullClearTimer = null;
+      }
+      hoveredClusterId = null;
+      if (!clusterHull) return;
+      const hullSource = map.getSource(hullSourceId) as MapLibreGL.GeoJSONSource | undefined;
+      if (hullSource) hullSource.setData({ type: "FeatureCollection", features: [] });
+    };
+
+    const debouncedClearHull = () => {
+      if (hullClearTimer) clearTimeout(hullClearTimer);
+      hullClearTimer = setTimeout(clearHull, 100);
+    };
+
     // Cursor style handlers
-    const handleMouseEnterCluster = () => {
+    const handleMouseEnterCluster = (
+      e: MapLibreGL.MapMouseEvent & {
+        features?: MapLibreGL.MapGeoJSONFeature[];
+      },
+    ) => {
       map.getCanvas().style.cursor = "pointer";
+
+      if (!clusterHull) return;
+      if (spiderfyEnabled && map.getZoom() >= clusterMaxZoom - 1) return;
+
+      // Cancel any pending clear - cursor is still on a cluster
+      if (hullClearTimer) {
+        clearTimeout(hullClearTimer);
+        hullClearTimer = null;
+      }
+
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: [clusterLayerId],
+      });
+      if (!features.length) return;
+
+      const clusterId = features[0].properties?.cluster_id as number;
+      if (hoveredClusterId === clusterId) return;
+      hoveredClusterId = clusterId;
+      const source = map.getSource(sourceId) as MapLibreGL.GeoJSONSource;
+
+      source.getClusterLeaves(clusterId, Infinity, 0).then((leaves) => {
+        if (disposed || hoveredClusterId !== clusterId) return;
+        const hull = convex({
+          type: "FeatureCollection",
+          features: leaves,
+        });
+        const hullSource = map.getSource(hullSourceId) as MapLibreGL.GeoJSONSource | undefined;
+        if (hullSource) {
+          hullSource.setData(
+            hull
+              ? { type: "FeatureCollection", features: [hull] }
+              : { type: "FeatureCollection", features: [] },
+          );
+        }
+      });
     };
     const handleMouseLeaveCluster = (
       e: MapLibreGL.MapMouseEvent,
     ) => {
       if (!hasSpiderLeafAt(e.point))
         map.getCanvas().style.cursor = "";
+      debouncedClearHull();
     };
     const handleMouseEnterPoint = () => {
       if (onPointClick) {
@@ -1612,6 +1715,11 @@ function MapClusterLayer<
         map.getCanvas().style.cursor = "";
     };
 
+    // Clear hull immediately on click so spiderfy's queryRenderedFeatures
+    // doesn't pick up hull fill features at the click point.
+    const handleMapClick = clearHull;
+
+    map.on("click", handleMapClick);
     map.on("click", clusterLayerId, handleClusterClick);
     map.on("click", unclusteredLayerId, handlePointClick);
     map.on("mouseenter", clusterLayerId, handleMouseEnterCluster);
@@ -1621,6 +1729,8 @@ function MapClusterLayer<
 
     return () => {
       disposed = true;
+      if (hullClearTimer) clearTimeout(hullClearTimer);
+      map.off("click", handleMapClick);
       map.off("click", clusterLayerId, handleClusterClick);
       map.off("click", unclusteredLayerId, handlePointClick);
       map.off("mouseenter", clusterLayerId, handleMouseEnterCluster);
@@ -1638,6 +1748,8 @@ function MapClusterLayer<
     onPointClick,
     spiderfyEnabled,
     clusterMaxZoom,
+    clusterHull,
+    hullSourceId,
   ]);
 
   // Spiderfy: fan out clusters that can't expand further
