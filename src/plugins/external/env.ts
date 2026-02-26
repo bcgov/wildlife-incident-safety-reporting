@@ -5,7 +5,7 @@ import fp from 'fastify-plugin'
 
 const schema = {
   type: 'object',
-  required: ['PORT'],
+  required: ['PORT', 'KEYCLOAK_URL', 'KEYCLOAK_REALM', 'KEYCLOAK_CLIENT_ID'],
   properties: {
     BASE_URL: {
       type: 'string',
@@ -60,6 +60,15 @@ const schema = {
       type: 'number',
       default: 500,
     },
+    KEYCLOAK_URL: {
+      type: 'string',
+    },
+    KEYCLOAK_REALM: {
+      type: 'string',
+    },
+    KEYCLOAK_CLIENT_ID: {
+      type: 'string',
+    },
   },
 }
 
@@ -78,6 +87,9 @@ interface RawEnv {
   LOG_LEVEL: string
   CLOSE_GRACE_DELAY: number
   RATE_LIMIT_MAX: number
+  KEYCLOAK_URL: string
+  KEYCLOAK_REALM: string
+  KEYCLOAK_CLIENT_ID: string
 }
 
 declare module 'fastify' {
@@ -115,6 +127,9 @@ export default fp(
       logLevel: raw.LOG_LEVEL,
       closeGraceDelay: raw.CLOSE_GRACE_DELAY,
       rateLimitMax: raw.RATE_LIMIT_MAX,
+      keycloakUrl: raw.KEYCLOAK_URL,
+      keycloakRealm: raw.KEYCLOAK_REALM,
+      keycloakClientId: raw.KEYCLOAK_CLIENT_ID,
     }
 
     // Validate PostgreSQL configuration

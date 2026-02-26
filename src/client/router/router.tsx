@@ -1,6 +1,4 @@
 import { createBrowserRouter, Outlet } from 'react-router-dom'
-import { MapPage } from '@/features/map'
-import { AppLayout } from '@/layouts/app'
 import RootLayout from '@/layouts/root'
 
 export const router = createBrowserRouter([
@@ -14,11 +12,17 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: (
-          <AppLayout>
-            <MapPage />
-          </AppLayout>
-        ),
+        lazy: () => import('@/features/landing'),
+      },
+      {
+        path: 'dashboard',
+        lazy: () => import('@/layouts/app'),
+        children: [
+          {
+            index: true,
+            lazy: () => import('@/features/map'),
+          },
+        ],
       },
       {
         path: '*',

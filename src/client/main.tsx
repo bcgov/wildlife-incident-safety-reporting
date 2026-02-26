@@ -5,10 +5,12 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { keycloak } from '@/lib/keycloak'
 import { queryClient } from '@/lib/queryClient'
 import { router } from '@/router/router'
+import { useAuthStore } from '@/stores/auth-store'
 
-function RootLayout() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -24,4 +26,16 @@ const rootElement = document.getElementById('app')
 if (rootElement === null) throw new Error('Root element not found')
 
 const root = createRoot(rootElement)
-root.render(<RootLayout />)
+root.render(<App />)
+
+keycloak
+  .init({
+    checkLoginIframe: false,
+    pkceMethod: 'S256',
+  })
+  .then((authenticated) => {
+    useAuthStore.getState().initialize(authenticated)
+  })
+  .catch(() => {
+    useAuthStore.getState().initialize(false)
+  })

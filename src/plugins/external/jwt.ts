@@ -1,0 +1,38 @@
+import fastifyJwt from '@fastify/jwt'
+import type { JwtHeader } from 'fast-jwt'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+import fp from 'fastify-plugin'
+import buildGetJwks from 'get-jwks'
+
+type TokenOrHeader = JwtHeader | { header: JwtHeader; payload: unknown }
+
+export default fp(
+  async (fastify: FastifyInstance) => {
+    const { keycloakUrl, keycloakRealm } = fastify.config
+    const issuer = `${keycloakUrl}/realms/${keycloakRealm}`
+
+    const getJwks = buildGetJwks({
+      issuersWhitelist: [issuer],
+      providerDiscovery: true,
+    })
+
+    await fastify.register(fastifyJwt, {
+      decode: { complete: true },
+      secret: (_request: FastifyRequest, token: TokenOrHeader) => {
+        const header = 'header' in token ? token.header : token
+        return getJwks.getPublicKey({
+          kid: header.kid,
+          alg: header.alg,
+          domain: issuer,
+        })
+      },
+      verify: {
+        allowedIss: [issuer],
+      },
+    })
+  },
+  {
+    name: 'jwt',
+    dependencies: ['config'],
+  },
+)

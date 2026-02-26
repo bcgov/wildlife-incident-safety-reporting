@@ -12,4 +12,7 @@ export interface Config {
   logLevel: string
   closeGraceDelay: number
   rateLimitMax: number
+  keycloakUrl: string
+  keycloakRealm: string
+  keycloakClientId: string
 }

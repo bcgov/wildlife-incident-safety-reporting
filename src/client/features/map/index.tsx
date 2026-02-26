@@ -64,7 +64,7 @@ function toGeoJSON(
   }
 }
 
-export function MapPage() {
+export function Component() {
   const { data: response } = useIncidents()
   const [selected, setSelected] = useState<SelectedIncident | null>(null)
 

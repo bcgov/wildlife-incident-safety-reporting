@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { useAuthStore } from '@/stores/auth-store'
 
 /**
  * Custom error class for API errors with status code and optional data
@@ -89,42 +90,73 @@ async function handleResponse<T>(
  * await apiClient.delete('/v1/api-keys/123')
  * ```
  */
+async function authHeaders(): Promise<HeadersInit> {
+  const token = await useAuthStore.getState().getToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export const apiClient = {
-  get: <T>(path: string, schema?: z.ZodType<T>): Promise<T> =>
-    fetch(path).then((r) => handleResponse<T>(r, schema)),
+  get: async <T>(path: string, schema?: z.ZodType<T>): Promise<T> => {
+    const headers = await authHeaders()
+    return fetch(path, { headers }).then((r) => handleResponse<T>(r, schema))
+  },
 
-  post: <T>(path: string, body: unknown, schema?: z.ZodType<T>): Promise<T> =>
-    fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }).then((r) => handleResponse<T>(r, schema)),
-
-  put: <T>(path: string, body: unknown, schema?: z.ZodType<T>): Promise<T> =>
-    fetch(path, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }).then((r) => handleResponse<T>(r, schema)),
-
-  patch: <T>(path: string, body: unknown, schema?: z.ZodType<T>): Promise<T> =>
-    fetch(path, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }).then((r) => handleResponse<T>(r, schema)),
-
-  delete: <T>(path: string, schema?: z.ZodType<T>): Promise<T> =>
-    fetch(path, { method: 'DELETE' }).then((r) => handleResponse<T>(r, schema)),
-
-  deleteWithBody: <T>(
+  post: async <T>(
     path: string,
     body: unknown,
     schema?: z.ZodType<T>,
-  ): Promise<T> =>
-    fetch(path, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+  ): Promise<T> => {
+    const headers = await authHeaders()
+    return fetch(path, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-    }).then((r) => handleResponse<T>(r, schema)),
+    }).then((r) => handleResponse<T>(r, schema))
+  },
+
+  put: async <T>(
+    path: string,
+    body: unknown,
+    schema?: z.ZodType<T>,
+  ): Promise<T> => {
+    const headers = await authHeaders()
+    return fetch(path, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then((r) => handleResponse<T>(r, schema))
+  },
+
+  patch: async <T>(
+    path: string,
+    body: unknown,
+    schema?: z.ZodType<T>,
+  ): Promise<T> => {
+    const headers = await authHeaders()
+    return fetch(path, {
+      method: 'PATCH',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then((r) => handleResponse<T>(r, schema))
+  },
+
+  delete: async <T>(path: string, schema?: z.ZodType<T>): Promise<T> => {
+    const headers = await authHeaders()
+    return fetch(path, { method: 'DELETE', headers }).then((r) =>
+      handleResponse<T>(r, schema),
+    )
+  },
+
+  deleteWithBody: async <T>(
+    path: string,
+    body: unknown,
+    schema?: z.ZodType<T>,
+  ): Promise<T> => {
+    const headers = await authHeaders()
+    return fetch(path, {
+      method: 'DELETE',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then((r) => handleResponse<T>(r, schema))
+  },
 }

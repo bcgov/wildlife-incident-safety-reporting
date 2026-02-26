@@ -1,32 +1,27 @@
 import type { FastifyInstance } from 'fastify'
 
 export default async function (fastify: FastifyInstance) {
-  // Public paths that don't require authentication
-  const publicPaths = ['/', '/health']
+  fastify.addHook('onRequest', async (request, reply) => {
+    const path = request.url.split('?')[0]
 
-  fastify.addHook('onRequest', async (request, _reply) => {
-    const urlWithoutQuery = request.url.split('?')[0]
-
-    // Allow public paths
-    const isPublicPath = publicPaths.some(
-      (path) =>
-        urlWithoutQuery === path || urlWithoutQuery.startsWith(`${path}/`),
-    )
-
-    if (isPublicPath) {
+    // Only protect API routes - everything else is public
+    if (path !== '/v1' && !path.startsWith('/v1/')) {
       return
     }
 
-    // Skip auth for static assets
-    const lastSeg = urlWithoutQuery.split('/').pop() ?? ''
-    if (lastSeg.includes('.')) {
-      return
+    try {
+      await request.jwtVerify()
+    } catch {
+      return reply.unauthorized('Authentication required')
     }
 
-    // TODO: Validate Keycloak JWT from Authorization: Bearer <token> header
-    // 1. Extract token from request.headers.authorization
-    // 2. Validate against Keycloak JWKS endpoint or introspection endpoint
-    // 3. Attach user info to request (request.user)
-    // 4. Return 401 if invalid/missing
+    // Ensure the token was issued via IDIR (standard or Azure-backed)
+    const payload = request.user as Record<string, unknown>
+    if (
+      payload.identity_provider !== 'idir' &&
+      payload.identity_provider !== 'azureidir'
+    ) {
+      return reply.unauthorized('IDIR authentication required')
+    }
   })
 }
