@@ -21,14 +21,14 @@ export const useAuthStore = create<AuthState>()(
 
       login: () => {
         keycloak.login({
-          redirectUri: `${window.location.origin}/`,
+          redirectUri: window.location.origin,
           idpHint: 'azureidir',
         })
       },
 
       logout: () => {
         keycloak.logout({
-          redirectUri: `${window.location.origin}/`,
+          redirectUri: window.location.origin,
         })
       },
 
