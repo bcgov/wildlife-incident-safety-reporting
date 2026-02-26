@@ -1170,82 +1170,6 @@ function MapRoute({
   return null;
 }
 
-// SVG donut segment path (filled wedge with inner radius cutout).
-function donutSegment(
-  start: number,
-  end: number,
-  r: number,
-  r0: number,
-  color: string,
-): string {
-  if (end - start === 1) end -= 0.00001;
-  const a0 = 2 * Math.PI * (start - 0.25);
-  const a1 = 2 * Math.PI * (end - 0.25);
-  const x0 = Math.cos(a0);
-  const y0 = Math.sin(a0);
-  const x1 = Math.cos(a1);
-  const y1 = Math.sin(a1);
-  const largeArc = end - start > 0.5 ? 1 : 0;
-
-  return [
-    "<path d=\"M",
-    r + r0 * x0, r + r0 * y0, "L",
-    r + r * x0, r + r * y0, "A",
-    r, r, 0, largeArc, 1,
-    r + r * x1, r + r * y1, "L",
-    r + r0 * x1, r + r0 * y1, "A",
-    r0, r0, 0, largeArc, 0,
-    r + r0 * x0, r + r0 * y0,
-    `" fill="${color}" />`,
-  ].join(" ");
-}
-
-// Creates a donut chart DOM element for a cluster marker.
-// Returns an HTMLElement so it can be cached and reused across frames.
-function createDonutChart(
-  segments: Array<{ value: number; color: string }>,
-  total: number,
-  size: number,
-): HTMLElement {
-  const r = size / 2;
-  const r0 = Math.round(r * 0.6);
-  const w = r * 2;
-
-  const countText = total >= 10000
-    ? `${(total / 1000).toFixed(0)}k`
-    : total >= 1000
-      ? `${(total / 1000).toFixed(1)}k`
-      : total.toLocaleString();
-
-  // Build offsets for each segment
-  const offsets: number[] = [];
-  let running = 0;
-  for (const seg of segments) {
-    offsets.push(running);
-    running += seg.value;
-  }
-
-  let html = `<svg width="${w}" height="${w}" viewBox="0 0 ${w} ${w}" text-anchor="middle" style="font: 12px sans-serif; display: block">`;
-
-  for (let i = 0; i < segments.length; i++) {
-    html += donutSegment(
-      offsets[i] / total,
-      (offsets[i] + segments[i].value) / total,
-      r,
-      r0,
-      segments[i].color,
-    );
-  }
-
-  html += `<circle cx="${r}" cy="${r}" r="${r0}" fill="rgba(0,0,0,0.5)" />`;
-  html += `<text dominant-baseline="central" transform="translate(${r}, ${r})" fill="#fff" font-weight="500">${countText}</text>`;
-  html += "</svg>";
-
-  const el = document.createElement("div");
-  el.innerHTML = html;
-  return el;
-}
-
 type MapClusterLayerProps<
   P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonProperties
 > = {
@@ -1280,10 +1204,6 @@ type MapClusterLayerProps<
   spiderfy?: boolean;
   /** Spider leg color override. Defaults to a theme-aware gray. */
   spiderLegColor?: string;
-  /** Category name to hex color map. When set, clusters render as donut charts showing category breakdown. */
-  categoryColors?: Record<string, string>;
-  /** GeoJSON property to aggregate by for donut charts. Defaults to iconProperty. */
-  categoryProperty?: string;
   /** Show a convex hull polygon on cluster hover showing the geographic extent of its points (default: false) */
   clusterHull?: boolean;
 };
@@ -1303,8 +1223,6 @@ function MapClusterLayer<
   onClusterClick,
   spiderfy: spiderfyEnabled = false,
   spiderLegColor,
-  categoryColors,
-  categoryProperty,
   clusterHull = false,
 }: MapClusterLayerProps<P>) {
   const { map, isLoaded } = useMap();
@@ -1325,21 +1243,6 @@ function MapClusterLayer<
   const onPointClickRef = useRef(onPointClick);
   onPointClickRef.current = onPointClick;
 
-  // Build per-category count expressions for donut chart clusters.
-  const donutMode = categoryColors != null;
-  const clusterPropertiesExpr = useMemo(() => {
-    if (!categoryColors) return undefined;
-    const result: Record<string, unknown> = {};
-    const prop = categoryProperty ?? iconProperty;
-    for (const key of Object.keys(categoryColors)) {
-      result[`cat_${key}`] = [
-        "+",
-        ["case", ["==", ["get", prop], key], 1, 0],
-      ];
-    }
-    return result;
-  }, [categoryColors, categoryProperty, iconProperty]);
-
   // Add source and layers on mount
   useEffect(() => {
     if (!isLoaded || !map) return;
@@ -1351,7 +1254,6 @@ function MapClusterLayer<
       cluster: true,
       clusterMaxZoom,
       clusterRadius,
-      ...(clusterPropertiesExpr && { clusterProperties: clusterPropertiesExpr }),
     });
 
     // Hull source + layers (rendered below clusters)
@@ -1366,10 +1268,7 @@ function MapClusterLayer<
         type: "fill",
         source: hullSourceId,
         paint: {
-          "fill-color":
-            getDocumentTheme() === "dark"
-              ? "rgba(148,163,184,0.15)"
-              : "rgba(100,116,139,0.12)",
+          "fill-color": "rgba(122,184,249,0.15)",
         },
       });
       map.addLayer({
@@ -1377,16 +1276,13 @@ function MapClusterLayer<
         type: "line",
         source: hullSourceId,
         paint: {
-          "line-color":
-            getDocumentTheme() === "dark"
-              ? "rgba(148,163,184,0.5)"
-              : "rgba(100,116,139,0.4)",
+          "line-color": "rgba(122,184,249,0.5)",
           "line-width": 1.5,
         },
       });
     }
 
-    // Add cluster circles layer (invisible in donut mode, kept as click hit target)
+    // Add cluster circles layer
     map.addLayer({
       id: clusterLayerId,
       type: "circle",
@@ -1413,8 +1309,7 @@ function MapClusterLayer<
         ],
         "circle-stroke-width": 1,
         "circle-stroke-color": "#fff",
-        "circle-opacity": donutMode ? 0 : 0.85,
-        ...(donutMode && { "circle-stroke-opacity": 0 }),
+        "circle-opacity": 0.85,
       },
     });
 
@@ -1431,9 +1326,26 @@ function MapClusterLayer<
       },
     });
 
+    // Transparent 1x1 pixel image used as an invisible icon on the cluster
+    // count symbol layer. This expands the symbol's hitbox to match the full
+    // cluster circle diameter so spiderfy and click handlers trigger on the
+    // entire circle area, not just the tiny text bounding box.
+    const hitboxId = "cluster-hitbox";
+    if (!map.hasImage(hitboxId)) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, 1, 1);
+        map.addImage(hitboxId, ctx.getImageData(0, 0, 1, 1), {
+          pixelRatio: 1,
+        });
+      }
+    }
+
     // Add cluster count text layer last so it's the topmost layer.
     // Spiderfy places legs below this layer, keeping them above circles and icons.
-    // Invisible in donut mode (donuts render their own count).
     map.addLayer({
       id: clusterCountLayerId,
       type: "symbol",
@@ -1442,11 +1354,22 @@ function MapClusterLayer<
       layout: {
         "text-field": "{point_count_abbreviated}",
         "text-font": ["Open Sans"],
-        "text-size": donutMode ? 40 : 12,
+        "text-size": 12,
+        "icon-image": hitboxId,
+        "icon-size": [
+          "step",
+          ["get", "point_count"],
+          40,
+          clusterThresholds[0],
+          60,
+          clusterThresholds[1],
+          80,
+        ],
+        "icon-allow-overlap": true,
+        "text-allow-overlap": true,
       },
       paint: {
         "text-color": "#fff",
-        ...(donutMode && { "text-opacity": 0 }),
       },
     });
 
@@ -1794,125 +1717,6 @@ function MapClusterLayer<
       instance.unspiderfyAll();
     };
   }, [spiderfyEnabled, isLoaded, map, clusterCountLayerId, clusterMaxZoom, spiderLegColor, iconProperty, iconSize]);
-
-  // Donut chart marker overlay. Uses querySourceFeatures + two-level marker
-  // cache so per-frame work is just object lookups and add/remove calls.
-  useEffect(() => {
-    if (!donutMode || !isLoaded || !map || !categoryColors) return;
-
-    // markerCache: all markers ever created (keyed by cluster_id).
-    // markersOnScreen: only the ones currently added to the map.
-    const markerCache: Record<number, MapLibreGL.Marker> = {};
-    let markersOnScreen: Record<number, MapLibreGL.Marker> = {};
-    const categoryKeys = Object.keys(categoryColors);
-    let disposed = false;
-
-    const handleDonutClick = async (clusterId: number, pointCount: number, marker: MapLibreGL.Marker) => {
-      // At spiderfy zoom, pointer-events: none lets clicks through to the canvas.
-      const lngLat = marker.getLngLat();
-      const coordinates: [number, number] = [lngLat.lng, lngLat.lat];
-
-      if (onClusterClick) {
-        onClusterClick(clusterId, coordinates, pointCount);
-        return;
-      }
-
-      const source = map.getSource(sourceId) as MapLibreGL.GeoJSONSource;
-      const zoom = await source.getClusterExpansionZoom(clusterId);
-      if (disposed) return;
-      map.easeTo({ center: coordinates, zoom });
-    };
-
-    const updateMarkers = () => {
-      const newMarkers: Record<number, MapLibreGL.Marker> = {};
-      const features = map.querySourceFeatures(sourceId);
-
-      // Near spiderfy zoom, disable pointer-events so clicks reach the canvas.
-      const atSpiderfyZoom = spiderfyEnabled && map.getZoom() >= clusterMaxZoom - 1;
-      const pointerEvents = atSpiderfyZoom ? "none" : "auto";
-      const cursor = atSpiderfyZoom ? "" : "pointer";
-
-      for (const feature of features) {
-        const props = feature.properties;
-        if (!props?.cluster) continue;
-
-        const clusterId = props.cluster_id as number;
-
-        let marker = markerCache[clusterId];
-        if (!marker) {
-          const total = props.point_count as number;
-
-          // Build segments from cat_* properties
-          const segments: Array<{ value: number; color: string }> = [];
-          for (const key of categoryKeys) {
-            const count = (props[`cat_${key}`] as number) ?? 0;
-            if (count > 0) {
-              segments.push({ value: count, color: categoryColors[key] });
-            }
-          }
-
-          // Compute donut size based on cluster thresholds
-          const size = total < clusterThresholds[0] ? 40
-            : total < clusterThresholds[1] ? 60
-            : 80;
-
-          const el = createDonutChart(segments, total, size);
-
-          marker = new MapLibreGL.Marker({ element: el, anchor: "center" })
-            .setLngLat(
-              (feature.geometry as GeoJSON.Point).coordinates as [number, number],
-            );
-
-          el.addEventListener("click", () => handleDonutClick(clusterId, total, marker));
-
-          markerCache[clusterId] = marker;
-        }
-
-        // Update pointer-events per zoom level
-        const el = marker.getElement();
-        el.style.pointerEvents = pointerEvents;
-        el.style.cursor = cursor;
-
-        newMarkers[clusterId] = marker;
-
-        if (!markersOnScreen[clusterId]) {
-          marker.addTo(map);
-        }
-      }
-
-      // Remove markers no longer on screen
-      for (const id in markersOnScreen) {
-        if (!newMarkers[id]) {
-          markersOnScreen[id].remove();
-        }
-      }
-      markersOnScreen = newMarkers;
-    };
-
-    // Update after each render frame, throttled to one rAF at a time.
-    let frameId: number | null = null;
-
-    const handleRender = () => {
-      if (!map.isSourceLoaded(sourceId)) return;
-      if (frameId != null) return;
-      frameId = requestAnimationFrame(() => {
-        frameId = null;
-        if (!disposed) updateMarkers();
-      });
-    };
-
-    map.on("render", handleRender);
-
-    return () => {
-      disposed = true;
-      map.off("render", handleRender);
-      if (frameId != null) cancelAnimationFrame(frameId);
-      for (const id in markersOnScreen) {
-        markersOnScreen[id].remove();
-      }
-      markersOnScreen = {};
-    };
-  }, [donutMode, isLoaded, map, categoryColors, clusterLayerId, clusterThresholds, sourceId, spiderfyEnabled, clusterMaxZoom, data, onClusterClick]);
 
   return null;
 }

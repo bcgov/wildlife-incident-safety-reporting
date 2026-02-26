@@ -1,5 +1,5 @@
 import type { Incident } from '@schemas/incidents/incidents.schema'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   MapClusterLayer,
   MapControls,
@@ -68,10 +68,14 @@ export function MapPage() {
   const { data: response } = useIncidents()
   const [selected, setSelected] = useState<SelectedIncident | null>(null)
 
-  const geojson = useMemo(
-    () => toGeoJSON(response?.data ?? []),
-    [response?.data],
-  )
+  const incidents = response?.data
+  const prevIncidentsRef = useRef(incidents)
+  if (prevIncidentsRef.current !== incidents) {
+    prevIncidentsRef.current = incidents
+    setSelected(null)
+  }
+
+  const geojson = useMemo(() => toGeoJSON(incidents ?? []), [incidents])
 
   return (
     <MapView className="flex-1" center={[-124.5, 54.5]} zoom={5}>
