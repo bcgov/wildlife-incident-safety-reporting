@@ -4,9 +4,19 @@ import {
   IncidentsQuerySchema,
   IncidentsResponseSchema,
 } from '@schemas/incidents/incidents.schema.js'
+import type { Encoding } from '@services/response-cache.js'
 import { logRouteError } from '@utils/route-errors.js'
-import { sendGzipped } from '@utils/send-gzipped.js'
+import { sendCompressed } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
+
+function negotiateEncoding(
+  header: string | string[] | undefined,
+): Encoding | undefined {
+  if (typeof header !== 'string') return undefined
+  if (header.includes('br')) return 'br'
+  if (header.includes('gzip')) return 'gzip'
+  return undefined
+}
 
 const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
   fastify.get(
@@ -27,9 +37,13 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
     },
     async (request, reply) => {
       try {
-        const cached = fastify.responseCache.get(request.url)
-        if (cached) {
-          return sendGzipped(reply, cached)
+        const encoding = negotiateEncoding(request.headers['accept-encoding'])
+
+        if (encoding) {
+          const cached = fastify.responseCache.get(request.url, encoding)
+          if (cached) {
+            return sendCompressed(reply, cached, encoding)
+          }
         }
 
         const result = await fastify.db.findIncidents(request.query)
@@ -39,12 +53,16 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           limit: request.query.limit,
           offset: request.query.offset,
         }
-        const compressed = fastify.responseCache.set(
-          request.url,
-          JSON.stringify(body),
-        )
 
-        return sendGzipped(reply, compressed)
+        if (encoding) {
+          const buffers = await fastify.responseCache.set(
+            request.url,
+            JSON.stringify(body),
+          )
+          return sendCompressed(reply, buffers[encoding], encoding)
+        }
+
+        return body
       } catch (error) {
         logRouteError(fastify.log, request, error, {
           message: 'Failed to query incidents',

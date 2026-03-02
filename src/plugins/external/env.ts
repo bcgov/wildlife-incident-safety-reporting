@@ -13,11 +13,11 @@ const schema = {
     },
     PORT: {
       type: 'number',
-      default: 3003,
+      default: 3033,
     },
     LISTEN_PORT: {
       type: 'number',
-      default: 3003,
+      default: 3033,
     },
     DB_HOST: {
       type: 'string',

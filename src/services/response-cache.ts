@@ -1,7 +1,18 @@
-import { gzipSync } from 'node:zlib'
+import { promisify } from 'node:util'
+import { brotliCompress, constants, gzip } from 'node:zlib'
+
+const brotliCompressAsync = promisify(brotliCompress)
+const gzipAsync = promisify(gzip)
+
+export type Encoding = 'br' | 'gzip'
+
+export interface CompressedBuffers {
+  br: Buffer
+  gzip: Buffer
+}
 
 interface CacheEntry {
-  buffer: Buffer
+  buffers: CompressedBuffers
   expiresAt: number
 }
 
@@ -32,7 +43,7 @@ export class ResponseCacheService {
     }
   }
 
-  get(key: string): Buffer | undefined {
+  get(key: string, encoding: Encoding): Buffer | undefined {
     const entry = this.cache.get(key)
     if (!entry) return undefined
 
@@ -41,10 +52,10 @@ export class ResponseCacheService {
       return undefined
     }
 
-    return entry.buffer
+    return entry.buffers[encoding]
   }
 
-  set(key: string, json: string): Buffer {
+  async set(key: string, json: string): Promise<CompressedBuffers> {
     if (!this.cache.has(key) && this.cache.size >= this.maxEntries) {
       this.pruneExpired()
     }
@@ -53,9 +64,15 @@ export class ResponseCacheService {
       if (oldestKey !== undefined) this.cache.delete(oldestKey)
     }
 
-    const buffer = gzipSync(json)
-    this.cache.set(key, { buffer, expiresAt: Date.now() + this.ttlMs })
-    return buffer
+    const [br, gz] = await Promise.all([
+      brotliCompressAsync(json, {
+        params: { [constants.BROTLI_PARAM_QUALITY]: 6 },
+      }),
+      gzipAsync(json),
+    ])
+    const buffers: CompressedBuffers = { br, gzip: gz }
+    this.cache.set(key, { buffers, expiresAt: Date.now() + this.ttlMs })
+    return buffers
   }
 
   delete(key: string): boolean {
