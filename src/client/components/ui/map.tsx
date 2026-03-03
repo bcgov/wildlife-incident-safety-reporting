@@ -1591,13 +1591,19 @@ function MapClusterLayer<
       hullClearTimer = setTimeout(clearHull, 100);
     };
 
+    // Skip cursor changes when another tool (e.g. terra-draw) controls the cursor
+    const isExternalCursor = () => {
+      const c = map.getCanvas().style.cursor;
+      return c === "crosshair" || c === "grab" || c === "grabbing";
+    };
+
     // Cursor style handlers
     const handleMouseEnterCluster = (
       e: MapLibreGL.MapMouseEvent & {
         features?: MapLibreGL.MapGeoJSONFeature[];
       },
     ) => {
-      map.getCanvas().style.cursor = "pointer";
+      if (!isExternalCursor()) map.getCanvas().style.cursor = "pointer";
 
       if (!clusterHull) return;
       if (spiderfyEnabled && map.getZoom() >= clusterMaxZoom - 1) return;
@@ -1637,19 +1643,19 @@ function MapClusterLayer<
     const handleMouseLeaveCluster = (
       e: MapLibreGL.MapMouseEvent,
     ) => {
-      if (!hasSpiderLeafAt(e.point))
+      if (!isExternalCursor() && !hasSpiderLeafAt(e.point))
         map.getCanvas().style.cursor = "";
       debouncedClearHull();
     };
     const handleMouseEnterPoint = () => {
-      if (onPointClick) {
+      if (onPointClick && !isExternalCursor()) {
         map.getCanvas().style.cursor = "pointer";
       }
     };
     const handleMouseLeavePoint = (
       e: MapLibreGL.MapMouseEvent,
     ) => {
-      if (!hasSpiderLeafAt(e.point))
+      if (!isExternalCursor() && !hasSpiderLeafAt(e.point))
         map.getCanvas().style.cursor = "";
     };
 
@@ -1713,7 +1719,9 @@ function MapClusterLayer<
       zoomIncrement: 0,
       closeOnLeafClick: false,
       onLeafHover: (leaf: GeoJSON.Feature | null) => {
-        map.getCanvas().style.cursor = leaf ? "pointer" : "";
+        const c = map.getCanvas().style.cursor;
+        const external = c === "crosshair" || c === "grab" || c === "grabbing";
+        if (!external) map.getCanvas().style.cursor = leaf ? "pointer" : "";
       },
       spiderLegsColor: legColor,
       spiderLegsWidth: 1,
