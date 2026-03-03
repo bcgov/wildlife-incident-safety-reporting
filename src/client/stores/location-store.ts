@@ -1,10 +1,18 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
+type ServiceArea = {
+  name: string
+  contractAreaNumber: number
+  district: string
+  region: string
+}
+
 type Location = {
   longitude: number
   latitude: number
   address: string
+  serviceArea?: ServiceArea | null
 }
 
 type LocationState = {

@@ -1,3 +1,4 @@
+import type { LookupResponse } from '@schemas/service-areas/lookup.schema'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import {
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/popover'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useGeocoderSearch } from '@/hooks/use-geocoder-search'
+import { apiClient } from '@/lib/apiClient'
 import { cn } from '@/lib/utils'
 import { useLocationStore } from '@/stores/location-store'
 import type { GeocoderFeature } from '@/types/geocoder'
@@ -46,6 +48,24 @@ export function SearchAddress() {
       useLocationStore.getState().clearLocation()
     } else {
       setLocation({ longitude, latitude, address })
+      // Fire-and-forget: enrich with service area data after map flies
+      apiClient
+        .get<LookupResponse>(
+          `/v1/service-areas/lookup?lng=${longitude}&lat=${latitude}`,
+        )
+        .then((data) => {
+          // Re-read current state to avoid overwriting a cleared location
+          const current = useLocationStore.getState().location
+          if (
+            current?.longitude === longitude &&
+            current.latitude === latitude
+          ) {
+            setLocation({ ...current, serviceArea: data })
+          }
+        })
+        .catch(() => {
+          // Graceful - leave serviceArea undefined on failure
+        })
     }
     setOpen(false)
   }
