@@ -360,20 +360,24 @@ export function useTerraDraw() {
     }
   }, [map, isLoaded, setGeometry])
 
+  const activeModeRef = useRef(activeMode)
+  activeModeRef.current = activeMode
+
   const startDrawing = useCallback(
     (mode: DrawMode) => {
       const draw = drawRef.current
       if (!draw) return
 
-      // Toggle select mode off when clicking edit again
+      // Toggle off if clicking the already-active mode
+      if (mode === activeModeRef.current) {
+        draw.setMode('idle')
+        setActiveMode(null)
+        return
+      }
+
       if (mode === 'select') {
-        if (draw.getMode() === 'select') {
-          draw.setMode('idle')
-          setActiveMode(null)
-        } else {
-          draw.setMode('select')
-          setActiveMode('select')
-        }
+        draw.setMode('select')
+        setActiveMode('select')
         return
       }
 

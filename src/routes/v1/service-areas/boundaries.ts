@@ -8,7 +8,7 @@ const CACHE_KEY = '/v1/service-areas/boundaries'
 
 const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
   fastify.get(
-    '/',
+    '/boundaries',
     {
       schema: {
         summary: 'Get service area boundary polygons',

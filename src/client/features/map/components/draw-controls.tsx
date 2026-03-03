@@ -11,6 +11,7 @@ import { useTerraDraw } from '../hooks/use-terra-draw'
 
 type DrawControlsProps = {
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  className?: string
 }
 
 const positionClasses = {
@@ -20,7 +21,10 @@ const positionClasses = {
   'bottom-right': 'bottom-10 right-2',
 }
 
-export function DrawControls({ position = 'top-right' }: DrawControlsProps) {
+export function DrawControls({
+  position = 'top-right',
+  className,
+}: DrawControlsProps) {
   const {
     activeMode,
     measurementPopup,
@@ -37,7 +41,7 @@ export function DrawControls({ position = 'top-right' }: DrawControlsProps) {
   return (
     <>
       <div
-        className={`absolute z-10 flex flex-col gap-1.5 ${positionClasses[position]}`}
+        className={`absolute z-10 flex flex-col gap-1.5 ${positionClasses[position]} ${className ?? ''}`}
       >
         <ControlGroup>
           <ControlButton

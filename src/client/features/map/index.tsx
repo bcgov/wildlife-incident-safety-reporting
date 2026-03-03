@@ -6,8 +6,10 @@ import {
   MapPopup,
   Map as MapView,
 } from '@/components/ui/map'
+import { BoundaryLayer } from './components/boundary-layer'
 import { DrawControls } from './components/draw-controls'
 import { IncidentPopup } from './components/incident-popup'
+import { LayerControls } from './components/layer-controls'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useIncidents } from './hooks/use-incidents'
 import { speciesIcons } from './lib/species-icons'
@@ -93,7 +95,9 @@ export function Component() {
         showFullscreen
       />
       <ZoomToLocation />
-      <DrawControls position="top-right" />
+      <LayerControls position="top-right" />
+      <DrawControls position="top-right" className="!top-12" />
+      <BoundaryLayer />
       <MapClusterLayer<IncidentProperties>
         data={geojson}
         icons={speciesIcons}
