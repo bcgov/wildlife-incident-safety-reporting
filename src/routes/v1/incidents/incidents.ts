@@ -4,19 +4,9 @@ import {
   IncidentsQuerySchema,
   IncidentsResponseSchema,
 } from '@schemas/incidents/incidents.schema.js'
-import type { Encoding } from '@services/response-cache.js'
 import { logRouteError } from '@utils/route-errors.js'
-import { sendCompressed } from '@utils/send-compressed.js'
+import { negotiateEncoding, sendCompressed } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
-
-function negotiateEncoding(
-  header: string | string[] | undefined,
-): Encoding | undefined {
-  if (typeof header !== 'string') return undefined
-  if (header.includes('br')) return 'br'
-  if (header.includes('gzip')) return 'gzip'
-  return undefined
-}
 
 const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
   fastify.get(

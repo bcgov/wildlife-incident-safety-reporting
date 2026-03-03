@@ -1,8 +1,7 @@
-import { createLoggerConfig, validLogLevels } from '@utils/logger.js'
+import { createLoggerConfig, isValidLogLevel } from '@utils/logger.js'
 import closeWithGrace from 'close-with-grace'
 import Fastify from 'fastify'
 import fp from 'fastify-plugin'
-import type { LevelWithSilent } from 'pino'
 import serviceApp from './app.js'
 
 async function init() {
@@ -27,11 +26,8 @@ async function init() {
   await app.ready()
 
   const configLogLevel = app.config.logLevel
-  if (
-    configLogLevel &&
-    validLogLevels.includes(configLogLevel as LevelWithSilent)
-  ) {
-    app.log.level = configLogLevel as LevelWithSilent
+  if (isValidLogLevel(configLogLevel)) {
+    app.log.level = configLogLevel
   }
 
   closeWithGrace(

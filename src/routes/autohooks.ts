@@ -16,11 +16,8 @@ export default async function (fastify: FastifyInstance) {
     }
 
     // Ensure the token was issued via IDIR (standard or Azure-backed)
-    const payload = request.user as Record<string, unknown>
-    if (
-      payload.identity_provider !== 'idir' &&
-      payload.identity_provider !== 'azureidir'
-    ) {
+    const { identity_provider } = request.user
+    if (identity_provider !== 'idir' && identity_provider !== 'azureidir') {
       return reply.unauthorized('IDIR authentication required')
     }
   })

@@ -23,6 +23,7 @@ export default fp(
         database: config.dbName,
         max: config.dbPoolSize,
       }),
+      fastify.log,
     )
 
     fastify.decorate('db', dbService)

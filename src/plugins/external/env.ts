@@ -94,14 +94,17 @@ interface RawEnv {
 
 declare module 'fastify' {
   interface FastifyInstance {
+    envRaw: RawEnv
     config: Config
   }
 }
 
 export default fp(
   async (fastify: FastifyInstance) => {
+    // @fastify/env validates + coerces process.env against the JSON Schema
+    // and decorates fastify.envRaw with the SCREAMING_SNAKE_CASE result.
     await fastify.register(env, {
-      confKey: 'config',
+      confKey: 'envRaw',
       schema,
       dotenv: {
         path: './.env',
@@ -111,8 +114,8 @@ export default fp(
       data: process.env,
     })
 
-    // Remap SCREAMING_SNAKE_CASE env vars to camelCase Config
-    const raw = fastify.config as unknown as RawEnv
+    // Remap validated env vars to camelCase Config
+    const raw = fastify.envRaw
     const config: Config = {
       baseUrl: raw.BASE_URL,
       port: raw.PORT,
@@ -168,8 +171,8 @@ export default fp(
       }
     }
 
-    // Replace the raw env object with our camelCase config
-    fastify.config = config
+    // Decorate with the camelCase config
+    fastify.decorate('config', config)
   },
   {
     name: 'config',

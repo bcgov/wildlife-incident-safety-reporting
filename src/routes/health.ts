@@ -24,9 +24,9 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
 
       try {
         await fastify.db.healthCheck()
-      } catch (error) {
+      } catch (err) {
         fastify.log.error(
-          { error },
+          { err },
           'Health check failed: database connectivity error',
         )
         dbStatus = 'failed'

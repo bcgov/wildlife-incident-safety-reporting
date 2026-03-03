@@ -4,6 +4,22 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 import buildGetJwks from 'get-jwks'
 
+export interface JwtUser {
+  identity_provider: string
+  idir_user_guid?: string
+  preferred_username?: string
+  display_name?: string
+  email?: string
+  client_roles?: string[]
+  sub: string
+}
+
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
+    user: JwtUser
+  }
+}
+
 type TokenOrHeader = JwtHeader | { header: JwtHeader; payload: unknown }
 
 export default fp(

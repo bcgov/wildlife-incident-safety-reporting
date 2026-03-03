@@ -4,11 +4,11 @@ import {
   TimeOfKillEnum,
 } from '@schemas/common/enums.schema.js'
 import { ErrorSchema } from '@schemas/common/error.schema.js'
+import { PolygonGeometrySchema } from '@schemas/common/geojson.schema.js'
 import {
   PaginationQuerySchema,
   paginatedResponse,
 } from '@schemas/common/pagination.schema.js'
-import type { Geometry } from 'geojson'
 import { z } from 'zod'
 
 // Comma-separated string to array of numbers
@@ -31,35 +31,18 @@ const commaStrings = z.string().transform((s) =>
     .filter((v) => v.length > 0),
 )
 
-const geometryTypes = [
-  'Point',
-  'MultiPoint',
-  'LineString',
-  'MultiLineString',
-  'Polygon',
-  'MultiPolygon',
-  'GeometryCollection',
-] as const
-
-// Parse GeoJSON string into a typed Geometry object
+// Parse a GeoJSON geometry string from drawing tools (Polygon or MultiPolygon)
 const geoJsonString = z
   .string()
   .transform((s, ctx) => {
     try {
-      return JSON.parse(s) as Record<string, unknown>
+      return JSON.parse(s)
     } catch {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid JSON' })
       return z.NEVER
     }
   })
-  .pipe(
-    z.object({
-      type: z.enum(geometryTypes),
-      coordinates: z.array(z.unknown()).optional(),
-      geometries: z.array(z.unknown()).optional(),
-    }),
-  )
-  .transform((v) => v as unknown as Geometry)
+  .pipe(PolygonGeometrySchema)
 
 export const IncidentsQuerySchema = z
   .object({

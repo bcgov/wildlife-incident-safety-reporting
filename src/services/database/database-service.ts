@@ -3,6 +3,9 @@ import type {
   Incident,
   IncidentsQuery,
 } from '@schemas/incidents/incidents.schema.js'
+import type { BoundariesResponse } from '@schemas/service-areas/boundaries.schema.js'
+import { createServiceLogger } from '@utils/logger.js'
+import type { FastifyBaseLogger } from 'fastify'
 import type { Expression, ExpressionBuilder, Kysely, SqlBool } from 'kysely'
 import { sql } from 'kysely'
 import { geomFromGeoJSON, within } from 'kysely-postgis'
@@ -59,19 +62,30 @@ function applyFilters(eb: IncidentEB, filters: IncidentsQuery) {
 }
 
 export class DatabaseService {
-  constructor(private readonly kysely: Kysely<DB>) {}
+  private readonly log: FastifyBaseLogger
+
+  constructor(
+    private readonly kysely: Kysely<DB>,
+    baseLog: FastifyBaseLogger,
+  ) {
+    this.log = createServiceLogger(baseLog, 'DATABASE')
+  }
 
   async healthCheck(): Promise<void> {
     await sql`SELECT 1`.execute(this.kysely)
+    this.log.debug('health check passed')
   }
 
   async destroy() {
+    this.log.debug('closing connection pool')
     await this.kysely.destroy()
   }
 
   async findIncidents(
     filters: IncidentsQuery,
   ): Promise<{ data: Incident[]; total: number }> {
+    this.log.debug({ filters }, 'querying incidents')
+
     const baseQuery = this.kysely
       .selectFrom('wars_incidents as wi')
       .innerJoin('species as sp', 'sp.id', 'wi.species_id')
@@ -115,13 +129,20 @@ export class DatabaseService {
         countQuery,
       ])
 
+      const total = Number(countResult.total)
+      this.log.debug(
+        { total, returned: rows.length },
+        'incidents query complete (paginated)',
+      )
+
       return {
         data: rows.map(toIncident),
-        total: Number(countResult.total),
+        total,
       }
     }
 
     const rows = await dataQuery.execute()
+    this.log.debug({ total: rows.length }, 'incidents query complete')
 
     return {
       data: rows.map(toIncident),
@@ -129,7 +150,43 @@ export class DatabaseService {
     }
   }
 
+  async findServiceAreaBoundaries(): Promise<BoundariesResponse> {
+    this.log.debug('querying service area boundaries')
+
+    const rows = await this.kysely
+      .selectFrom('service_areas')
+      .select([
+        'id',
+        'name',
+        'contract_area_number',
+        sql<string>`ST_AsGeoJSON(geom_simplified)`.as('geometry'),
+      ])
+      .where('geom_simplified', 'is not', null)
+      .orderBy('name')
+      .execute()
+
+    this.log.debug(
+      { count: rows.length },
+      'service area boundaries query complete',
+    )
+
+    return {
+      type: 'FeatureCollection',
+      features: rows.map((row) => ({
+        type: 'Feature' as const,
+        geometry: JSON.parse(row.geometry),
+        properties: {
+          id: row.id,
+          name: row.name,
+          contractAreaNumber: row.contract_area_number,
+        },
+      })),
+    }
+  }
+
   async findIncidentFilters(): Promise<IncidentFiltersResponse> {
+    this.log.debug('querying incident filters')
+
     const [
       years,
       species,
@@ -181,6 +238,11 @@ export class DatabaseService {
         ])
         .executeTakeFirstOrThrow(),
     ])
+
+    this.log.debug(
+      { species: species.length, serviceAreas: serviceAreas.length },
+      'incident filters query complete',
+    )
 
     return {
       years: years.map((r) => r.year),

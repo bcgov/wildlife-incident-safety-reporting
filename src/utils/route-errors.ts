@@ -1,8 +1,8 @@
 import type { FastifyBaseLogger, FastifyRequest } from 'fastify'
 
 interface RouteErrorContext {
-  /** The error that occurred */
-  error: unknown
+  /** The error that occurred (uses pino's built-in err serializer) */
+  err: unknown
   /** HTTP method and path (e.g., 'GET /v1/items') */
   route?: string
   /** User ID if authenticated */
@@ -34,15 +34,12 @@ export function logRouteError(
   const route = `${request.method} ${request.routeOptions?.url || request.url}`
 
   const baseContext: RouteErrorContext = {
-    error,
+    err: error,
     route,
   }
 
-  if ('user' in request && request.user && typeof request.user === 'object') {
-    const user = request.user as { id?: string | number }
-    if (user.id) {
-      baseContext.userId = user.id
-    }
+  if ('user' in request && request.user) {
+    baseContext.userId = request.user.sub
   }
 
   if (options.context) {
