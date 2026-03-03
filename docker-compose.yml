@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgis/postgis:17-3.5
+    image: postgis/postgis:18-3.6
     container_name: wars-db
     restart: unless-stopped
     ports:
@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: wars
     volumes:
-      - wars-pgdata:/var/lib/postgresql/data
+      - wars-pgdata:/var/lib/postgresql
       - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]

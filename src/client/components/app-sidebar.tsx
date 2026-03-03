@@ -163,10 +163,10 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             ) : (
               <MultiSelect
                 options={[...(filters?.serviceAreas ?? [])]
-                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .sort((a, b) => a.contractAreaNumber - b.contractAreaNumber)
                   .map((sa) => ({
                     value: String(sa.id),
-                    label: sa.name,
+                    label: `${sa.contractAreaNumber} - ${sa.name}`,
                   }))}
                 defaultValue={store.serviceAreas.map(String)}
                 onValueChange={(values) =>

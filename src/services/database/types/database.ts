@@ -44,6 +44,7 @@ export interface ServiceAreas {
   contract_area_number: number
   created_at: Generated<Timestamp>
   geom: string
+  geom_simplified: string | null
   id: Generated<number>
   name: string
   updated_at: Generated<Timestamp>

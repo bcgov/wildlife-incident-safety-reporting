@@ -1,8 +1,9 @@
-import { existsSync, readFileSync } from 'node:fs'
-import * as path from 'node:path'
 import { sql } from 'kysely'
 
 import { createDatabase } from '../src/services/database/create-database.js'
+
+const WFS_URL =
+  'https://maps.th.gov.bc.ca/geoV05/hwy/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=hwy%3ADSA_CONTRACT_AREA&outputFormat=application%2Fjson'
 
 interface GeoJsonFeature {
   type: 'Feature'
@@ -24,21 +25,24 @@ interface GeoJsonCollection {
 const db = createDatabase()
 
 async function seedServiceAreas() {
-  const root = path.resolve(import.meta.dir, '..')
-  const seedPath = path.join(root, 'data', 'seed', 'service-areas.geojson')
-  const samplePath = path.join(root, 'data', 'sample', 'service-areas.geojson')
-  const geojsonPath = existsSync(seedPath) ? seedPath : samplePath
+  console.log('Fetching service areas from BC Gov WFS...')
+  const response = await fetch(WFS_URL)
+  if (!response.ok) {
+    throw new Error(
+      `WFS request failed: ${response.status} ${response.statusText}`,
+    )
+  }
 
-  console.log(
-    `Using ${geojsonPath === seedPath ? 'seed' : 'sample'} data for service-areas.geojson`,
-  )
-
-  const raw = readFileSync(geojsonPath, 'utf-8')
-  const geojson: GeoJsonCollection = JSON.parse(raw)
-
-  console.log(`Parsed ${geojson.features.length} service area features`)
+  const geojson: GeoJsonCollection = await response.json()
+  console.log(`Fetched ${geojson.features.length} service area features`)
 
   await sql`TRUNCATE service_areas CASCADE`.execute(db)
+  await sql`ALTER TABLE service_areas DISABLE TRIGGER trg_simplify_service_areas`.execute(
+    db,
+  )
+  await sql`ALTER TABLE service_areas DISABLE TRIGGER trg_reassign_incidents_on_boundary_change`.execute(
+    db,
+  )
 
   for (const feature of geojson.features) {
     const { CONTRACT_AREA_NUMBER, CONTRACT_AREA_NAME } = feature.properties
@@ -49,7 +53,7 @@ async function seedServiceAreas() {
       VALUES (
         ${CONTRACT_AREA_NUMBER},
         ${CONTRACT_AREA_NAME},
-        ST_Multi(ST_GeomFromGeoJSON(${geomJson}))
+        ST_Transform(ST_SetSRID(ST_Multi(ST_GeomFromGeoJSON(${geomJson})), 3005), 4326)
       )
     `.execute(db)
   }
@@ -60,6 +64,32 @@ async function seedServiceAreas() {
     .executeTakeFirstOrThrow()
 
   console.log(`Inserted ${count} service areas`)
+
+  // The statement-level trigger fires per INSERT, but each fires before all rows
+  // exist, so the coverage simplification won't be correct. Recompute once with
+  // all rows present.
+  console.log('Computing simplified geometries...')
+  await sql`
+    UPDATE service_areas sa
+    SET geom_simplified = sub.geom_simplified
+    FROM (
+      SELECT id, ST_Transform(
+        ST_SetSRID(ST_CoverageSimplify(ST_Transform(geom, 3005), 500) OVER (), 3005),
+        4326
+      ) AS geom_simplified
+      FROM service_areas
+    ) sub
+    WHERE sa.id = sub.id
+  `.execute(db)
+  console.log('Simplified geometries computed')
+
+  await sql`ALTER TABLE service_areas ENABLE TRIGGER trg_simplify_service_areas`.execute(
+    db,
+  )
+  await sql`ALTER TABLE service_areas ENABLE TRIGGER trg_reassign_incidents_on_boundary_change`.execute(
+    db,
+  )
+
   await db.destroy()
 }
 

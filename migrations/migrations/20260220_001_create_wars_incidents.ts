@@ -67,6 +67,7 @@ export async function up(db: Kysely<never>): Promise<void> {
     .addColumn('geom', sql`geometry(MultiPolygon, 4326)`, (col) =>
       col.notNull(),
     )
+    .addColumn('geom_simplified', sql`geometry(MultiPolygon, 4326)`)
     .addColumn('created_at', sql`timestamptz`, (col) =>
       col.notNull().defaultTo(sql`now()`),
     )
@@ -87,6 +88,65 @@ export async function up(db: Kysely<never>): Promise<void> {
     BEFORE UPDATE ON service_areas
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at()
+  `.execute(db)
+
+  // Recompute simplified geometries for all service areas as a coverage.
+  // Uses ST_CoverageSimplify in BC Albers (EPSG:3005, meters) with 500m tolerance,
+  // which preserves shared boundaries between adjacent service areas.
+  await sql`
+    CREATE OR REPLACE FUNCTION recompute_simplified_geom()
+    RETURNS trigger AS $$
+    BEGIN
+      UPDATE service_areas sa
+      SET geom_simplified = sub.geom_simplified
+      FROM (
+        SELECT id, ST_Transform(
+          ST_SetSRID(ST_CoverageSimplify(ST_Transform(geom, 3005), 500) OVER (), 3005),
+          4326
+        ) AS geom_simplified
+        FROM service_areas
+      ) sub
+      WHERE sa.id = sub.id;
+      RETURN NULL;
+    END;
+    $$ LANGUAGE plpgsql
+  `.execute(db)
+
+  await sql`
+    CREATE TRIGGER trg_simplify_service_areas
+    AFTER INSERT OR UPDATE OF geom OR DELETE ON service_areas
+    FOR EACH STATEMENT
+    EXECUTE FUNCTION recompute_simplified_geom()
+  `.execute(db)
+
+  // Reassign all incidents to the correct service area when boundaries change
+  await sql`
+    CREATE OR REPLACE FUNCTION reassign_incidents_service_area()
+    RETURNS trigger AS $$
+    BEGIN
+      UPDATE wars_incidents wi
+      SET service_area_id = sa.id
+      FROM service_areas sa
+      WHERE ST_Contains(sa.geom, wi.geom);
+
+      UPDATE wars_incidents
+      SET service_area_id = NULL
+      WHERE geom IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM service_areas sa
+          WHERE ST_Contains(sa.geom, wars_incidents.geom)
+        );
+
+      RETURN NULL;
+    END;
+    $$ LANGUAGE plpgsql
+  `.execute(db)
+
+  await sql`
+    CREATE TRIGGER trg_reassign_incidents_on_boundary_change
+    AFTER INSERT OR UPDATE OF geom OR DELETE ON service_areas
+    FOR EACH STATEMENT
+    EXECUTE FUNCTION reassign_incidents_service_area()
   `.execute(db)
 
   // Enums
@@ -136,15 +196,21 @@ export async function up(db: Kysely<never>): Promise<void> {
     )
     .execute()
 
-  // Auto-compute geom from lat/lng on insert/update
+  // Auto-compute geom from lat/lng, then assign service area via spatial containment
   await sql`
     CREATE OR REPLACE FUNCTION wars_incidents_geom_trigger()
     RETURNS trigger AS $$
     BEGIN
       IF NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL THEN
         NEW.geom := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326);
+        NEW.service_area_id := (
+          SELECT id FROM service_areas
+          WHERE ST_Contains(geom, NEW.geom)
+          LIMIT 1
+        );
       ELSE
         NEW.geom := NULL;
+        NEW.service_area_id := NULL;
       END IF;
       RETURN NEW;
     END;
@@ -204,6 +270,12 @@ export async function down(db: Kysely<never>): Promise<void> {
   await db.schema.dropTable('service_areas').cascade().execute()
   await db.schema.dropTable('species').cascade().execute()
   await sql`DROP FUNCTION IF EXISTS wars_incidents_geom_trigger() CASCADE`.execute(
+    db,
+  )
+  await sql`DROP FUNCTION IF EXISTS recompute_simplified_geom() CASCADE`.execute(
+    db,
+  )
+  await sql`DROP FUNCTION IF EXISTS reassign_incidents_service_area() CASCADE`.execute(
     db,
   )
   await db.schema.dropType('time_of_kill').ifExists().execute()
