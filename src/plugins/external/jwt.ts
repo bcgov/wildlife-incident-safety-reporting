@@ -18,13 +18,17 @@ export default fp(
 
     await fastify.register(fastifyJwt, {
       decode: { complete: true },
-      secret: (_request: FastifyRequest, token: TokenOrHeader) => {
+      secret: async (_request: FastifyRequest, token: TokenOrHeader) => {
         const header = 'header' in token ? token.header : token
-        return getJwks.getPublicKey({
-          kid: header.kid,
-          alg: header.alg,
-          domain: issuer,
-        })
+        try {
+          return await getJwks.getPublicKey({
+            kid: header.kid,
+            alg: header.alg,
+            domain: issuer,
+          })
+        } catch (err) {
+          throw err instanceof Error ? err : new Error(String(err))
+        }
       },
       verify: {
         allowedIss: [issuer],

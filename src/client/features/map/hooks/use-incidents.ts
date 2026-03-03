@@ -13,6 +13,7 @@ export function useIncidents() {
   const age = useFilterStore((s) => s.age)
   const startDate = useFilterStore((s) => s.startDate)
   const endDate = useFilterStore((s) => s.endDate)
+  const geometry = useFilterStore((s) => s.geometry)
 
   const filters: IncidentFilters = useMemo(
     () => ({
@@ -24,8 +25,19 @@ export function useIncidents() {
       age,
       startDate,
       endDate,
+      geometry,
     }),
-    [years, species, serviceAreas, sex, timeOfKill, age, startDate, endDate],
+    [
+      years,
+      species,
+      serviceAreas,
+      sex,
+      timeOfKill,
+      age,
+      startDate,
+      endDate,
+      geometry,
+    ],
   )
 
   const hasFilters =
@@ -36,7 +48,8 @@ export function useIncidents() {
     timeOfKill.length > 0 ||
     age.length > 0 ||
     startDate !== null ||
-    endDate !== null
+    endDate !== null ||
+    geometry !== null
 
   return useAppQuery({
     queryKey: incidentsQueryKey(filters),

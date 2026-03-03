@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns'
-import { CalendarIcon, RotateCcw } from 'lucide-react'
+import { CalendarIcon, RotateCcw, X } from 'lucide-react'
 import { NavUser } from '@/components/nav-user'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { MultiSelect } from '@/components/ui/multi-select'
@@ -92,7 +93,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     store.timeOfKill.length > 0 ||
     store.age.length > 0 ||
     store.startDate !== null ||
-    store.endDate !== null
+    store.endDate !== null ||
+    store.geometry !== null
 
   return (
     <Sidebar variant="inset" collapsible="offcanvas" {...props}>
@@ -259,6 +261,24 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             )}
           </SidebarGroupContent>
         </SidebarGroup>
+        {store.geometry && (
+          <SidebarGroup className="px-2 py-1">
+            <SidebarGroupLabel>Spatial Filter</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <Badge variant="secondary" className="gap-1.5">
+                Area filter
+                <button
+                  type="button"
+                  onClick={() => store.setGeometry(null)}
+                  className="rounded-full opacity-70 transition-opacity hover:opacity-100"
+                  aria-label="Remove spatial filter"
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <p className="px-2 text-xs text-muted-foreground">

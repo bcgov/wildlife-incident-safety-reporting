@@ -1,3 +1,4 @@
+import type { Geometry } from 'geojson'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
@@ -10,6 +11,7 @@ type FilterState = {
   age: string[]
   startDate: string | null
   endDate: string | null
+  geometry: Geometry | null
 }
 
 type FilterActions = {
@@ -21,6 +23,7 @@ type FilterActions = {
   setAge: (age: string[]) => void
   setStartDate: (date: string | null) => void
   setEndDate: (date: string | null) => void
+  setGeometry: (geometry: Geometry | null) => void
   clearAll: () => void
 }
 
@@ -33,6 +36,7 @@ const initialState: FilterState = {
   age: [],
   startDate: null,
   endDate: null,
+  geometry: null,
 }
 
 export const useFilterStore = create<FilterState & FilterActions>()(
@@ -47,6 +51,7 @@ export const useFilterStore = create<FilterState & FilterActions>()(
       setAge: (age) => set({ age }),
       setStartDate: (date) => set({ startDate: date }),
       setEndDate: (date) => set({ endDate: date }),
+      setGeometry: (geometry) => set({ geometry }),
       clearAll: () => set(initialState),
     }),
     { name: 'filter-store' },

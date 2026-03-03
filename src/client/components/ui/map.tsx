@@ -19,7 +19,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const defaultStyles = {
@@ -747,25 +747,37 @@ function ControlButton({
   label,
   children,
   disabled = false,
+  active = false,
+  tooltipSide,
 }: {
   onClick: () => void;
   label: string;
   children: React.ReactNode;
   disabled?: boolean;
+  active?: boolean;
+  tooltipSide?: "top" | "right" | "bottom" | "left";
 }) {
   return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      type="button"
-      className={cn(
-        "flex items-center justify-center size-8 hover:bg-accent dark:hover:bg-accent/40 transition-colors",
-        disabled && "opacity-50 pointer-events-none cursor-not-allowed"
-      )}
-      disabled={disabled}
-    >
-      {children}
-    </button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            onClick={onClick}
+            aria-label={label}
+            type="button"
+            className={cn(
+              "flex items-center justify-center size-8 hover:bg-accent dark:hover:bg-accent/40 transition-colors",
+              disabled && "opacity-50 pointer-events-none cursor-not-allowed",
+              active && "bg-accent text-accent-foreground"
+            )}
+            disabled={disabled}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent side={tooltipSide}>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -829,6 +841,8 @@ function MapControls({
     }
   }, [map]);
 
+  const tooltipSide = position.includes("left") ? "right" as const : "left" as const;
+
   return (
     <div
       className={cn(
@@ -839,17 +853,17 @@ function MapControls({
     >
       {showZoom && (
         <ControlGroup>
-          <ControlButton onClick={handleZoomIn} label="Zoom in">
+          <ControlButton onClick={handleZoomIn} label="Zoom in" tooltipSide={tooltipSide}>
             <Plus className="size-4" />
           </ControlButton>
-          <ControlButton onClick={handleZoomOut} label="Zoom out">
+          <ControlButton onClick={handleZoomOut} label="Zoom out" tooltipSide={tooltipSide}>
             <Minus className="size-4" />
           </ControlButton>
         </ControlGroup>
       )}
       {showCompass && (
         <ControlGroup>
-          <CompassButton onClick={handleResetBearing} />
+          <CompassButton onClick={handleResetBearing} tooltipSide={tooltipSide} />
         </ControlGroup>
       )}
       {showLocate && (
@@ -858,6 +872,7 @@ function MapControls({
             onClick={handleLocate}
             label="Find my location"
             disabled={waitingForLocation}
+            tooltipSide={tooltipSide}
           >
             {waitingForLocation ? (
               <Loader2 className="size-4 animate-spin" />
@@ -869,7 +884,7 @@ function MapControls({
       )}
       {showFullscreen && (
         <ControlGroup>
-          <ControlButton onClick={handleFullscreen} label="Toggle fullscreen">
+          <ControlButton onClick={handleFullscreen} label="Toggle fullscreen" tooltipSide={tooltipSide}>
             <Maximize className="size-4" />
           </ControlButton>
         </ControlGroup>
@@ -878,7 +893,7 @@ function MapControls({
   );
 }
 
-function CompassButton({ onClick }: { onClick: () => void }) {
+function CompassButton({ onClick, tooltipSide }: { onClick: () => void; tooltipSide?: "top" | "right" | "bottom" | "left" }) {
   const { map } = useMap();
   const compassRef = useRef<SVGSVGElement>(null);
 
@@ -904,7 +919,7 @@ function CompassButton({ onClick }: { onClick: () => void }) {
   }, [map]);
 
   return (
-    <ControlButton onClick={onClick} label="Reset bearing to north">
+    <ControlButton onClick={onClick} label="Reset bearing to north" tooltipSide={tooltipSide}>
       <svg
         ref={compassRef}
         viewBox="0 0 24 24"
@@ -1731,6 +1746,8 @@ export {
   MarkerLabel,
   MapPopup,
   MapControls,
+  ControlGroup,
+  ControlButton,
   MapRoute,
   MapClusterLayer,
 };

@@ -2,6 +2,7 @@ import {
   type IncidentsResponse,
   IncidentsResponseSchema,
 } from '@schemas/incidents/incidents.schema'
+import type { Geometry } from 'geojson'
 import { apiClient } from '@/lib/apiClient'
 
 export type IncidentFilters = {
@@ -13,6 +14,7 @@ export type IncidentFilters = {
   age: string[]
   startDate: string | null
   endDate: string | null
+  geometry: Geometry | null
 }
 
 export const incidentsQueryKey = (filters: IncidentFilters) =>
@@ -32,6 +34,7 @@ function buildQueryString(filters: IncidentFilters): string {
   if (filters.age.length > 0) params.set('age', filters.age.join(','))
   if (filters.startDate) params.set('startDate', filters.startDate)
   if (filters.endDate) params.set('endDate', filters.endDate)
+  if (filters.geometry) params.set('geometry', JSON.stringify(filters.geometry))
 
   const qs = params.toString()
   return qs ? `?${qs}` : ''

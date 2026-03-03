@@ -6,6 +6,7 @@ import {
   MapPopup,
   Map as MapView,
 } from '@/components/ui/map'
+import { DrawControls } from './components/draw-controls'
 import { IncidentPopup } from './components/incident-popup'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useIncidents } from './hooks/use-incidents'
@@ -92,6 +93,7 @@ export function Component() {
         showFullscreen
       />
       <ZoomToLocation />
+      <DrawControls position="top-right" />
       <MapClusterLayer<IncidentProperties>
         data={geojson}
         icons={speciesIcons}
