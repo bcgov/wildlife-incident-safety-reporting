@@ -5,6 +5,8 @@ export const BoundaryPropertiesSchema = z.object({
   id: z.number(),
   name: z.string(),
   contractAreaNumber: z.number(),
+  district: z.string(),
+  region: z.string(),
 })
 
 export type BoundaryProperties = z.infer<typeof BoundaryPropertiesSchema>

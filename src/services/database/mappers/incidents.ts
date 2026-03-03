@@ -13,6 +13,8 @@ export function toIncident(row: IncidentRow): Incident {
     serviceAreaId: row.service_area_id,
     serviceAreaName: row.service_area_name,
     contractAreaNumber: row.contract_area_number,
+    district: row.district,
+    region: row.region,
     sex: row.sex,
     timeOfKill: row.time_of_kill,
     age: row.age,

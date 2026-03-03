@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns'
 import { CalendarIcon, RotateCcw, X } from 'lucide-react'
+import { useMemo } from 'react'
 import { NavUser } from '@/components/nav-user'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -85,6 +86,25 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { data: incidents } = useIncidents()
   const store = useFilterStore()
 
+  const serviceAreaOptions = useMemo(() => {
+    const sorted = [...(filters?.serviceAreas ?? [])].sort(
+      (a, b) => a.contractAreaNumber - b.contractAreaNumber,
+    )
+    const grouped = new Map<string, { value: string; label: string }[]>()
+    for (const sa of sorted) {
+      const items = grouped.get(sa.region) ?? []
+      items.push({
+        value: String(sa.id),
+        label: `${sa.contractAreaNumber} - ${sa.name}`,
+      })
+      grouped.set(sa.region, items)
+    }
+    return [...grouped.entries()].map(([region, options]) => ({
+      heading: region,
+      options,
+    }))
+  }, [filters?.serviceAreas])
+
   const hasSelections =
     store.years.length > 0 ||
     store.species.length > 0 ||
@@ -162,12 +182,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               <FilterSkeleton />
             ) : (
               <MultiSelect
-                options={[...(filters?.serviceAreas ?? [])]
-                  .sort((a, b) => a.contractAreaNumber - b.contractAreaNumber)
-                  .map((sa) => ({
-                    value: String(sa.id),
-                    label: `${sa.contractAreaNumber} - ${sa.name}`,
-                  }))}
+                options={serviceAreaOptions}
                 defaultValue={store.serviceAreas.map(String)}
                 onValueChange={(values) =>
                   store.setServiceAreas(values.map(Number))

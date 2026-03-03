@@ -43,10 +43,12 @@ export interface GeometryColumns {
 export interface ServiceAreas {
   contract_area_number: number
   created_at: Generated<Timestamp>
+  district: string
   geom: string
   geom_simplified: string | null
   id: Generated<number>
   name: string
+  region: string
   updated_at: Generated<Timestamp>
 }
 

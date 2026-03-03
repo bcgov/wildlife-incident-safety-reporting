@@ -24,6 +24,40 @@ interface GeoJsonCollection {
   features: GeoJsonFeature[]
 }
 
+const DISTRICT_REGION_MAP: Record<
+  number,
+  { district: string; region: string }
+> = {
+  1: { district: 'Vancouver Island', region: 'South Coast' },
+  2: { district: 'Vancouver Island', region: 'South Coast' },
+  3: { district: 'Vancouver Island', region: 'South Coast' },
+  4: { district: 'Lower Mainland', region: 'South Coast' },
+  5: { district: 'Lower Mainland', region: 'South Coast' },
+  6: { district: 'Lower Mainland', region: 'South Coast' },
+  7: { district: 'Lower Mainland', region: 'South Coast' },
+  8: { district: 'Okanagan-Shuswap', region: 'Southern Interior' },
+  9: { district: 'West Kootenay', region: 'Southern Interior' },
+  10: { district: 'West Kootenay', region: 'Southern Interior' },
+  11: { district: 'Rocky Mountain', region: 'Southern Interior' },
+  12: { district: 'Rocky Mountain', region: 'Southern Interior' },
+  13: { district: 'Okanagan-Shuswap', region: 'Southern Interior' },
+  14: { district: 'Thompson-Nicola', region: 'Southern Interior' },
+  15: { district: 'Thompson-Nicola', region: 'Southern Interior' },
+  16: { district: 'Cariboo', region: 'Southern Interior' },
+  17: { district: 'Cariboo', region: 'Southern Interior' },
+  18: { district: 'Cariboo', region: 'Southern Interior' },
+  19: { district: 'Fort George', region: 'Northern' },
+  20: { district: 'Fort George', region: 'Northern' },
+  21: { district: 'Peace', region: 'Northern' },
+  22: { district: 'Peace', region: 'Northern' },
+  23: { district: 'Fort George', region: 'Northern' },
+  24: { district: 'Bulkley-Stikine', region: 'Northern' },
+  25: { district: 'Bulkley-Stikine', region: 'Northern' },
+  26: { district: 'Skeena', region: 'Northern' },
+  27: { district: 'Skeena', region: 'Northern' },
+  28: { district: 'Bulkley-Stikine', region: 'Northern' },
+}
+
 export async function seedServiceAreas(db: Kysely<DB>): Promise<number> {
   console.log('Fetching service areas from BC Gov WFS...')
   const response = await fetch(WFS_URL)
@@ -48,12 +82,20 @@ export async function seedServiceAreas(db: Kysely<DB>): Promise<number> {
     for (const feature of geojson.features) {
       const { CONTRACT_AREA_NUMBER, CONTRACT_AREA_NAME } = feature.properties
       const geomJson = JSON.stringify(feature.geometry)
+      const mapping = DISTRICT_REGION_MAP[CONTRACT_AREA_NUMBER]
+      if (!mapping) {
+        throw new Error(
+          `No district/region mapping for contract area ${CONTRACT_AREA_NUMBER}`,
+        )
+      }
 
       await sql`
-        INSERT INTO service_areas (contract_area_number, name, geom)
+        INSERT INTO service_areas (contract_area_number, name, district, region, geom)
         VALUES (
           ${CONTRACT_AREA_NUMBER},
           ${CONTRACT_AREA_NAME},
+          ${mapping.district},
+          ${mapping.region},
           ST_Transform(ST_SetSRID(ST_Multi(ST_GeomFromGeoJSON(${geomJson})), 3005), 4326)
         )
       `.execute(trx)

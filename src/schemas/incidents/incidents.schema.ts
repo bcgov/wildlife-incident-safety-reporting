@@ -133,6 +133,8 @@ export const IncidentSchema = z
     serviceAreaId: z.number().nullable(),
     serviceAreaName: z.string().nullable(),
     contractAreaNumber: z.number().nullable(),
+    district: z.string().nullable(),
+    region: z.string().nullable(),
     sex: SexEnum.nullable(),
     timeOfKill: TimeOfKillEnum.nullable(),
     age: AgeEnum.nullable(),

@@ -4,11 +4,19 @@ import type {
   IncidentsQuery,
 } from '@schemas/incidents/incidents.schema.js'
 import type { BoundariesResponse } from '@schemas/service-areas/boundaries.schema.js'
+import type { LookupResponse } from '@schemas/service-areas/lookup.schema.js'
 import { createServiceLogger } from '@utils/logger.js'
 import type { FastifyBaseLogger } from 'fastify'
 import type { Expression, ExpressionBuilder, Kysely, SqlBool } from 'kysely'
 import { sql } from 'kysely'
-import { geomFromGeoJSON, within } from 'kysely-postgis'
+import {
+  asGeoJSON,
+  contains,
+  geomFromGeoJSON,
+  makePoint,
+  setSRID,
+  within,
+} from 'kysely-postgis'
 import { toIncident } from './mappers/incidents.js'
 import type { DB } from './types/database.js'
 
@@ -104,6 +112,8 @@ export class DatabaseService {
         'wi.service_area_id',
         'sa.name as service_area_name',
         'sa.contract_area_number',
+        'sa.district',
+        'sa.region',
         'wi.sex',
         'wi.time_of_kill',
         'wi.age',
@@ -155,11 +165,13 @@ export class DatabaseService {
 
     const rows = await this.kysely
       .selectFrom('service_areas')
-      .select([
-        'id',
-        'name',
-        'contract_area_number',
-        sql<string>`ST_AsGeoJSON(geom_simplified)`.as('geometry'),
+      .select((eb) => [
+        'id' as const,
+        'name' as const,
+        'contract_area_number' as const,
+        'district' as const,
+        'region' as const,
+        asGeoJSON(eb, 'geom_simplified').as('geometry'),
       ])
       .where('geom_simplified', 'is not', null)
       .orderBy('name')
@@ -179,6 +191,8 @@ export class DatabaseService {
           id: row.id,
           name: row.name,
           contractAreaNumber: row.contract_area_number,
+          district: row.district,
+          region: row.region,
         },
       })),
     }
@@ -209,7 +223,7 @@ export class DatabaseService {
         .execute(),
       this.kysely
         .selectFrom('service_areas')
-        .select(['id', 'name', 'contract_area_number'])
+        .select(['id', 'name', 'contract_area_number', 'district', 'region'])
         .orderBy('name')
         .execute(),
       this.kysely
@@ -256,6 +270,8 @@ export class DatabaseService {
         id: r.id,
         name: r.name,
         contractAreaNumber: r.contract_area_number,
+        district: r.district,
+        region: r.region,
       })),
       sex: sexValues.flatMap((r) => (r.sex ? [r.sex] : [])).sort(),
       timeOfKill: timeOfKillValues
@@ -266,6 +282,31 @@ export class DatabaseService {
         min: dateRange.min ?? null,
         max: dateRange.max ?? null,
       },
+    }
+  }
+
+  async findServiceAreaByLocation(
+    lng: number,
+    lat: number,
+  ): Promise<LookupResponse> {
+    this.log.debug({ lng, lat }, 'looking up service area by location')
+
+    const row = await this.kysely
+      .selectFrom('service_areas')
+      .select(['id', 'name', 'contract_area_number', 'district', 'region'])
+      .where((eb) =>
+        contains(eb, 'geom', setSRID(eb, makePoint(eb, lng, lat), 4326)),
+      )
+      .executeTakeFirst()
+
+    if (!row) return null
+
+    return {
+      id: row.id,
+      name: row.name,
+      contractAreaNumber: row.contract_area_number,
+      district: row.district,
+      region: row.region,
     }
   }
 }

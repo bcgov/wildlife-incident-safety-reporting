@@ -64,6 +64,8 @@ export async function up(db: Kysely<never>): Promise<void> {
       col.notNull().unique(),
     )
     .addColumn('name', 'text', (col) => col.notNull())
+    .addColumn('district', 'text', (col) => col.notNull())
+    .addColumn('region', 'text', (col) => col.notNull())
     .addColumn('geom', sql`geometry(MultiPolygon, 4326)`, (col) =>
       col.notNull(),
     )
@@ -127,11 +129,13 @@ export async function up(db: Kysely<never>): Promise<void> {
       UPDATE wars_incidents wi
       SET service_area_id = sa.id
       FROM service_areas sa
-      WHERE ST_Contains(sa.geom, wi.geom);
+      WHERE ST_Contains(sa.geom, wi.geom)
+        AND wi.service_area_id IS DISTINCT FROM sa.id;
 
       UPDATE wars_incidents
       SET service_area_id = NULL
       WHERE geom IS NOT NULL
+        AND service_area_id IS NOT NULL
         AND NOT EXISTS (
           SELECT 1 FROM service_areas sa
           WHERE ST_Contains(sa.geom, wars_incidents.geom)

@@ -14,6 +14,8 @@ export interface IncidentRow {
   service_area_id: number | null
   service_area_name: string | null
   contract_area_number: number | null
+  district: string | null
+  region: string | null
   sex: Sex | null
   time_of_kill: TimeOfKill | null
   age: Age | null

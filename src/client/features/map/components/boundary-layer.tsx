@@ -179,7 +179,9 @@ export function BoundaryLayer() {
         layers: [FILL_LAYER_ID],
       })
 
-      if (features.length > 0 && !hasOverlappingFeatures(e.point)) {
+      const overlapping = hasOverlappingFeatures(e.point)
+
+      if (features.length > 0 && !overlapping) {
         const id = features[0].id
         if (id !== hoveredId) {
           clearHover()
@@ -191,7 +193,8 @@ export function BoundaryLayer() {
         map.getCanvas().style.cursor = 'pointer'
       } else {
         clearHover()
-        if (!isExternalCursor()) map.getCanvas().style.cursor = ''
+        if (!isExternalCursor() && !overlapping)
+          map.getCanvas().style.cursor = ''
       }
     }
 
@@ -228,6 +231,14 @@ export function BoundaryLayer() {
           <span className="font-medium">
             {selected.properties.contractAreaNumber}
           </span>
+        </div>
+        <div className="flex justify-between gap-4 text-xs">
+          <span className="text-muted-foreground">District</span>
+          <span className="font-medium">{selected.properties.district}</span>
+        </div>
+        <div className="flex justify-between gap-4 text-xs">
+          <span className="text-muted-foreground">Region</span>
+          <span className="font-medium">{selected.properties.region}</span>
         </div>
       </div>
     </MapPopup>

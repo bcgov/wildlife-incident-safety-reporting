@@ -20,6 +20,8 @@ export const IncidentFiltersResponseSchema = z.object({
       id: z.number(),
       name: z.string(),
       contractAreaNumber: z.number(),
+      district: z.string(),
+      region: z.string(),
     }),
   ),
   sex: z.array(SexEnum),
