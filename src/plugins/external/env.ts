@@ -5,7 +5,16 @@ import fp from 'fastify-plugin'
 
 const schema = {
   type: 'object',
-  required: ['PORT', 'KEYCLOAK_URL', 'KEYCLOAK_REALM', 'KEYCLOAK_CLIENT_ID'],
+  required: [
+    'PORT',
+    'KEYCLOAK_URL',
+    'KEYCLOAK_REALM',
+    'KEYCLOAK_CLIENT_ID',
+    'HMCR_ID',
+    'HMCR_SECRET',
+    'HMCR_API_URL',
+    'HMCR_TOKEN_URL',
+  ],
   properties: {
     BASE_URL: {
       type: 'string',
@@ -69,6 +78,18 @@ const schema = {
     KEYCLOAK_CLIENT_ID: {
       type: 'string',
     },
+    HMCR_ID: {
+      type: 'string',
+    },
+    HMCR_SECRET: {
+      type: 'string',
+    },
+    HMCR_API_URL: {
+      type: 'string',
+    },
+    HMCR_TOKEN_URL: {
+      type: 'string',
+    },
   },
 }
 
@@ -90,6 +111,10 @@ interface RawEnv {
   KEYCLOAK_URL: string
   KEYCLOAK_REALM: string
   KEYCLOAK_CLIENT_ID: string
+  HMCR_ID: string
+  HMCR_SECRET: string
+  HMCR_API_URL: string
+  HMCR_TOKEN_URL: string
 }
 
 declare module 'fastify' {
@@ -133,6 +158,10 @@ export default fp(
       keycloakUrl: raw.KEYCLOAK_URL,
       keycloakRealm: raw.KEYCLOAK_REALM,
       keycloakClientId: raw.KEYCLOAK_CLIENT_ID,
+      hmcrId: raw.HMCR_ID,
+      hmcrSecret: raw.HMCR_SECRET,
+      hmcrApiUrl: raw.HMCR_API_URL,
+      hmcrTokenUrl: raw.HMCR_TOKEN_URL,
     }
 
     // Validate PostgreSQL configuration

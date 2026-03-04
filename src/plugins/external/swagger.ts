@@ -50,6 +50,14 @@ const createOpenapiConfig = (fastify: FastifyInstance) => {
           name: 'System',
           description: 'System health and monitoring endpoints',
         },
+        {
+          name: 'Incidents',
+          description: 'Wildlife-vehicle collision incidents',
+        },
+        {
+          name: 'Service Areas',
+          description: 'Highway maintenance service area boundaries',
+        },
       ],
       components: {
         securitySchemes: {

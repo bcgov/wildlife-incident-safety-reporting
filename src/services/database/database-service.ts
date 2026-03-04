@@ -7,67 +7,13 @@ import type { BoundariesResponse } from '@schemas/service-areas/boundaries.schem
 import type { LookupResponse } from '@schemas/service-areas/lookup.schema.js'
 import { createServiceLogger } from '@utils/logger.js'
 import type { FastifyBaseLogger } from 'fastify'
-import type { Expression, ExpressionBuilder, Kysely, SqlBool } from 'kysely'
+import type { Kysely } from 'kysely'
 import { sql } from 'kysely'
-import {
-  asGeoJSON,
-  contains,
-  geomFromGeoJSON,
-  makePoint,
-  setSRID,
-  within,
-} from 'kysely-postgis'
+import { asGeoJSON, contains, makePoint, setSRID } from 'kysely-postgis'
+import { applyFilters } from './filters.js'
 import { toIncident } from './mappers/incidents.js'
-import type { DB } from './types/database.js'
-
-type IncidentEB = ExpressionBuilder<
-  DB & {
-    wi: DB['wars_incidents']
-    sp: DB['species']
-    sa: DB['service_areas']
-  },
-  'wi' | 'sp' | 'sa'
->
-
-function applyFilters(eb: IncidentEB, filters: IncidentsQuery) {
-  const conditions: Expression<SqlBool>[] = []
-
-  if (filters.year?.length) {
-    conditions.push(eb('wi.year', 'in', filters.year))
-  }
-  if (filters.species?.length) {
-    conditions.push(eb('wi.species_id', 'in', filters.species))
-  }
-  if (filters.serviceArea?.length) {
-    conditions.push(eb('wi.service_area_id', 'in', filters.serviceArea))
-  }
-  if (filters.sex?.length) {
-    conditions.push(eb('wi.sex', 'in', filters.sex))
-  }
-  if (filters.timeOfKill?.length) {
-    conditions.push(eb('wi.time_of_kill', 'in', filters.timeOfKill))
-  }
-  if (filters.age?.length) {
-    conditions.push(eb('wi.age', 'in', filters.age))
-  }
-  if (filters.startDate) {
-    conditions.push(
-      sql<boolean>`wi.accident_date::date >= ${filters.startDate}::date`,
-    )
-  }
-  if (filters.endDate) {
-    conditions.push(
-      sql<boolean>`wi.accident_date::date <= ${filters.endDate}::date`,
-    )
-  }
-  if (filters.geometry) {
-    conditions.push(
-      within(eb, 'wi.geom', geomFromGeoJSON(eb, filters.geometry)),
-    )
-  }
-
-  return eb.and(conditions)
-}
+import type { Age, DB, Sex, TimeOfKill } from './types/database.js'
+import type { HmcrUpsertRow } from './types/hmcr.js'
 
 export class DatabaseService {
   private readonly log: FastifyBaseLogger
@@ -308,5 +254,112 @@ export class DatabaseService {
       district: row.district,
       region: row.region,
     }
+  }
+
+  async getSpeciesMap(): Promise<Map<string, number>> {
+    const rows = await this.kysely
+      .selectFrom('species')
+      .select(['id', 'name'])
+      .execute()
+    const map = new Map<string, number>()
+    for (const row of rows) {
+      map.set(row.name.toLowerCase(), row.id)
+    }
+    return map
+  }
+
+  async upsertHmcrIncidents(
+    rows: HmcrUpsertRow[],
+  ): Promise<{ created: number; updated: number }> {
+    if (rows.length === 0) return { created: 0, updated: 0 }
+
+    this.log.debug({ count: rows.length }, 'upserting HMCR incidents')
+
+    const batchSize = 1000
+    const totalBatches = Math.ceil(rows.length / batchSize)
+
+    return await this.kysely.transaction().execute(async (trx) => {
+      let created = 0
+      let updated = 0
+
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize)
+        const batchNum = Math.floor(i / batchSize) + 1
+
+        // Use xmax to distinguish inserts (xmax = 0) from updates (xmax > 0).
+        // IS DISTINCT FROM and xmax aren't expressible via the query builder.
+        const result = await trx
+          .insertInto('wars_incidents')
+          .values(
+            batch.map((r) => ({
+              hmcr_record_id: r.hmcr_record_id,
+              accident_date: r.accident_date
+                ? sql<Date>`${r.accident_date}::date`
+                : null,
+              time_of_kill: r.time_of_kill
+                ? sql<TimeOfKill>`${r.time_of_kill}::time_of_kill`
+                : null,
+              nearest_town: r.nearest_town,
+              sex: r.sex ? sql<Sex>`${r.sex}::sex` : null,
+              age: r.age ? sql<Age>`${r.age}::age` : null,
+              comments: r.comments,
+              quantity: r.quantity,
+              latitude: r.latitude,
+              longitude: r.longitude,
+              species_id: r.species_id,
+              year: r.year,
+            })),
+          )
+          .onConflict((oc) =>
+            oc
+              .column('hmcr_record_id')
+              .doUpdateSet((eb) => ({
+                accident_date: eb.ref('excluded.accident_date'),
+                time_of_kill: eb.ref('excluded.time_of_kill'),
+                nearest_town: eb.ref('excluded.nearest_town'),
+                sex: eb.ref('excluded.sex'),
+                age: eb.ref('excluded.age'),
+                comments: eb.ref('excluded.comments'),
+                quantity: eb.ref('excluded.quantity'),
+                latitude: eb.ref('excluded.latitude'),
+                longitude: eb.ref('excluded.longitude'),
+                species_id: eb.ref('excluded.species_id'),
+                year: eb.ref('excluded.year'),
+              }))
+              .where(
+                sql<boolean>`
+                  wars_incidents.accident_date IS DISTINCT FROM excluded.accident_date
+                  OR wars_incidents.time_of_kill IS DISTINCT FROM excluded.time_of_kill
+                  OR wars_incidents.nearest_town IS DISTINCT FROM excluded.nearest_town
+                  OR wars_incidents.sex IS DISTINCT FROM excluded.sex
+                  OR wars_incidents.age IS DISTINCT FROM excluded.age
+                  OR wars_incidents.comments IS DISTINCT FROM excluded.comments
+                  OR wars_incidents.quantity IS DISTINCT FROM excluded.quantity
+                  OR wars_incidents.latitude IS DISTINCT FROM excluded.latitude
+                  OR wars_incidents.longitude IS DISTINCT FROM excluded.longitude
+                  OR wars_incidents.species_id IS DISTINCT FROM excluded.species_id
+                  OR wars_incidents.year IS DISTINCT FROM excluded.year
+                `,
+              ),
+          )
+          .returning(sql<boolean>`(xmax = 0)`.as('is_new'))
+          .execute()
+
+        for (const row of result) {
+          if (row.is_new) created++
+          else updated++
+        }
+
+        if (batchNum % 10 === 0 || batchNum === totalBatches) {
+          this.log.debug(
+            { batch: batchNum, totalBatches },
+            'upsert batch complete',
+          )
+        }
+      }
+
+      this.log.debug({ created, updated }, 'HMCR upsert complete')
+      return { created, updated }
+    })
   }
 }

@@ -15,4 +15,8 @@ export interface Config {
   keycloakUrl: string
   keycloakRealm: string
   keycloakClientId: string
+  hmcrId: string
+  hmcrSecret: string
+  hmcrApiUrl: string
+  hmcrTokenUrl: string
 }
