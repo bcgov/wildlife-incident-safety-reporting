@@ -6,13 +6,13 @@ import {
   MapPopup,
   Map as MapView,
 } from '@/components/ui/map'
+import { useIncidents } from '@/hooks/use-incidents'
 import { BasemapDarkener } from './components/basemap-darkener'
 import { BoundaryLayer } from './components/boundary-layer'
 import { DrawControls } from './components/draw-controls'
 import { IncidentPopup } from './components/incident-popup'
 import { LayerControls } from './components/layer-controls'
 import { ZoomToLocation } from './components/zoom-to-location'
-import { useIncidents } from './hooks/use-incidents'
 import { createGoogleMapStyle } from './lib/google-styles'
 import { speciesIcons } from './lib/species-icons'
 import { useLayerStore } from './store/layer-store'

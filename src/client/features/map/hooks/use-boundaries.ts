@@ -1,4 +1,4 @@
-import { useAppQuery } from '@/lib/useAppQuery'
+import { useAppQuery } from '@/hooks/use-app-query'
 import { boundariesQueryKey, fetchBoundaries } from '../lib/boundaries-api'
 import { useLayerStore } from '../store/layer-store'
 

@@ -6,7 +6,7 @@ import {
   useQuery,
 } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { MIN_LOADING_DELAY } from './constants'
+import { MIN_LOADING_DELAY } from '@/lib/constants'
 
 /**
  * Custom useQuery wrapper with stale-while-revalidate behavior

@@ -1,5 +1,5 @@
-import { useAppQuery } from '@/lib/useAppQuery'
-import { fetchFilters, filtersQueryKey } from '../lib/filters-api'
+import { useAppQuery } from '@/hooks/use-app-query'
+import { fetchFilters, filtersQueryKey } from '@/lib/filters-api'
 
 export function useFilters() {
   return useAppQuery({

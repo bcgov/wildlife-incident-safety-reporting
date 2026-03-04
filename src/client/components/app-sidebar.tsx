@@ -21,9 +21,9 @@ import {
   SidebarHeader,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useFilters } from '@/features/map/hooks/use-filters'
-import { useIncidents } from '@/features/map/hooks/use-incidents'
-import { useFilterStore } from '@/features/map/store/filter-store'
+import { useFilters } from '@/hooks/use-filters'
+import { useIncidents } from '@/hooks/use-incidents'
+import { useFilterStore } from '@/stores/filter-store'
 
 function FilterSkeleton() {
   return <Skeleton className="h-10 rounded-md border border-input" />

@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { useAppQuery } from '@/lib/useAppQuery'
-import type { IncidentFilters } from '../lib/incidents-api'
-import { fetchIncidents, incidentsQueryKey } from '../lib/incidents-api'
-import { useFilterStore } from '../store/filter-store'
+import { useAppQuery } from '@/hooks/use-app-query'
+import type { IncidentFilters } from '@/lib/incidents-api'
+import { fetchIncidents, incidentsQueryKey } from '@/lib/incidents-api'
+import { useFilterStore } from '@/stores/filter-store'
 
 export function useIncidents() {
   const years = useFilterStore((s) => s.years)

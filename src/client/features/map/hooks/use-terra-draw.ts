@@ -16,7 +16,7 @@ import {
 } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { useMap } from '@/components/ui/map'
-import { useFilterStore } from '../store/filter-store'
+import { useFilterStore } from '@/stores/filter-store'
 
 export type DrawMode = 'polygon' | 'rectangle' | 'circle' | 'measure' | 'select'
 
