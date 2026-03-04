@@ -355,7 +355,13 @@ export function useTerraDraw() {
       // Snapshot features before teardown so they survive style changes
       const snapshot = draw.getSnapshot()
       snapshotRef.current = snapshot.length > 0 ? snapshot : null
-      draw.stop()
+      // Style changes (e.g. Google basemap theme swap) can remove td-* sources
+      // before terra-draw's adapter tries to clear them, so guard the teardown
+      try {
+        draw.stop()
+      } catch {
+        // Sources already removed by style change - safe to ignore
+      }
       drawRef.current = null
     }
   }, [map, isLoaded, setGeometry])

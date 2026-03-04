@@ -6,13 +6,16 @@ import {
   MapPopup,
   Map as MapView,
 } from '@/components/ui/map'
+import { BasemapDarkener } from './components/basemap-darkener'
 import { BoundaryLayer } from './components/boundary-layer'
 import { DrawControls } from './components/draw-controls'
 import { IncidentPopup } from './components/incident-popup'
 import { LayerControls } from './components/layer-controls'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useIncidents } from './hooks/use-incidents'
+import { createGoogleMapStyle } from './lib/google-styles'
 import { speciesIcons } from './lib/species-icons'
+import { useLayerStore } from './store/layer-store'
 
 export type IncidentProperties = {
   id: number
@@ -72,9 +75,12 @@ function toGeoJSON(
   }
 }
 
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+
 export function Component() {
   const { data: response } = useIncidents()
   const [selected, setSelected] = useState<SelectedIncident | null>(null)
+  const basemap = useLayerStore((s) => s.basemap)
 
   const incidents = response?.data
   const prevIncidentsRef = useRef(incidents)
@@ -85,8 +91,19 @@ export function Component() {
 
   const geojson = useMemo(() => toGeoJSON(incidents ?? []), [incidents])
 
+  const styles = useMemo(() => {
+    if (!googleMapsApiKey) return undefined
+    const style = createGoogleMapStyle(basemap, googleMapsApiKey)
+    return { light: style, dark: style }
+  }, [basemap])
+
   return (
-    <MapView className="flex-1" center={[-124.5, 54.5]} zoom={5}>
+    <MapView
+      className="flex-1"
+      center={[-124.5, 54.5]}
+      zoom={5}
+      styles={styles}
+    >
       <MapControls
         position="top-left"
         showZoom
@@ -97,13 +114,14 @@ export function Component() {
       <ZoomToLocation />
       <LayerControls position="top-right" />
       <DrawControls position="top-right" className="!top-12" />
+      <BasemapDarkener />
       <BoundaryLayer />
       <MapClusterLayer<IncidentProperties>
         data={geojson}
         icons={speciesIcons}
         iconProperty="speciesGroupName"
         clusterRadius={80}
-        clusterMaxZoom={22}
+        clusterMaxZoom={17}
         clusterThresholds={[50, 200]}
         spiderfy
         clusterHull

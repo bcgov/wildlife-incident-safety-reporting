@@ -5,6 +5,10 @@ import convex from "@turf/convex";
 import MapLibreGL, { type MarkerOptions, type PopupOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Loader2, Locate, Maximize, Minus, Plus, X } from "lucide-react";
+import { googleProtocol } from "maplibre-google-maps";
+
+MapLibreGL.addProtocol("google", googleProtocol);
+
 import {
   createContext,
   forwardRef,

@@ -99,6 +99,7 @@
     "kysely-codegen": "^0.20.0",
     "lucide-react": "^0.575.0",
     "maplibre-gl": "^5.19.0",
+    "maplibre-google-maps": "^1.1.0",
     "msw": "^2.12.10",
     "papaparse": "^5.5.3",
     "pg": "^8.18.0",
