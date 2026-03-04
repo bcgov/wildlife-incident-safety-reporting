@@ -73,6 +73,7 @@ export interface WarsIncidents {
   comments: string | null
   created_at: Generated<Timestamp>
   geom: string | null
+  hmcr_record_id: number | null
   id: Generated<number>
   latitude: Numeric | null
   longitude: Numeric | null

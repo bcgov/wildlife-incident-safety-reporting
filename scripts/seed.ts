@@ -43,6 +43,7 @@ interface InsertRow {
   longitude: number | null
   species_id: number
   year: number
+  hmcr_record_id: number | null
 }
 
 type MatchMethod = 'exact' | 'override' | 'unknown'
@@ -271,6 +272,8 @@ async function seed() {
       unknownDetails.set(raw, (unknownDetails.get(raw) || 0) + 1)
     }
 
+    const hmcrId = row['Data.Set'] === 'Current' ? parseIntOrNull(row.ID) : null
+
     insertRows.push({
       accident_date: parseDate(row['Accident.Date']),
       time_of_kill: parseEnum(row['Time.of.Kill'], VALID_TIME_OF_KILL),
@@ -283,6 +286,7 @@ async function seed() {
       longitude: parseFloatOrNull(row.Longitude),
       species_id: result.speciesId,
       year,
+      hmcr_record_id: hmcrId,
     })
   }
 
@@ -346,6 +350,7 @@ async function seed() {
               longitude: r.longitude,
               species_id: r.species_id,
               year: r.year,
+              hmcr_record_id: r.hmcr_record_id,
             })),
           )
           .execute()

@@ -192,6 +192,7 @@ export async function up(db: Kysely<never>): Promise<void> {
     .addColumn('service_area_id', 'smallint', (col) =>
       col.references('service_areas.id'),
     )
+    .addColumn('hmcr_record_id', 'integer', (col) => col.unique())
     .addColumn('created_at', sql`timestamptz`, (col) =>
       col.notNull().defaultTo(sql`now()`),
     )
@@ -260,6 +261,12 @@ export async function up(db: Kysely<never>): Promise<void> {
     .createIndex('idx_wars_incidents_service_area_id')
     .on('wars_incidents')
     .column('service_area_id')
+    .execute()
+
+  await db.schema
+    .createIndex('idx_wars_incidents_hmcr_record_id')
+    .on('wars_incidents')
+    .column('hmcr_record_id')
     .execute()
 
   await db.schema
