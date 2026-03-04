@@ -17,12 +17,6 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         lazy: () => import('@/layouts/app'),
-        children: [
-          {
-            index: true,
-            lazy: () => import('@/features/map'),
-          },
-        ],
       },
       {
         path: '*',

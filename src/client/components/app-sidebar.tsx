@@ -117,7 +117,12 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     store.geometry !== null
 
   return (
-    <Sidebar variant="inset" collapsible="offcanvas" {...props}>
+    <Sidebar
+      variant="inset"
+      collapsible="offcanvas"
+      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
+      {...props}
+    >
       <SidebarHeader>
         <div className="flex items-center justify-between px-2">
           <span className="text-lg font-semibold">Filters</span>
