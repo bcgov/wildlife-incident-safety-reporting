@@ -42,12 +42,12 @@ export function BoundaryLayer() {
       type: 'fill',
       source: SOURCE_ID,
       paint: {
-        'fill-color': '#3470B1',
+        'fill-color': '#42814A',
         'fill-opacity': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
           0.18,
-          0.08,
+          0.1,
         ],
       },
     })
@@ -61,7 +61,7 @@ export function BoundaryLayer() {
           'case',
           ['boolean', ['feature-state', 'hover'], false],
           '#ffffff',
-          '#3470B1',
+          '#42814A',
         ],
         'line-width': [
           'case',
@@ -73,7 +73,7 @@ export function BoundaryLayer() {
           'case',
           ['boolean', ['feature-state', 'hover'], false],
           0.9,
-          0.4,
+          1.0,
         ],
       },
     })

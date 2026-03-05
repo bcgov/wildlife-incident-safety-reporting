@@ -1342,7 +1342,8 @@ function MapClusterLayer<
         type: "fill",
         source: hullSourceId,
         paint: {
-          "fill-color": "rgba(122,184,249,0.15)",
+          "fill-color": "#3470B1",
+          "fill-opacity": 0.1,
         },
       });
       map.addLayer({
@@ -1350,8 +1351,9 @@ function MapClusterLayer<
         type: "line",
         source: hullSourceId,
         paint: {
-          "line-color": "rgba(122,184,249,0.5)",
+          "line-color": "#3470B1",
           "line-width": 1.5,
+          "line-opacity": 1.0,
         },
       });
     }
