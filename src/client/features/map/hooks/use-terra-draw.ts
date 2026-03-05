@@ -369,41 +369,40 @@ export function useTerraDraw() {
   const activeModeRef = useRef(activeMode)
   activeModeRef.current = activeMode
 
-  const startDrawing = useCallback(
-    (mode: DrawMode) => {
-      const draw = drawRef.current
-      if (!draw) return
+  const startDrawing = useCallback((mode: DrawMode) => {
+    const draw = drawRef.current
+    if (!draw) return
 
-      // Toggle off if clicking the already-active mode
-      if (mode === activeModeRef.current) {
-        draw.setMode('idle')
-        setActiveMode(null)
-        return
-      }
+    // Toggle off if clicking the already-active mode
+    if (mode === activeModeRef.current) {
+      draw.setMode('idle')
+      setActiveMode(null)
+      return
+    }
 
-      if (mode === 'select') {
-        draw.setMode('select')
-        setActiveMode('select')
-        return
-      }
+    if (mode === 'select') {
+      draw.setMode('select')
+      setActiveMode('select')
+      return
+    }
 
-      setMeasurementPopup(null)
+    setMeasurementPopup(null)
 
-      if (mode === 'measure') {
-        // Measure mode clears everything - it's display-only
-        draw.clear()
-        featureIdsRef.current.clear()
-        measurementRef.current = null
-        setHasMeasurement(false)
-        setGeometry(null)
-        draw.setMode('linestring')
-      } else {
-        draw.setMode(mode)
-      }
-      setActiveMode(mode)
-    },
-    [setGeometry],
-  )
+    if (mode === 'measure') {
+      // Clear any previous measurement linestring but keep polygon features
+      const snapshot = draw.getSnapshot()
+      const lineIds = snapshot
+        .filter((f) => f.geometry.type === 'LineString' && f.id != null)
+        .map((f) => f.id as string | number)
+      if (lineIds.length > 0) draw.removeFeatures(lineIds)
+      measurementRef.current = null
+      setHasMeasurement(false)
+      draw.setMode('linestring')
+    } else {
+      draw.setMode(mode)
+    }
+    setActiveMode(mode)
+  }, [])
 
   const clearDrawing = useCallback(() => {
     const draw = drawRef.current

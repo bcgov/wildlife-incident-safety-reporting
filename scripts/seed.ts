@@ -58,6 +58,29 @@ const VALID_TIME_OF_KILL = new Set(['DAWN', 'DUSK', 'DAY', 'DARK', 'UNKNOWN'])
 const VALID_SEX = new Set(['MALE', 'FEMALE', 'UNKNOWN'])
 const VALID_AGE = new Set(['YOUNG', 'ADULT', 'UNKNOWN'])
 
+// Numeric codes from HMCR that appear in historical CSV data
+const TIME_OF_KILL_CODES: Record<string, string> = {
+  '1': 'DAWN',
+  '2': 'DUSK',
+  '3': 'DAY',
+  '4': 'DARK',
+  '5': 'UNKNOWN',
+}
+
+// Single-char and variant sex codes from historical CSV data
+const SEX_CODES: Record<string, string> = {
+  F: 'FEMALE',
+  M: 'MALE',
+  U: 'UNKNOWN',
+}
+
+// Single-char age codes and descriptive values from historical CSV data
+const AGE_CODES: Record<string, string> = {
+  A: 'ADULT',
+  Y: 'YOUNG',
+  U: 'UNKNOWN',
+}
+
 // Lowercase key -> canonical species name
 const OVERRIDES: Record<string, string> = {
   '': 'Unknown',
@@ -120,13 +143,25 @@ function parseDate(raw: string): string | null {
   return null
 }
 
-function parseEnum<T extends string>(
-  raw: string,
-  valid: Set<string>,
-): T | null {
+function parseTimeOfKill(raw: string): string | null {
+  if (!raw || raw.trim() === '') return null
   const upper = raw.trim().toUpperCase()
-  if (valid.has(upper)) return upper as T
-  return null
+  if (VALID_TIME_OF_KILL.has(upper)) return upper
+  return TIME_OF_KILL_CODES[raw.trim()] ?? 'UNKNOWN'
+}
+
+function parseSex(raw: string): string | null {
+  if (!raw || raw.trim() === '') return null
+  const upper = raw.trim().toUpperCase()
+  if (VALID_SEX.has(upper)) return upper
+  return SEX_CODES[upper] ?? 'UNKNOWN'
+}
+
+function parseAge(raw: string): string | null {
+  if (!raw || raw.trim() === '') return null
+  const upper = raw.trim().toUpperCase()
+  if (VALID_AGE.has(upper)) return upper
+  return AGE_CODES[upper] ?? 'UNKNOWN'
 }
 
 function parseIntOrNull(raw: string): number | null {
@@ -276,10 +311,10 @@ async function seed() {
 
     insertRows.push({
       accident_date: parseDate(row['Accident.Date']),
-      time_of_kill: parseEnum(row['Time.of.Kill'], VALID_TIME_OF_KILL),
+      time_of_kill: parseTimeOfKill(row['Time.of.Kill']),
       nearest_town: row['Nearest.Town']?.trim() || null,
-      sex: parseEnum(row.Sex, VALID_SEX),
-      age: parseEnum(row.Age, VALID_AGE),
+      sex: parseSex(row.Sex),
+      age: parseAge(row.Age),
       comments,
       quantity: parseQuantity(row.Quantity),
       latitude: parseFloatOrNull(row.Latitude),

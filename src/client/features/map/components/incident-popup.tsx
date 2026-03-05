@@ -75,7 +75,7 @@ export function IncidentPopup({
   return (
     <div className="flex w-96 flex-col gap-2">
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-sm font-semibold">{properties.speciesName}</p>
+        <p className="text-sm font-semibold">{properties.speciesGroupName}</p>
         <span className="text-xs text-muted-foreground">#{properties.id}</span>
       </div>
 

@@ -86,6 +86,35 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { data: incidents } = useIncidents()
   const store = useFilterStore()
 
+  const speciesGroupMap = useMemo(() => {
+    const map = new Map<string, number[]>()
+    for (const s of filters?.species ?? []) {
+      const ids = map.get(s.groupName) ?? []
+      ids.push(s.id)
+      map.set(s.groupName, ids)
+    }
+    return map
+  }, [filters?.species])
+
+  const speciesOptions = useMemo(
+    () => [...speciesGroupMap.keys()].map((g) => ({ value: g, label: g })),
+    [speciesGroupMap],
+  )
+
+  const selectedSpeciesGroups = useMemo(() => {
+    const idToGroup = new Map<number, string>()
+    for (const s of filters?.species ?? []) {
+      idToGroup.set(s.id, s.groupName)
+    }
+    return [
+      ...new Set(
+        store.species
+          .map((id) => idToGroup.get(id))
+          .filter((g): g is string => g !== undefined),
+      ),
+    ]
+  }, [filters?.species, store.species])
+
   const serviceAreaOptions = useMemo(() => {
     const sorted = [...(filters?.serviceAreas ?? [])].sort(
       (a, b) => a.contractAreaNumber - b.contractAreaNumber,
@@ -167,12 +196,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               <FilterSkeleton />
             ) : (
               <MultiSelect
-                options={(filters?.species ?? []).map((s) => ({
-                  value: String(s.id),
-                  label: s.name,
-                }))}
-                defaultValue={store.species.map(String)}
-                onValueChange={(values) => store.setSpecies(values.map(Number))}
+                options={speciesOptions}
+                defaultValue={selectedSpeciesGroups}
+                onValueChange={(groups) =>
+                  store.setSpecies(
+                    groups.flatMap((g) => speciesGroupMap.get(g) ?? []),
+                  )
+                }
                 placeholder="Select species"
                 maxCount={2}
               />

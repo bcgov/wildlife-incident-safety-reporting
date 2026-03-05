@@ -47,7 +47,7 @@ const PROPERTY_NAMES = [
   'COMMENT',
 ].join(',')
 
-// HMCR species numeric codes -> species names (from the R script mapping)
+// HMCR species numeric codes -> species names
 const HMCR_SPECIES_MAP: Record<number, string> = {
   1: 'Deer',
   2: 'Moose',

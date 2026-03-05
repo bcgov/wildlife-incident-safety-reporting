@@ -126,8 +126,6 @@ declare module 'fastify' {
 
 export default fp(
   async (fastify: FastifyInstance) => {
-    // @fastify/env validates + coerces process.env against the JSON Schema
-    // and decorates fastify.envRaw with the SCREAMING_SNAKE_CASE result.
     await fastify.register(env, {
       confKey: 'envRaw',
       schema,
