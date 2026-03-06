@@ -6,7 +6,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { Component as MapView } from '@/features/map'
 import { useAuthStore } from '@/stores/auth-store'
 
-const ChartsView = lazy(() =>
+const DataPage = lazy(() =>
   import('@/features/charts').then((m) => ({ default: m.Component })),
 )
 
@@ -50,7 +50,7 @@ export function Component() {
                 <MapView />
               </TabsContent>
               <TabsContent
-                value="charts"
+                value="data"
                 keepMounted
                 className="[&:not([hidden])]:flex flex-1 overflow-hidden"
               >
@@ -63,7 +63,7 @@ export function Component() {
                     </div>
                   }
                 >
-                  <ChartsView />
+                  <DataPage />
                 </Suspense>
               </TabsContent>
             </SidebarInset>

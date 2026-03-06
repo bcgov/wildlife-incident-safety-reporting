@@ -2,6 +2,7 @@ import type { Incident } from '@schemas/incidents/incidents.schema'
 import { useMemo, useState } from 'react'
 import { useIncidents } from '@/hooks/use-incidents'
 import { ChartToolbar } from './components/chart-toolbar'
+import { IncidentsTable } from './components/incidents-table'
 import { KpiCards } from './components/kpi-cards'
 import { SeasonalHeatmap } from './components/seasonal-heatmap'
 import { SpeciesBarChart } from './components/species-bar-chart'
@@ -68,7 +69,7 @@ export function Component() {
   if (!hasData && !isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-muted-foreground">Select filters to view charts</p>
+        <p className="text-muted-foreground">Select filters to view data</p>
       </div>
     )
   }
@@ -93,6 +94,7 @@ export function Component() {
           monthlyUnavailable={monthlyUnavailable}
         />
       )}
+      <IncidentsTable incidents={incidents} isLoading={isLoading} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect } from 'react'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -35,9 +36,7 @@ export function ThemeProvider({
   themes = ['light', 'dark'],
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme | null) ?? defaultTheme,
-  )
+  const [theme, setTheme] = useLocalStorage<Theme>(storageKey, defaultTheme)
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -79,14 +78,6 @@ export function ThemeProvider({
     return () =>
       mediaQuery.removeEventListener('change', handleSystemThemeChange)
   }, [theme, themes, enableSystem])
-
-  const setTheme = React.useCallback(
-    (newTheme: Theme) => {
-      localStorage.setItem(storageKey, newTheme)
-      setThemeState(newTheme)
-    },
-    [storageKey],
-  )
 
   const value = React.useMemo(
     () => ({

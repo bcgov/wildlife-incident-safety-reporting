@@ -19,6 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 
@@ -65,34 +66,17 @@ function SidebarProvider({
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
 
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(() => {
-    try {
-      const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY)
-      return stored !== null ? stored === 'true' : defaultOpen
-    } catch {
-      return defaultOpen
-    }
-  })
+  const [_open, _setOpen] = useLocalStorage(SIDEBAR_STORAGE_KEY, defaultOpen)
   const open = openProp ?? _open
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value
       if (setOpenProp) {
         setOpenProp(openState)
-      } else {
-        _setOpen(openState)
       }
-
-      // Persist sidebar state to localStorage.
-      try {
-        localStorage.setItem(SIDEBAR_STORAGE_KEY, openState.toString())
-      } catch {
-        // Ignore localStorage errors
-      }
+      _setOpen(openState)
     },
-    [setOpenProp, open]
+    [setOpenProp, open, _setOpen]
   )
 
   // Helper to toggle the sidebar.

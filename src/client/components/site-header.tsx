@@ -15,7 +15,7 @@ export function SiteHeader() {
         <h1 className="text-base font-medium">WARS</h1>
         <TabsList variant="line" className="ml-2">
           <TabsTrigger value="map">Map</TabsTrigger>
-          <TabsTrigger value="charts">Charts</TabsTrigger>
+          <TabsTrigger value="data">Data</TabsTrigger>
         </TabsList>
         <SearchAddress />
         <div className="ml-auto flex items-center gap-2">

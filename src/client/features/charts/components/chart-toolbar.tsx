@@ -15,6 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { REMAINING_KEY } from '../lib/aggregations'
 import type { TimeBucket } from '../types/chart-types'
 
@@ -44,14 +49,15 @@ export function ChartToolbar({
         </SelectContent>
       </Select>
       <Popover>
-        <PopoverTrigger
-          render={
-            <Button variant="outline">
-              <Palette className="size-4" />
-              Legend
-            </Button>
-          }
-        />
+        <Tooltip>
+          <TooltipTrigger
+            render={<PopoverTrigger render={<Button variant="outline" />} />}
+          >
+            <Palette className="size-4" />
+            Legend
+          </TooltipTrigger>
+          <TooltipContent>Species legend</TooltipContent>
+        </Tooltip>
         <PopoverContent align="end" className="w-48">
           <PopoverHeader>
             <PopoverTitle>Species Legend</PopoverTitle>
