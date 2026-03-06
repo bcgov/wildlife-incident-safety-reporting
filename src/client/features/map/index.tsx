@@ -123,7 +123,11 @@ function LocateIncident({
       if (cancelled) return
       map.resize()
       // Zoom to clusterMaxZoom - 1 so spiderfy activates on click
-      map.flyTo({ center: coordinates, zoom: CLUSTER_MAX_ZOOM - 1, duration: 1500 })
+      map.flyTo({
+        center: coordinates,
+        zoom: CLUSTER_MAX_ZOOM - 1,
+        duration: 1500,
+      })
       map.once('moveend', onMoveEnd)
     })
 

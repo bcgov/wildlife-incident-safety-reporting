@@ -5,7 +5,7 @@ export const HealthCheckResponseSchema = z.object({
   timestamp: z.iso.datetime(),
   checks: z.object({
     database: z.enum(['ok', 'failed']),
-  })
+  }),
 })
 
 export type HealthCheckResponse = z.infer<typeof HealthCheckResponseSchema>

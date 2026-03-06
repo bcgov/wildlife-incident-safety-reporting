@@ -34,7 +34,18 @@ keycloak
     pkceMethod: 'S256',
   })
   .then((authenticated) => {
-    useAuthStore.getState().initialize(authenticated)
+    if (authenticated) {
+      useAuthStore.getState().initialize(true)
+    } else {
+      keycloak
+        .login({
+          redirectUri: window.location.origin,
+          idpHint: 'azureidir',
+        })
+        .catch(() => {
+          useAuthStore.getState().initialize(false)
+        })
+    }
   })
   .catch(() => {
     useAuthStore.getState().initialize(false)
