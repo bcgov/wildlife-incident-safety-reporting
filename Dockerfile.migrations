@@ -1,0 +1,14 @@
+# Lightweight image that runs Kysely migrations and exits.
+# Used as an init container before the app starts.
+FROM oven/bun:1.3.10-alpine AS base
+WORKDIR /app
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
+
+COPY migrations/ ./migrations/
+COPY src/services/database/ ./src/services/database/
+
+USER bun
+
+CMD ["bun", "run", "--bun", "migrations/migrate.ts"]

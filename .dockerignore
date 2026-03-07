@@ -1,0 +1,14 @@
+.git
+node_modules
+dist
+tmp
+.env
+.env.*
+!.env.example
+test
+.vscode
+.claude
+charts
+.github
+scripts
+*.md

@@ -1,12 +1,12 @@
-{{- if .Values.frontend.enabled }}
+{{- if and .Values.backend.enabled .Values.backend.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "frontend.fullname" . }}
+  name: {{ include "backend.fullname" . }}
   labels:
-    {{- include "frontend.labels" . | nindent 4 }}
-  {{- if and .Values.frontend.ingress .Values.frontend.ingress.annotations }}
-  {{- with .Values.frontend.ingress.annotations }}
+    {{- include "backend.labels" . | nindent 4 }}
+  {{- if and .Values.backend.ingress .Values.backend.ingress.annotations }}
+  {{- with .Values.backend.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -21,7 +21,7 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: {{ include "frontend.fullname" . }}
+                name: {{ include "backend.fullname" . }}
                 port:
-                  number: 80
+                  number: {{ .Values.backend.service.port }}
 {{- end }}
