@@ -1,5 +1,3 @@
-// Global type declarations for client-side code
-
 import '@tanstack/react-query'
 
 declare global {

@@ -33,8 +33,7 @@ export function useAppQuery<
 >(options: UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>) {
   const query = useQuery(options)
 
-  // Loading when fetching and no data currently available
-  // This triggers on initial load AND after resetQueries clears cache
+  // Also triggers after resetQueries clears the cache
   const isLoadingWithoutData = query.isFetching && query.data === undefined
 
   // Min duration state for loading (skeleton)
@@ -66,7 +65,6 @@ export function useAppQuery<
 
   return {
     ...query,
-    // isLoading: true when fetching with no data (initial or after reset)
     isLoading: showLoading,
   }
 }

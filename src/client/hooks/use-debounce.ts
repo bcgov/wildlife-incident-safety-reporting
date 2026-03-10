@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-/**
- * Returns a debounced version of the provided callback that delays execution
- * until after the specified delay has elapsed since the last call.
- */
 export function useDebounce<TArgs extends readonly unknown[]>(
   callback: (...args: TArgs) => void,
   delay: number,

@@ -1,9 +1,6 @@
 import type { z } from 'zod'
 import { useAuthStore } from '@/stores/auth-store'
 
-/**
- * Custom error class for API errors with status code and optional data
- */
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -15,12 +12,6 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Handles API response parsing with optional Zod schema validation
- * - Extracts error messages from failed responses
- * - Handles 204 No Content responses
- * - Validates response data against schema if provided
- */
 async function handleResponse<T>(
   response: Response,
   schema?: z.ZodType<T>,
@@ -39,14 +30,11 @@ async function handleResponse<T>(
         const data = errorData as { message?: string; error?: string }
         message = data.message || data.error || message
       }
-    } catch {
-      // JSON parsing failed, use default message
-    }
+    } catch {}
 
     throw new ApiError(message, response.status, errorData)
   }
 
-  // Handle 204 No Content responses (typically DELETE operations)
   if (response.status === 204) {
     return undefined as T
   }
@@ -72,24 +60,6 @@ async function handleResponse<T>(
   return json as T
 }
 
-/**
- * Consolidated API client with standardized error handling and Zod validation
- *
- * Usage:
- * ```typescript
- * // Simple GET
- * const data = await apiClient.get('/v1/stats/all')
- *
- * // GET with schema validation
- * const data = await apiClient.get('/v1/api-keys', GetApiKeysResponseSchema)
- *
- * // POST with body and schema
- * const result = await apiClient.post('/v1/api-keys', { name: 'My Key' }, CreateApiKeyResponseSchema)
- *
- * // DELETE (typically returns undefined for 204)
- * await apiClient.delete('/v1/api-keys/123')
- * ```
- */
 async function authHeaders(): Promise<HeadersInit> {
   const token = await useAuthStore.getState().getToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
