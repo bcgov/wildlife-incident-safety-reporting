@@ -7,4 +7,4 @@ This product currently has no support and is experimental.  That could change in
 
 ## Reporting a Vulnerability
 
-Please report any issues or vulerabilities with an [issue](https://github.com/bcgov/quickstart-openshift/issues).
+Please report any issues or vulnerabilities with an [issue](https://github.com/bcgov/wildlife-accident-reporting/issues).
