@@ -6,7 +6,7 @@
 
 # Wildlife Accident Reporting System (WARS)
 
-Web application for analyzing wildlife-vehicle collision data on BC highways.
+Web application for analyzing and visualizing wildlife-vehicle collision data on BC highways.
 
 ## Tech Stack
 
