@@ -27,3 +27,9 @@ export type SeasonalHeatmapRow = {
   color: string
   months: number[]
 }
+
+export type DensityKpiSummary = {
+  segmentsWithData: number
+  highestSegment: { name: string; value: number } | null
+  averageDensity: number | null
+}

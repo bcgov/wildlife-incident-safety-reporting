@@ -1,11 +1,11 @@
-import type { IncidentsQuery } from '@schemas/incidents/incidents.schema.js'
+import type { IncidentFilterQuery } from '@schemas/common/incident-query.schema.js'
 import type { Expression, ExpressionBuilder, SqlBool } from 'kysely'
 import { sql } from 'kysely'
 import { geomFromGeoJSON, within } from 'kysely-postgis'
 import type { DB } from './types/database.js'
 
 type FilterFields = Pick<
-  IncidentsQuery,
+  IncidentFilterQuery,
   | 'year'
   | 'species'
   | 'serviceArea'

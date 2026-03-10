@@ -1,21 +1,8 @@
-import type { Geometry } from 'geojson'
+import type { DensityResponse } from '@schemas/incidents/density.schema'
 import { apiClient } from '@/lib/apiClient'
 import { buildQueryString, type IncidentFilters } from '@/lib/incidents-api'
 
-export type DensitySegment = {
-  segmentId: number
-  segmentName: string
-  segmentDescription: string | null
-  highwayNumber: string | null
-  segmentLengthKm: number | null
-  geometry: Geometry
-  small: number
-  medium: number
-  large: number
-  totalAnimals: number
-  weighted: number
-  densityPerKm: number | null
-}
+export type DensitySegment = DensityResponse[number]
 
 export const densityQueryKey = (filters: IncidentFilters) =>
   ['density', filters] as const

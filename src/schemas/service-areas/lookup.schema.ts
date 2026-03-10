@@ -1,3 +1,4 @@
+import { ServiceAreaSchema } from '@schemas/service-areas/service-area.schema.js'
 import { z } from 'zod'
 
 export const LookupQuerySchema = z.object({
@@ -13,19 +14,10 @@ export const LookupQuerySchema = z.object({
 
 export type LookupQuery = z.infer<typeof LookupQuerySchema>
 
-export const LookupResponseSchema = z
-  .object({
-    id: z.number(),
-    name: z.string(),
-    contractAreaNumber: z.number(),
-    district: z.string(),
-    region: z.string(),
-  })
-  .nullable()
-  .meta({
-    id: 'ServiceAreaLookup',
-    description:
-      'Service area matching the given coordinates, or null if outside all boundaries',
-  })
+export const LookupResponseSchema = ServiceAreaSchema.nullable().meta({
+  id: 'ServiceAreaLookup',
+  description:
+    'Service area matching the given coordinates, or null if outside all boundaries',
+})
 
 export type LookupResponse = z.infer<typeof LookupResponseSchema>

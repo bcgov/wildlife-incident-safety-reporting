@@ -1,8 +1,9 @@
 import type MapLibreGL from 'maplibre-gl'
 import { useEffect, useMemo, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
+import { useDensityData } from '@/hooks/use-density-data'
 import type { DensitySegment } from '@/lib/density-api'
-import { useDensity } from '../hooks/use-density'
+import { DENSITY_COLORS } from '@/lib/density-colors'
 import type { DensityMode } from '../store/layer-store'
 import { useLayerStore } from '../store/layer-store'
 
@@ -36,7 +37,11 @@ function parseProperties(raw: Record<string, string>): DensityProperties {
   }
 }
 
-// Color ramps based on real data percentile distributions
+// Breakpoints aligned to percentile distribution of segments with data:
+// weighted/km: P25=7, P50=25, P75=72, P90=155
+// raw/km:      P25=2.3, P50=7, P75=16, P90=31
+const [GREEN, YELLOW, ORANGE, RED] = DENSITY_COLORS
+
 const COLOR_RAMPS: Record<DensityMode, MapLibreGL.ExpressionSpecification> = {
   weighted: [
     'interpolate',
@@ -45,13 +50,13 @@ const COLOR_RAMPS: Record<DensityMode, MapLibreGL.ExpressionSpecification> = {
     0,
     'rgba(34, 197, 94, 0.15)',
     7,
-    '#22c55e',
+    GREEN,
     25,
-    '#eab308',
-    75,
-    '#f97316',
-    155,
-    '#ef4444',
+    YELLOW,
+    50,
+    ORANGE,
+    72,
+    RED,
   ],
   raw: [
     'interpolate',
@@ -59,14 +64,14 @@ const COLOR_RAMPS: Record<DensityMode, MapLibreGL.ExpressionSpecification> = {
     ['get', 'rawDensityPerKm'],
     0,
     'rgba(34, 197, 94, 0.15)',
-    2,
-    '#22c55e',
+    2.3,
+    GREEN,
     7,
-    '#eab308',
+    YELLOW,
+    12,
+    ORANGE,
     16,
-    '#f97316',
-    31,
-    '#ef4444',
+    RED,
   ],
 }
 
@@ -101,8 +106,8 @@ function toGeoJSON(
 
 export function DensityLayer() {
   const { map, isLoaded } = useMap()
-  const { data } = useDensity()
   const visible = useLayerStore((s) => s.layers.density)
+  const { data } = useDensityData({ enabled: visible })
   const densityMode = useLayerStore((s) => s.densityMode)
   const [selected, setSelected] = useState<SelectedSegment | null>(null)
 

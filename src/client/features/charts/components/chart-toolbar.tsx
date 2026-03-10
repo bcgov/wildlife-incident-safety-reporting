@@ -23,6 +23,12 @@ import {
 import { REMAINING_KEY } from '../lib/aggregations'
 import type { TimeBucket } from '../types/chart-types'
 
+const TIME_BUCKET_LABELS: Record<TimeBucket, string> = {
+  year: 'Yearly',
+  month: 'Monthly',
+  seasonal: 'Seasonal',
+}
+
 type ChartToolbarProps = {
   bucket: TimeBucket
   onBucketChange: (bucket: TimeBucket) => void
@@ -40,7 +46,9 @@ export function ChartToolbar({
     <div className="flex items-center justify-end gap-2">
       <Select value={bucket} onValueChange={(v) => v && onBucketChange(v)}>
         <SelectTrigger className="w-32">
-          <SelectValue />
+          <SelectValue>
+            {(value: TimeBucket) => TIME_BUCKET_LABELS[value]}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="year">Yearly</SelectItem>

@@ -1,25 +1,26 @@
+import type { Geometry } from 'geojson'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import type { IncidentProperties } from '@/features/map'
 
 export type LocateTarget = {
-  coordinates: [number, number]
-  properties: IncidentProperties
+  segmentId: number
+  segmentName: string
+  geometry: Geometry
 }
 
-type IncidentLocateState = {
+type SegmentLocateState = {
   target: LocateTarget | null
   locate: (target: LocateTarget) => void
   clear: () => void
 }
 
-export const useIncidentLocateStore = create<IncidentLocateState>()(
+export const useSegmentLocateStore = create<SegmentLocateState>()(
   devtools(
     (set) => ({
       target: null,
       locate: (target) => set({ target }),
       clear: () => set({ target: null }),
     }),
-    { name: 'incident-locate-store' },
+    { name: 'segment-locate-store' },
   ),
 )

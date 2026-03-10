@@ -1,6 +1,8 @@
 import type { Incident } from '@schemas/incidents/incidents.schema'
 import type { ChartConfig } from '@/components/ui/chart'
+import type { DensitySegment } from '@/lib/density-api'
 import type {
+  DensityKpiSummary,
   KpiSummary,
   SeasonalHeatmapRow,
   SpeciesCount,
@@ -212,4 +214,29 @@ export function buildChartConfig(
     }
   }
   return config
+}
+
+export function summarizeDensity(
+  segments: DensitySegment[],
+): DensityKpiSummary {
+  const withData = segments.filter((s) => s.totalAnimals > 0)
+  const segmentsWithData = withData.length
+
+  let highestSegment: { name: string; value: number } | null = null
+  let densitySum = 0
+  let densityCount = 0
+
+  for (const s of withData) {
+    if (s.densityPerKm != null) {
+      densitySum += s.densityPerKm
+      densityCount++
+      if (!highestSegment || s.densityPerKm > highestSegment.value) {
+        highestSegment = { name: s.segmentName, value: s.densityPerKm }
+      }
+    }
+  }
+
+  const averageDensity = densityCount > 0 ? densitySum / densityCount : null
+
+  return { segmentsWithData, highestSegment, averageDensity }
 }

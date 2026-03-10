@@ -1,5 +1,7 @@
 import type { Incident } from '@schemas/incidents/incidents.schema'
+import bbox from '@turf/bbox'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { DensityLegend } from '@/components/density-legend'
 import {
   MapClusterLayer,
   MapControls,
@@ -10,6 +12,7 @@ import {
 import { useIncidents } from '@/hooks/use-incidents'
 import { speciesIcons } from '@/lib/species-icons'
 import { useIncidentLocateStore } from '@/stores/incident-locate-store'
+import { useSegmentLocateStore } from '@/stores/segment-locate-store'
 import { BasemapDarkener } from './components/basemap-darkener'
 import { BoundaryLayer } from './components/boundary-layer'
 import { DensityLayer } from './components/density-layer'
@@ -143,12 +146,62 @@ function LocateIncident({
   return null
 }
 
+function LocateSegment() {
+  const { map, isLoaded } = useMap()
+  const target = useSegmentLocateStore((s) => s.target)
+  const clear = useSegmentLocateStore((s) => s.clear)
+
+  useEffect(() => {
+    if (!target || !map || !isLoaded) return
+
+    let cancelled = false
+
+    const onMoveEnd = () => {
+      if (!cancelled) clear()
+    }
+
+    const rafId = requestAnimationFrame(() => {
+      if (cancelled) return
+      map.resize()
+
+      const [minLng, minLat, maxLng, maxLat] = bbox({
+        type: 'Feature',
+        geometry: target.geometry,
+        properties: {},
+      })
+
+      if (!Number.isFinite(minLng) || !Number.isFinite(maxLng)) {
+        clear()
+        return
+      }
+
+      map.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 80, duration: 1500 },
+      )
+      map.once('moveend', onMoveEnd)
+    })
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(rafId)
+      map.off('moveend', onMoveEnd)
+    }
+  }, [target, map, isLoaded, clear])
+
+  return null
+}
+
 const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
 export function Component() {
   const { data: response } = useIncidents()
   const [selected, setSelected] = useState<SelectedIncident | null>(null)
   const basemap = useLayerStore((s) => s.basemap)
+  const densityVisible = useLayerStore((s) => s.layers.density)
 
   const incidents = response?.data
   const prevIncidentsRef = useRef(incidents)
@@ -189,6 +242,7 @@ export function Component() {
       <DrawControls position="top-right" className="!top-12" />
       <BasemapDarkener />
       <LocateIncident onLocate={setSelected} />
+      <LocateSegment />
       <DensityLayer />
       <BoundaryLayer />
       <MapClusterLayer<IncidentProperties>
@@ -217,6 +271,11 @@ export function Component() {
             onClose={() => setSelected(null)}
           />
         </MapPopup>
+      )}
+      {densityVisible && (
+        <div className="border-border bg-background absolute bottom-2 left-2 z-10 flex h-8 items-center overflow-hidden rounded-md border px-3 shadow-sm">
+          <DensityLegend />
+        </div>
       )}
     </MapView>
   )

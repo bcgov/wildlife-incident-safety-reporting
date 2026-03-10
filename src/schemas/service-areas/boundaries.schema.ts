@@ -1,13 +1,8 @@
 import { PolygonGeometrySchema } from '@schemas/common/geojson.schema.js'
+import { ServiceAreaSchema } from '@schemas/service-areas/service-area.schema.js'
 import { z } from 'zod'
 
-export const BoundaryPropertiesSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  contractAreaNumber: z.number(),
-  district: z.string(),
-  region: z.string(),
-})
+export const BoundaryPropertiesSchema = ServiceAreaSchema
 
 export type BoundaryProperties = z.infer<typeof BoundaryPropertiesSchema>
 
