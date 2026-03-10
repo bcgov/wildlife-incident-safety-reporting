@@ -113,12 +113,10 @@ export function DensityLayer() {
 
   const geojson = useMemo(() => toGeoJSON(data ?? []), [data])
 
-  // Clear popup when layer is hidden
   useEffect(() => {
     if (!visible) setSelected(null)
   }, [visible])
 
-  // Add source and layer on mount
   useEffect(() => {
     if (!isLoaded || !map) return
 
@@ -159,7 +157,6 @@ export function DensityLayer() {
     }
   }, [isLoaded, map])
 
-  // Update source data when density loads
   useEffect(() => {
     if (!isLoaded || !map) return
 
@@ -169,7 +166,6 @@ export function DensityLayer() {
     }
   }, [isLoaded, map, geojson])
 
-  // Update color ramp when density mode changes
   useEffect(() => {
     if (!isLoaded || !map) return
 
@@ -182,7 +178,6 @@ export function DensityLayer() {
     }
   }, [isLoaded, map, densityMode])
 
-  // Toggle visibility when store changes
   useEffect(() => {
     if (!isLoaded || !map) return
 
@@ -193,7 +188,6 @@ export function DensityLayer() {
     }
   }, [isLoaded, map, visible])
 
-  // Click and hover handlers
   useEffect(() => {
     if (!isLoaded || !map) return
 

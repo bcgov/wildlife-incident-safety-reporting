@@ -91,7 +91,6 @@ export function useTerraDraw() {
   const [hasMeasurement, setHasMeasurement] = useState(false)
   // Suppress the click handler right after a drawing finishes
   const justFinishedRef = useRef(false)
-  // Track all drawn polygon feature IDs
   const featureIdsRef = useRef<Set<string | number>>(new Set())
   // Preserve drawn features across style changes (theme switch)
   const snapshotRef = useRef<
@@ -227,7 +226,6 @@ export function useTerraDraw() {
       }
     }
 
-    // Recompute combined geometry from all tracked polygon features
     const recomputeGeometry = () => {
       const features = [...featureIdsRef.current].map((id) =>
         draw.getSnapshotFeature(id),
@@ -305,7 +303,6 @@ export function useTerraDraw() {
     const getTdLayers = () =>
       [TD_POLYGON_LAYER, TD_LINESTRING_LAYER].filter((id) => map.getLayer(id))
 
-    // Check if any cluster or marker features exist at a point
     const hasClusterFeatures = (point: MapMouseEvent['point']) => {
       const all = map.queryRenderedFeatures(point)
       return all.some(

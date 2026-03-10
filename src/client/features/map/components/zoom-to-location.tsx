@@ -41,7 +41,6 @@ export function ZoomToLocation() {
 
   useEffect(() => {
     if (!map || !location) return
-    // Only fly when location actually changes
     if (
       prevLocationRef.current?.longitude === location.longitude &&
       prevLocationRef.current?.latitude === location.latitude
@@ -50,7 +49,6 @@ export function ZoomToLocation() {
     }
     prevLocationRef.current = location
 
-    // Reset street view state when location changes
     setView('details')
     cachedUrlRef.current = null
     setEmbedUrl(null)

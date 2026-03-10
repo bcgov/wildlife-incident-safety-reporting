@@ -70,7 +70,6 @@ export function SearchAddress() {
     setOpen(false)
   }
 
-  // Group features by localityType
   const grouped = useMemo(() => {
     if (!data?.features.length) return null
 

@@ -20,12 +20,10 @@ export function BoundaryLayer() {
   const visible = useLayerStore((s) => s.layers.boundaries)
   const [selected, setSelected] = useState<SelectedBoundary | null>(null)
 
-  // Clear popup when layer is hidden
   useEffect(() => {
     if (!visible) setSelected(null)
   }, [visible])
 
-  // Add source and layers on mount
   useEffect(() => {
     if (!isLoaded || !map) return
 
@@ -89,7 +87,6 @@ export function BoundaryLayer() {
     }
   }, [isLoaded, map])
 
-  // Update source data when boundaries load
   useEffect(() => {
     if (!isLoaded || !map || !data) return
 
@@ -99,7 +96,6 @@ export function BoundaryLayer() {
     }
   }, [isLoaded, map, data])
 
-  // Toggle visibility when store changes
   useEffect(() => {
     if (!isLoaded || !map) return
 
@@ -113,7 +109,6 @@ export function BoundaryLayer() {
     }
   }, [isLoaded, map, visible])
 
-  // Click and hover handlers
   useEffect(() => {
     if (!isLoaded || !map) return
 

@@ -58,7 +58,6 @@ export function IncidentPopup({
 
     setView('streetview')
 
-    // Use cached URL if we already fetched it
     if (cachedUrlRef.current) {
       setEmbedUrl(cachedUrlRef.current)
       return
