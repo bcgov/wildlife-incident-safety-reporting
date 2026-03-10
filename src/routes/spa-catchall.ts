@@ -1,10 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 
-/**
- * SPA catch-all route handler.
- * Must be registered last (after all other routes) to act as a catch-all.
- * Serves the SPA HTML for client-side routing.
- */
+// Must be registered last (after all other routes) to act as a catch-all
 export default async function spaRoute(fastify: FastifyInstance) {
   fastify.get(
     '/*',
@@ -12,7 +8,6 @@ export default async function spaRoute(fastify: FastifyInstance) {
       preHandler: async (request, reply) => {
         const path = request.url.split('?')[0] ?? request.url
 
-        // Skip API routes and static assets
         const lastSeg = path.split('/').pop() ?? ''
         if (
           path === '/v1' ||

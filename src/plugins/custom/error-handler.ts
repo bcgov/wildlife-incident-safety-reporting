@@ -2,10 +2,6 @@ import type { ErrorResponse } from '@root/schemas/common/error.schema.js'
 import type { FastifyError, FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
-/**
- * Global error handler plugin.
- * Provides consistent error responses and appropriate logging.
- */
 async function errorHandler(fastify: FastifyInstance) {
   fastify.setErrorHandler((err: FastifyError, request, reply) => {
     const statusCode = err.statusCode ?? 500
@@ -20,7 +16,6 @@ async function errorHandler(fastify: FastifyInstance) {
       },
     }
 
-    // Use appropriate log level based on status code
     if (statusCode === 401) {
       request.log.warn(logData, 'Authentication required')
     } else if (statusCode >= 500) {

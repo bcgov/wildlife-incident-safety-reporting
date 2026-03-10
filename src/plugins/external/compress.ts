@@ -1,12 +1,5 @@
 import compress from '@fastify/compress'
 
-export const autoConfig = {
-  // Set plugin options here
-}
+export const autoConfig = {}
 
-/**
- * This plugin adds compression
- *
- * @see {@link https://github.com/fastify/fastify-compress}
- */
 export default compress

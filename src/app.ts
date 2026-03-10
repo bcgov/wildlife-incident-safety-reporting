@@ -6,23 +6,16 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import fp from 'fastify-plugin'
 import { serializerCompiler, validatorCompiler } from 'fastify-zod-openapi'
 
-/**
- * Configures and initializes the Fastify server with plugin autoloading,
- * route handlers, and Vite integration for serving a single-page application.
- */
 async function serviceApp(
   fastify: FastifyInstance,
   opts: FastifyPluginOptions,
 ) {
-  // Set Zod compilers for validation and fast-json-stringify serialization
   // Must be set before any routes are registered
   fastify.setValidatorCompiler(validatorCompiler)
   fastify.setSerializerCompiler(serializerCompiler)
 
-  // Basic setup
   fastify.register(FastifyFormBody)
 
-  // Load external plugins
   await fastify.register(fastifyAutoload, {
     dir: path.join(import.meta.dirname, 'plugins/external'),
     options: {
@@ -31,7 +24,6 @@ async function serviceApp(
     },
   })
 
-  // Load custom plugins
   fastify.register(fastifyAutoload, {
     dir: path.join(import.meta.dirname, 'plugins/custom'),
     options: {
@@ -40,7 +32,6 @@ async function serviceApp(
     },
   })
 
-  // Load routes
   fastify.register(fastifyAutoload, {
     dir: path.join(import.meta.dirname, 'routes'),
     autoHooks: true,

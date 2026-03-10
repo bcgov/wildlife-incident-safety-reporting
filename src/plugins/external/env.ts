@@ -137,7 +137,6 @@ export default fp(
       data: process.env,
     })
 
-    // Remap validated env vars to camelCase Config
     const raw = fastify.envRaw
     const config: Config = {
       baseUrl: raw.BASE_URL,
@@ -162,7 +161,6 @@ export default fp(
       hmcrTokenUrl: raw.HMCR_TOKEN_URL,
     }
 
-    // Validate PostgreSQL configuration
     const isUsingConnectionString =
       config.databaseUrl && config.databaseUrl.trim() !== ''
 
@@ -198,7 +196,6 @@ export default fp(
       }
     }
 
-    // Decorate with the camelCase config
     fastify.decorate('config', config)
   },
   {

@@ -82,19 +82,11 @@ const createOpenapiConfig = (fastify: FastifyInstance) => {
 
 export default fp(
   async (fastify: FastifyInstance) => {
-    // Register the zod-openapi plugin (required for schema transformation)
+    // Must be registered before fastifySwagger for schema transformation to work
     await fastify.register(fastifyZodOpenApiPlugin)
 
-    /**
-     * Register Swagger with combined config
-     * @see {@link https://github.com/fastify/fastify-swagger}
-     */
     await fastify.register(fastifySwagger, createOpenapiConfig(fastify))
 
-    /**
-     * Register Swagger UI
-     * @see {@link https://github.com/fastify/fastify-swagger-ui}
-     */
     await fastify.register(apiReference, {
       routePrefix: '/api/docs',
     })

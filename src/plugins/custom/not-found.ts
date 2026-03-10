@@ -2,10 +2,7 @@ import type { ErrorResponse } from '@root/schemas/common/error.schema.js'
 import type { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
-/**
- * 404 Not Found handler plugin with rate limiting.
- * Prevents abuse from repeated requests to non-existent routes.
- */
+// Rate-limited to prevent abuse from repeated requests to non-existent routes
 async function notFoundHandler(fastify: FastifyInstance) {
   fastify.setNotFoundHandler(
     {
