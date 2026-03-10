@@ -39,6 +39,8 @@ bun run seed
 
 The seed script loads service area polygons from GeoJSON, then inserts incident records from CSV and assigns service areas via spatial join.
 
+Interactive API docs (Scalar) are available at [localhost:3033/api/docs](http://localhost:3033/api/docs) in development.
+
 ### Common Commands
 
 | Command | Description |
