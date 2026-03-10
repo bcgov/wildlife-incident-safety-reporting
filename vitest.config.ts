@@ -27,7 +27,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
     },
     globalSetup: './test/setup/global-setup.ts',
-    setupFiles: ['./test/setup/msw-setup.ts'],
+    setupFiles: ['./test/setup/bun-compat.ts', './test/setup/msw-setup.ts'],
     testTimeout: 10000,
     hookTimeout: 10000,
     experimental: {

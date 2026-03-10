@@ -1,8 +1,7 @@
-import { promises as fs } from 'node:fs'
-import * as path from 'node:path'
 import { createDatabase } from '@services/database/create-database.js'
 import type { DB } from '@services/database/types/database.js'
-import { FileMigrationProvider, type Kysely, Migrator, sql } from 'kysely'
+import type { Kysely } from 'kysely'
+import { sql } from 'kysely'
 
 declare global {
   var __testDb: Kysely<DB> | null
@@ -10,10 +9,9 @@ declare global {
 globalThis.__testDb ??= null
 
 /**
- * Initialize the test database connection and run migrations.
- * Requires a running PostgreSQL instance with a test database.
- *
- * Set TEST_DATABASE_URL or individual DB_* env vars in global-setup.ts.
+ * Initialize the test database connection.
+ * Migrations are handled by global-setup.ts so this only creates the
+ * Kysely instance (once per worker process).
  */
 export async function initializeTestDatabase(): Promise<Kysely<DB>> {
   if (globalThis.__testDb) {
@@ -24,23 +22,6 @@ export async function initializeTestDatabase(): Promise<Kysely<DB>> {
     url: process.env.TEST_DATABASE_URL,
     database: 'wars_test',
   })
-
-  const migrator = new Migrator({
-    db: globalThis.__testDb,
-    provider: new FileMigrationProvider({
-      fs,
-      path,
-      migrationFolder: path.resolve(
-        import.meta.dir,
-        '../../migrations/migrations',
-      ),
-    }),
-  })
-
-  const { error } = await migrator.migrateToLatest()
-  if (error) {
-    throw new Error(`Test migration failed: ${error}`)
-  }
 
   return globalThis.__testDb
 }
