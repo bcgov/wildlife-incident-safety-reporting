@@ -11,11 +11,6 @@ export const PaginationQuerySchema = z.object({
 
 export type PaginationQuery = z.infer<typeof PaginationQuerySchema>
 
-/**
- * Wraps an item schema in a standard paginated response envelope.
- *
- * Shape: { data: T[], total, limit?, offset }
- */
 export function paginatedResponse<T extends z.ZodTypeAny>(itemSchema: T) {
   return z
     .object({

@@ -15,9 +15,6 @@ export function isValidLogLevel(value: string): value is LevelWithSilent {
   return validLogLevels.includes(value as LevelWithSilent)
 }
 
-/**
- * Create a child logger that prefixes all messages with an uppercased service name.
- */
 export function createServiceLogger(
   parentLogger: FastifyBaseLogger,
   serviceName: string,
@@ -28,11 +25,7 @@ export function createServiceLogger(
   )
 }
 
-/**
- * Build pino logger options for stdout output.
- * Dev: pino-pretty for human-readable logs.
- * Prod: raw JSON to stdout for container log aggregators (OpenShift/Docker).
- */
+// Prod emits raw JSON for container log aggregators (OpenShift/Docker)
 export function createLoggerConfig(): LoggerOptions {
   const isDev = process.env.NODE_ENV !== 'production'
 

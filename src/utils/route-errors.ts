@@ -1,30 +1,19 @@
 import type { FastifyBaseLogger, FastifyRequest } from 'fastify'
 
 interface RouteErrorContext {
-  /** The error that occurred (uses pino's built-in err serializer) */
   err: unknown
-  /** HTTP method and path (e.g., 'GET /v1/items') */
   route?: string
-  /** User ID if authenticated */
   userId?: string | number
-  /** Additional context fields */
   [key: string]: unknown
 }
 
 interface LogRouteErrorOptions {
-  /** Custom log message (defaults to generic error message based on route) */
   message?: string
-  /** Additional context to include in logs */
   context?: Record<string, unknown>
-  /** Log level; defaults to 'error' */
   level?: 'error' | 'warn' | 'info'
-  /** Allow any additional context fields directly on the options object */
   [key: string]: unknown
 }
 
-/**
- * Standardized error logging helper for route handlers
- */
 export function logRouteError(
   logger: FastifyBaseLogger,
   request: FastifyRequest,

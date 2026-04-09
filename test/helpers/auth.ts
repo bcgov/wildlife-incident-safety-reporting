@@ -64,7 +64,6 @@ interface TokenOptions {
   expiresIn?: number
 }
 
-/** Sign a JWT with the test private key, merging sensible defaults. */
 export function generateToken(
   claims?: TokenClaims,
   options?: TokenOptions,
@@ -98,7 +97,6 @@ export function expiredToken(claims?: TokenClaims): string {
   return generateToken({ exp: past, iat: past - 3600, ...claims })
 }
 
-/** Decode payload, modify it, re-encode with original signature. */
 export function tamperedToken(validToken: string): string {
   const [header, payload, signature] = validToken.split('.')
   const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
@@ -107,7 +105,6 @@ export function tamperedToken(validToken: string): string {
   return `${header}.${newPayload}.${signature}`
 }
 
-/** Signed by a key not in the mocked JWKS. */
 export function wrongKeyToken(claims?: TokenClaims): string {
   const now = Math.floor(Date.now() / 1000)
   return signWrongKey({

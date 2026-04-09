@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Generic error schema - matches Fastify Sensible HttpError structure
+// Matches Fastify Sensible HttpError structure
 export const ErrorSchema = z.object({
   statusCode: z.number().int(),
   code: z.string(),

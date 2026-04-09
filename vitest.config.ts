@@ -20,7 +20,7 @@ export default defineConfig({
         '**/test/**',
         '**/*.test.ts',
         '**/*.spec.ts',
-        '**/src/client/**', // Exclude client-side code
+        '**/src/client/**',
         '**/migrations/**',
         '**/scripts/**',
       ],

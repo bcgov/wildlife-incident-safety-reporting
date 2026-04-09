@@ -10,7 +10,6 @@ import {
 } from '@schemas/common/transforms.schema.js'
 import { z } from 'zod'
 
-// Base filter fields shared by both incidents and density queries
 export const IncidentFilterFields = z.object({
   year: commaNumbers.optional().meta({
     override: {

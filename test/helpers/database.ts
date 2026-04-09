@@ -8,11 +8,6 @@ declare global {
 }
 globalThis.__testDb ??= null
 
-/**
- * Initialize the test database connection.
- * Migrations are handled by global-setup.ts so this only creates the
- * Kysely instance (once per worker process).
- */
 export async function initializeTestDatabase(): Promise<Kysely<DB>> {
   if (globalThis.__testDb) {
     return globalThis.__testDb
@@ -26,10 +21,6 @@ export async function initializeTestDatabase(): Promise<Kysely<DB>> {
   return globalThis.__testDb
 }
 
-/**
- * Get the current test database connection.
- * Throws if database has not been initialized.
- */
 export function getTestDatabase(): Kysely<DB> {
   if (!globalThis.__testDb) {
     throw new Error('Test database not initialized')
@@ -37,10 +28,6 @@ export function getTestDatabase(): Kysely<DB> {
   return globalThis.__testDb
 }
 
-/**
- * Reset database by truncating all tables.
- * Call this in beforeEach hooks to ensure clean state between tests.
- */
 export async function resetDatabase(): Promise<void> {
   const db = getTestDatabase()
 
@@ -60,10 +47,6 @@ export async function resetDatabase(): Promise<void> {
   }
 }
 
-/**
- * Clean up the test database connection.
- * Should be called in global teardown.
- */
 export async function cleanupTestDatabase(): Promise<void> {
   if (globalThis.__testDb) {
     await globalThis.__testDb.destroy()

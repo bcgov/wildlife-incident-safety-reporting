@@ -284,19 +284,16 @@ async function seed() {
 
   const root = path.resolve(import.meta.dir, '..')
 
-  // 1. Seed service areas from WFS
   console.log('\n--- Service Areas ---')
   if (!DRY_RUN) {
     await seedServiceAreas(db)
   }
 
-  // 2. Seed LKI segments from WFS
   console.log('\n--- LKI Segments ---')
   if (!DRY_RUN) {
     await seedLkiSegments(db)
   }
 
-  // 3. Load species lookup from DB
   const speciesRows = await db.selectFrom('species').selectAll().execute()
   const speciesMap = new Map<string, number>()
   for (const row of speciesRows) {
@@ -306,7 +303,6 @@ async function seed() {
 
   const match = buildMatcher(speciesMap)
 
-  // 4. Parse CSV
   const csvPath = resolveDataFile(root, 'WARs.csv')
   const csvText = readFileSync(csvPath, 'utf-8')
   const parsed = Papa.parse<CsvRow>(csvText, {

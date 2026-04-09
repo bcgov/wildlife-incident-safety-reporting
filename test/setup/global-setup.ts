@@ -1,13 +1,6 @@
 import { promises as fs } from 'node:fs'
 import * as path from 'node:path'
 
-/**
- * Global test setup and teardown.
- *
- * Sets env vars before any test file loads so that the Fastify config plugin
- * and database helpers both resolve to the wars_test database.
- */
-
 export async function setup(): Promise<void> {
   process.env.NODE_ENV = 'test'
   process.env.LOG_LEVEL = 'silent'
@@ -30,7 +23,6 @@ export async function setup(): Promise<void> {
   process.env.HMCR_API_URL = 'http://localhost:9090/api'
   process.env.HMCR_TOKEN_URL = 'http://localhost:9090/token'
 
-  // Run migrations once before all test files
   const { createDatabase } = await import(
     '../../src/services/database/create-database.js'
   )

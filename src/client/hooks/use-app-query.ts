@@ -8,23 +8,8 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { MIN_LOADING_DELAY } from '@/lib/constants'
 
-/**
- * Custom useQuery wrapper with stale-while-revalidate behavior
- *
- * - Initial load (never had data): Shows skeleton for at least MIN_LOADING_DELAY
- * - Refetch (has had data before): Shows stale data silently, no loading indicator
- *
- * Usage:
- * ```typescript
- * const { data, isLoading, error } = useAppQuery({
- *   queryKey: ['approvals', filters],
- *   queryFn: () => fetchApprovals(filters),
- * })
- *
- * if (isLoading) return <Skeleton />
- * return <Data data={data} />
- * ```
- */
+// Initial load (no data yet): shows skeleton for at least MIN_LOADING_DELAY.
+// Refetch (has stale data): shows stale data silently, no loading indicator.
 export function useAppQuery<
   TQueryFnData = unknown,
   TError = Error,
@@ -69,20 +54,7 @@ export function useAppQuery<
   }
 }
 
-/**
- * Custom useMutation wrapper that enforces minimum loading duration
- *
- * Ensures mutation loading states last at least MIN_LOADING_DELAY milliseconds
- * for consistent UI feedback on create/update/delete operations.
- *
- * Usage:
- * ```typescript
- * const { mutate, isPending } = useAppMutation({
- *   mutationFn: (data) => apiClient.post('/v1/api-keys', data),
- *   onSuccess: () => queryClient.invalidateQueries({ queryKey: ['api-keys'] }),
- * })
- * ```
- */
+// Enforces MIN_LOADING_DELAY on isPending for consistent UI feedback
 export function useAppMutation<
   TData = unknown,
   TError = Error,
