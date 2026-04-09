@@ -7,7 +7,6 @@ tmp
 !.env.example
 test
 .vscode
-.claude
 charts
 .github
 scripts
