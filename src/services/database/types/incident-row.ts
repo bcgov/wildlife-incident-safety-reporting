@@ -1,6 +1,6 @@
 import type { Age, Sex, TimeOfKill } from './database.js'
 
-// Joined result from wars_incidents + species + service_areas.
+// Joined result from incidents + species + service_areas.
 // Not a repeat of codegen types - those are per-table. This represents
 // the flattened shape after joins with aliased columns.
 export interface IncidentRow {

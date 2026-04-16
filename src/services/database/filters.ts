@@ -19,7 +19,7 @@ type FilterFields = Pick<
 
 type IncidentEB = ExpressionBuilder<
   DB & {
-    wi: DB['wars_incidents']
+    wi: DB['incidents']
     sp: DB['species']
     sa: DB['service_areas']
   },
@@ -28,7 +28,7 @@ type IncidentEB = ExpressionBuilder<
 
 type DensityEB = ExpressionBuilder<
   DB & {
-    wi: DB['wars_incidents']
+    wi: DB['incidents']
     sp: DB['species']
   },
   'wi' | 'sp'

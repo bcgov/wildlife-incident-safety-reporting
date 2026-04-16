@@ -38,7 +38,7 @@ const schema = {
     },
     DB_NAME: {
       type: 'string',
-      default: 'wars',
+      default: 'wisr',
     },
     DB_USER: {
       type: 'string',

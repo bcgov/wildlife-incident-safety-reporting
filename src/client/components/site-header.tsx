@@ -1,4 +1,4 @@
-import warsIcon from '@/assets/images/wars-icon.png'
+import wisrIcon from '@/assets/images/wisr-icon.png'
 import { ModeToggle } from '@/components/mode-toggle'
 import { SearchAddress } from '@/components/search-address'
 import { Separator } from '@/components/ui/separator'
@@ -11,8 +11,8 @@ export function SiteHeader() {
       <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4! self-center!" />
-        <img src={warsIcon} alt="WARS" className="h-7" />
-        <h1 className="text-base font-medium">WARS</h1>
+        <img src={wisrIcon} alt="WISR" className="h-7" />
+        <h1 className="text-base font-medium">WISR</h1>
         <TabsList variant="line" className="ml-2">
           <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="data">Data</TabsTrigger>

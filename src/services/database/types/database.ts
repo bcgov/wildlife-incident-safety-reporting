@@ -42,6 +42,27 @@ export interface GeometryColumns {
   type: string | null
 }
 
+export interface Incidents {
+  accident_date: Timestamp | null
+  age: Age | null
+  comments: string | null
+  created_at: Generated<Timestamp>
+  geom: string | null
+  hmcr_record_id: number | null
+  id: Generated<number>
+  latitude: Numeric | null
+  lki_segment_id: number | null
+  longitude: Numeric | null
+  nearest_town: string | null
+  quantity: Generated<number>
+  service_area_id: number | null
+  sex: Sex | null
+  species_id: number
+  time_of_kill: TimeOfKill | null
+  updated_at: Generated<Timestamp>
+  year: number
+}
+
 export interface LkiSegments {
   chris_lki_segment_id: number
   created_at: Generated<Timestamp>
@@ -85,33 +106,12 @@ export interface Species {
   name: string
 }
 
-export interface WarsIncidents {
-  accident_date: Timestamp | null
-  age: Age | null
-  comments: string | null
-  created_at: Generated<Timestamp>
-  geom: string | null
-  hmcr_record_id: number | null
-  id: Generated<number>
-  latitude: Numeric | null
-  lki_segment_id: number | null
-  longitude: Numeric | null
-  nearest_town: string | null
-  quantity: Generated<number>
-  service_area_id: number | null
-  sex: Sex | null
-  species_id: number
-  time_of_kill: TimeOfKill | null
-  updated_at: Generated<Timestamp>
-  year: number
-}
-
 export interface DB {
   geography_columns: GeographyColumns
   geometry_columns: GeometryColumns
+  incidents: Incidents
   lki_segments: LkiSegments
   service_areas: ServiceAreas
   spatial_ref_sys: SpatialRefSys
   species: Species
-  wars_incidents: WarsIncidents
 }

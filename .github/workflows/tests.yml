@@ -17,7 +17,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: wars
+          POSTGRES_DB: wisr
         ports:
           - 5432:5432
         options: >-
@@ -49,4 +49,4 @@ jobs:
           DB_PORT: 5432
           DB_USER: postgres
           DB_PASSWORD: postgres
-          DB_NAME: wars_test
+          DB_NAME: wisr_test

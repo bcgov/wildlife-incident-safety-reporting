@@ -1,6 +1,6 @@
 apiVersion: v2
-name: wars-app
-description: Wildlife Activity Reporting System Helm chart
+name: wisr-app
+description: Wildlife Incident Safety Reporting Helm chart
 type: application
 version: 0.1.0
 appVersion: "0.1.0"

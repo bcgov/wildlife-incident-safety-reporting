@@ -1,5 +1,5 @@
 {
-  "name": "wars-app",
+  "name": "wisr-app",
   "version": "0.1.0",
   "description": "",
   "main": "build/server.js",
@@ -30,15 +30,15 @@
     "seed:service-areas": "bun run --bun scripts/seed-service-areas.ts",
     "migrate": "bun run --bun migrations/migrate.ts && bun run db:codegen",
     "migrate:rollback": "bun run --bun migrations/rollback.ts && bun run db:codegen",
-    "db:codegen": "DATABASE_URL=postgres://postgres:postgres@localhost:5432/wars bun run --bun kysely-codegen --dialect postgres --include-pattern 'public.*' --out-file src/services/database/types/database.ts"
+    "db:codegen": "DATABASE_URL=postgres://postgres:postgres@localhost:5432/wisr bun run --bun kysely-codegen --dialect postgres --include-pattern 'public.*' --out-file src/services/database/types/database.ts"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jaymcalli/wars-app.git"
+    "url": "git+https://github.com/jaymcalli/wisr-app.git"
   },
-  "homepage": "https://github.com/jaymcalli/wars-app#readme",
+  "homepage": "https://github.com/jaymcalli/wisr-app#readme",
   "bugs": {
-    "url": "https://github.com/jaymcalli/wars-app/issues"
+    "url": "https://github.com/jaymcalli/wisr-app/issues"
   },
   "keywords": [],
   "author": "jamcalli",

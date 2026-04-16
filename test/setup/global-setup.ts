@@ -7,12 +7,12 @@ export async function setup(): Promise<void> {
   process.env.PORT = '3004'
   process.env.DOTENV_CONFIG_QUIET = 'true'
 
-  // Database - points at the wars_test DB created by docker/init-test-db.sql
+  // Database - points at the wisr_test DB created by docker/init-test-db.sql
   process.env.DB_HOST = 'localhost'
   process.env.DB_PORT = '5432'
   process.env.DB_USER = 'postgres'
   process.env.DB_PASSWORD = 'postgres'
-  process.env.DB_NAME = 'wars_test'
+  process.env.DB_NAME = 'wisr_test'
 
   // Required by the config plugin but not exercised in tests (MSW stubs HTTP)
   process.env.KEYCLOAK_URL = 'http://localhost:8080'
@@ -28,7 +28,7 @@ export async function setup(): Promise<void> {
   )
   const { FileMigrationProvider, Migrator } = await import('kysely')
 
-  const db = createDatabase({ database: 'wars_test' })
+  const db = createDatabase({ database: 'wisr_test' })
 
   const migrator = new Migrator({
     db,

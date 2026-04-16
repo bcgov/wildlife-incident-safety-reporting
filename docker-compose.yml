@@ -1,16 +1,16 @@
 services:
   db:
     image: postgis/postgis:18-3.6
-    container_name: wars-db
+    container_name: wisr-db
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: wars
+      POSTGRES_DB: wisr
     volumes:
-      - wars-pgdata:/var/lib/postgresql
+      - wisr-pgdata:/var/lib/postgresql
       - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -19,4 +19,4 @@ services:
       retries: 5
 
 volumes:
-  wars-pgdata:
+  wisr-pgdata:

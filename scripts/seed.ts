@@ -198,7 +198,7 @@ async function runSpatialJoin(): Promise<void> {
 
   const result = await sql<{ matched: number }>`
     WITH updated AS (
-      UPDATE wars_incidents wi
+      UPDATE incidents wi
       SET service_area_id = sa.id
       FROM service_areas sa
       WHERE wi.geom IS NOT NULL
@@ -211,12 +211,12 @@ async function runSpatialJoin(): Promise<void> {
   const matched = result.rows[0].matched
 
   const { total } = await db
-    .selectFrom('wars_incidents')
+    .selectFrom('incidents')
     .select(db.fn.countAll<number>().as('total'))
     .executeTakeFirstOrThrow()
 
   const { no_coords } = await db
-    .selectFrom('wars_incidents')
+    .selectFrom('incidents')
     .select(db.fn.count<number>('id').as('no_coords'))
     .where('geom', 'is', null)
     .executeTakeFirstOrThrow()
@@ -236,11 +236,11 @@ async function runLkiAssignment(): Promise<void> {
 
   const result = await sql<{ matched: number }>`
     WITH updated AS (
-      UPDATE wars_incidents wi
+      UPDATE incidents wi
       SET lki_segment_id = sub.nearest_id
       FROM (
         SELECT wi2.id, nearest.chris_lki_segment_id AS nearest_id
-        FROM wars_incidents wi2
+        FROM incidents wi2
         CROSS JOIN LATERAL (
           SELECT chris_lki_segment_id, geom
           FROM lki_segments
@@ -259,12 +259,12 @@ async function runLkiAssignment(): Promise<void> {
   const matched = result.rows[0].matched
 
   const { total } = await db
-    .selectFrom('wars_incidents')
+    .selectFrom('incidents')
     .select(db.fn.countAll<number>().as('total'))
     .executeTakeFirstOrThrow()
 
   const { no_coords } = await db
-    .selectFrom('wars_incidents')
+    .selectFrom('incidents')
     .select(db.fn.count<number>('id').as('no_coords'))
     .where('geom', 'is', null)
     .executeTakeFirstOrThrow()
@@ -409,7 +409,7 @@ async function seed() {
     await db.transaction().execute(async (trx) => {
       // Disable per-row LKI trigger during bulk insert - we'll do a single
       // bulk assignment after all rows are in
-      await sql`ALTER TABLE wars_incidents DISABLE TRIGGER trg_wars_incidents_lki_assign`.execute(
+      await sql`ALTER TABLE incidents DISABLE TRIGGER trg_incidents_lki_assign`.execute(
         trx,
       )
 
@@ -418,7 +418,7 @@ async function seed() {
         const batchNum = Math.floor(i / BATCH_SIZE) + 1
 
         await trx
-          .insertInto('wars_incidents')
+          .insertInto('incidents')
           .values(
             batch.map((r) => ({
               accident_date: r.accident_date
@@ -446,13 +446,13 @@ async function seed() {
         }
       }
 
-      await sql`ALTER TABLE wars_incidents ENABLE TRIGGER trg_wars_incidents_lki_assign`.execute(
+      await sql`ALTER TABLE incidents ENABLE TRIGGER trg_incidents_lki_assign`.execute(
         trx,
       )
     })
 
     const { count } = await db
-      .selectFrom('wars_incidents')
+      .selectFrom('incidents')
       .select(db.fn.countAll<number>().as('count'))
       .executeTakeFirstOrThrow()
 

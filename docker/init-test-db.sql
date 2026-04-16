@@ -1,8 +1,8 @@
 -- Create test database and enable PostGIS on both databases
-CREATE DATABASE wars_test;
+CREATE DATABASE wisr_test;
 
-\c wars
+\c wisr
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-\c wars_test
+\c wisr_test
 CREATE EXTENSION IF NOT EXISTS postgis;

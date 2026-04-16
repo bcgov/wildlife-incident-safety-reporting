@@ -1,10 +1,10 @@
 [![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![CI](https://github.com/bcgov/wildlife-accident-reporting/actions/workflows/ci.yml/badge.svg)](https://github.com/bcgov/wildlife-accident-reporting/actions/workflows/ci.yml)
-[![Issues](https://img.shields.io/github/issues/bcgov/wildlife-accident-reporting)](/../../issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/bcgov/wildlife-accident-reporting)](/../../pulls)
+[![CI](https://github.com/bcgov/wildlife-incident-safety-reporting/actions/workflows/ci.yml/badge.svg)](https://github.com/bcgov/wildlife-incident-safety-reporting/actions/workflows/ci.yml)
+[![Issues](https://img.shields.io/github/issues/bcgov/wildlife-incident-safety-reporting)](/../../issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/bcgov/wildlife-incident-safety-reporting)](/../../pulls)
 
-# Wildlife Accident Reporting System (WARS)
+# Wildlife Incident Safety Reporting (WISR)
 
 Web application for analyzing wildlife-vehicle collision data on BC highways.
 

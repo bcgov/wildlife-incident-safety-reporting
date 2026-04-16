@@ -123,19 +123,19 @@ export async function up(db: Kysely<never>): Promise<void> {
     CREATE OR REPLACE FUNCTION reassign_incidents_service_area()
     RETURNS trigger AS $$
     BEGIN
-      UPDATE wars_incidents wi
+      UPDATE incidents wi
       SET service_area_id = sa.id
       FROM service_areas sa
       WHERE ST_Contains(sa.geom, wi.geom)
         AND wi.service_area_id IS DISTINCT FROM sa.id;
 
-      UPDATE wars_incidents
+      UPDATE incidents
       SET service_area_id = NULL
       WHERE geom IS NOT NULL
         AND service_area_id IS NOT NULL
         AND NOT EXISTS (
           SELECT 1 FROM service_areas sa
-          WHERE ST_Contains(sa.geom, wars_incidents.geom)
+          WHERE ST_Contains(sa.geom, incidents.geom)
         );
 
       RETURN NULL;
@@ -166,7 +166,7 @@ export async function up(db: Kysely<never>): Promise<void> {
     .execute()
 
   await db.schema
-    .createTable('wars_incidents')
+    .createTable('incidents')
     .addColumn('id', 'integer', (col) =>
       col.primaryKey().generatedAlwaysAsIdentity(),
     )
@@ -198,7 +198,7 @@ export async function up(db: Kysely<never>): Promise<void> {
 
   // Auto-compute geom from lat/lng, then assign service area via spatial containment
   await sql`
-    CREATE OR REPLACE FUNCTION wars_incidents_geom_trigger()
+    CREATE OR REPLACE FUNCTION incidents_geom_trigger()
     RETURNS trigger AS $$
     BEGIN
       IF NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL THEN
@@ -218,62 +218,62 @@ export async function up(db: Kysely<never>): Promise<void> {
   `.execute(db)
 
   await sql`
-    CREATE TRIGGER trg_wars_incidents_geom
-    BEFORE INSERT OR UPDATE OF latitude, longitude ON wars_incidents
+    CREATE TRIGGER trg_incidents_geom
+    BEFORE INSERT OR UPDATE OF latitude, longitude ON incidents
     FOR EACH ROW
-    EXECUTE FUNCTION wars_incidents_geom_trigger()
+    EXECUTE FUNCTION incidents_geom_trigger()
   `.execute(db)
 
   await sql`
-    CREATE TRIGGER trg_wars_incidents_updated_at
-    BEFORE UPDATE ON wars_incidents
+    CREATE TRIGGER trg_incidents_updated_at
+    BEFORE UPDATE ON incidents
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at()
   `.execute(db)
 
   await db.schema
-    .createIndex('idx_wars_incidents_geom')
-    .on('wars_incidents')
+    .createIndex('idx_incidents_geom')
+    .on('incidents')
     .using('gist')
     .column('geom')
     .execute()
 
   await db.schema
-    .createIndex('idx_wars_incidents_year')
-    .on('wars_incidents')
+    .createIndex('idx_incidents_year')
+    .on('incidents')
     .column('year')
     .execute()
 
   await db.schema
-    .createIndex('idx_wars_incidents_species_id')
-    .on('wars_incidents')
+    .createIndex('idx_incidents_species_id')
+    .on('incidents')
     .column('species_id')
     .execute()
 
   await db.schema
-    .createIndex('idx_wars_incidents_service_area_id')
-    .on('wars_incidents')
+    .createIndex('idx_incidents_service_area_id')
+    .on('incidents')
     .column('service_area_id')
     .execute()
 
   await db.schema
-    .createIndex('idx_wars_incidents_hmcr_record_id')
-    .on('wars_incidents')
+    .createIndex('idx_incidents_hmcr_record_id')
+    .on('incidents')
     .column('hmcr_record_id')
     .execute()
 
   await db.schema
-    .createIndex('idx_wars_incidents_year_species')
-    .on('wars_incidents')
+    .createIndex('idx_incidents_year_species')
+    .on('incidents')
     .columns(['year', 'species_id'])
     .execute()
 }
 
 export async function down(db: Kysely<never>): Promise<void> {
-  await db.schema.dropTable('wars_incidents').cascade().execute()
+  await db.schema.dropTable('incidents').cascade().execute()
   await db.schema.dropTable('service_areas').cascade().execute()
   await db.schema.dropTable('species').cascade().execute()
-  await sql`DROP FUNCTION IF EXISTS wars_incidents_geom_trigger() CASCADE`.execute(
+  await sql`DROP FUNCTION IF EXISTS incidents_geom_trigger() CASCADE`.execute(
     db,
   )
   await sql`DROP FUNCTION IF EXISTS recompute_simplified_geom() CASCADE`.execute(

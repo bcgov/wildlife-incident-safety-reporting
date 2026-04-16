@@ -12,8 +12,8 @@ const createOpenapiConfig = (fastify: FastifyInstance) => {
   return {
     openapi: {
       info: {
-        title: 'Wars API',
-        description: 'API documentation for the Wars application',
+        title: 'WISR API',
+        description: 'API documentation for the WISR application',
         version: 'V1',
       },
       servers: [

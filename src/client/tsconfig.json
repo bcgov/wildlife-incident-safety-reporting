@@ -7,7 +7,6 @@
     "module": "ESNext",
     "rootDir": "../..",
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
       "@schemas/*": ["../../src/schemas/*"]

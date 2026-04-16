@@ -260,7 +260,7 @@ export function DensityTable({
     useState<VisibilityState>(DEFAULT_VISIBILITY)
   const [globalFilter, setGlobalFilter] = useState('')
   const [pageSize, setPageSize] = useLocalStorage(
-    'wars-table-density-pageSize',
+    'wisr-table-density-pageSize',
     20,
   )
 
@@ -360,7 +360,7 @@ export function DensityTable({
       <DataTableToolbar
         table={table}
         searchPlaceholder="Search segment, highway..."
-        exportFilename="wars-lki-density.csv"
+        exportFilename="wisr-lki-density.csv"
         columnLabels={{
           segmentName: 'Segment',
           highwayNumber: 'Highway',

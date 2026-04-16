@@ -76,26 +76,26 @@ export async function up(db: Kysely<never>): Promise<void> {
   `.execute(db)
 
   await db.schema
-    .alterTable('wars_incidents')
+    .alterTable('incidents')
     .addColumn('lki_segment_id', 'integer', (col) =>
-      col.references('lki_segments.chris_lki_segment_id'),
+      col.references('lki_segments.chris_lki_segment_id').onDelete('set null'),
     )
     .execute()
 
   await db.schema
-    .createIndex('idx_wars_incidents_lki_segment_id')
-    .on('wars_incidents')
+    .createIndex('idx_incidents_lki_segment_id')
+    .on('incidents')
     .column('lki_segment_id')
     .execute()
 
   // Functional index for geography-based distance queries against incidents
   await sql`
-    CREATE INDEX idx_wars_incidents_geom_geog
-    ON wars_incidents USING gist (geography(geom))
+    CREATE INDEX idx_incidents_geom_geog
+    ON incidents USING gist (geography(geom))
   `.execute(db)
 
   // Assign nearest LKI segment within 200m on incident insert/update.
-  // This trigger fires after trg_wars_incidents_geom (alphabetical ordering)
+  // This trigger fires after trg_incidents_geom (alphabetical ordering)
   // which has already computed geom from lat/lng.
   // Uses <-> KNN operator (GiST-accelerated) to find nearest, then confirms
   // with a single ST_DWithin geography check on that one candidate.
@@ -129,8 +129,8 @@ export async function up(db: Kysely<never>): Promise<void> {
   `.execute(db)
 
   await sql`
-    CREATE TRIGGER trg_wars_incidents_lki_assign
-    BEFORE INSERT OR UPDATE OF latitude, longitude ON wars_incidents
+    CREATE TRIGGER trg_incidents_lki_assign
+    BEFORE INSERT OR UPDATE OF latitude, longitude ON incidents
     FOR EACH ROW
     EXECUTE FUNCTION assign_nearest_lki_segment()
   `.execute(db)
@@ -142,11 +142,11 @@ export async function up(db: Kysely<never>): Promise<void> {
     CREATE OR REPLACE FUNCTION reassign_incidents_lki_segment()
     RETURNS trigger AS $$
     BEGIN
-      UPDATE wars_incidents wi
+      UPDATE incidents wi
       SET lki_segment_id = sub.nearest_id
       FROM (
         SELECT wi2.id, nearest.chris_lki_segment_id AS nearest_id
-        FROM wars_incidents wi2
+        FROM incidents wi2
         CROSS JOIN LATERAL (
           SELECT chris_lki_segment_id, geom
           FROM lki_segments
@@ -159,13 +159,13 @@ export async function up(db: Kysely<never>): Promise<void> {
       WHERE wi.id = sub.id
         AND wi.lki_segment_id IS DISTINCT FROM sub.nearest_id;
 
-      UPDATE wars_incidents
+      UPDATE incidents
       SET lki_segment_id = NULL
       WHERE geom IS NOT NULL
         AND lki_segment_id IS NOT NULL
         AND NOT EXISTS (
           SELECT 1 FROM lki_segments s
-          WHERE ST_DWithin(geography(s.geom), geography(wars_incidents.geom), 200)
+          WHERE ST_DWithin(geography(s.geom), geography(incidents.geom), 200)
         );
 
       RETURN NULL;
@@ -188,17 +188,14 @@ export async function down(db: Kysely<never>): Promise<void> {
   await sql`DROP FUNCTION IF EXISTS reassign_incidents_lki_segment() CASCADE`.execute(
     db,
   )
-  await sql`DROP TRIGGER IF EXISTS trg_wars_incidents_lki_assign ON wars_incidents`.execute(
+  await sql`DROP TRIGGER IF EXISTS trg_incidents_lki_assign ON incidents`.execute(
     db,
   )
   await sql`DROP FUNCTION IF EXISTS assign_nearest_lki_segment() CASCADE`.execute(
     db,
   )
-  await db.schema.dropIndex('idx_wars_incidents_geom_geog').execute()
-  await db.schema
-    .alterTable('wars_incidents')
-    .dropColumn('lki_segment_id')
-    .execute()
+  await db.schema.dropIndex('idx_incidents_geom_geog').execute()
+  await db.schema.alterTable('incidents').dropColumn('lki_segment_id').execute()
   await db.schema.dropTable('lki_segments').cascade().execute()
   await db.schema.alterTable('species').dropColumn('body_size').execute()
   await db.schema.dropType('body_size').ifExists().execute()

@@ -289,7 +289,7 @@ export function IncidentsTable({ incidents, isLoading }: IncidentsTableProps) {
     useState<VisibilityState>(DEFAULT_VISIBILITY)
   const [globalFilter, setGlobalFilter] = useState('')
   const [pageSize, setPageSize] = useLocalStorage(
-    'wars-table-incidents-pageSize',
+    'wisr-table-incidents-pageSize',
     20,
   )
 
@@ -343,7 +343,7 @@ export function IncidentsTable({ incidents, isLoading }: IncidentsTableProps) {
       <DataTableToolbar
         table={table}
         searchPlaceholder="Search species, town, area..."
-        exportFilename="wars-incidents.csv"
+        exportFilename="wisr-incidents.csv"
         columnLabels={{
           accidentDate: 'Date',
           year: 'Year',

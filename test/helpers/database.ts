@@ -15,7 +15,7 @@ export async function initializeTestDatabase(): Promise<Kysely<DB>> {
 
   globalThis.__testDb = createDatabase({
     url: process.env.TEST_DATABASE_URL,
-    database: 'wars_test',
+    database: 'wisr_test',
   })
 
   return globalThis.__testDb

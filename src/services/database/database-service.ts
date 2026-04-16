@@ -46,7 +46,7 @@ export class DatabaseService {
     this.log.debug({ filters }, 'querying incidents')
 
     const baseQuery = this.kysely
-      .selectFrom('wars_incidents as wi')
+      .selectFrom('incidents as wi')
       .innerJoin('species as sp', 'sp.id', 'wi.species_id')
       .leftJoin('service_areas as sa', 'sa.id', 'wi.service_area_id')
       .where((eb) => applyFilters(eb, filters))
@@ -162,7 +162,7 @@ export class DatabaseService {
       dateRange,
     ] = await Promise.all([
       this.kysely
-        .selectFrom('wars_incidents')
+        .selectFrom('incidents')
         .select('year')
         .distinct()
         .orderBy('year', 'desc')
@@ -178,25 +178,25 @@ export class DatabaseService {
         .orderBy('name')
         .execute(),
       this.kysely
-        .selectFrom('wars_incidents')
+        .selectFrom('incidents')
         .select('sex')
         .distinct()
         .where('sex', 'is not', null)
         .execute(),
       this.kysely
-        .selectFrom('wars_incidents')
+        .selectFrom('incidents')
         .select('time_of_kill')
         .distinct()
         .where('time_of_kill', 'is not', null)
         .execute(),
       this.kysely
-        .selectFrom('wars_incidents')
+        .selectFrom('incidents')
         .select('age')
         .distinct()
         .where('age', 'is not', null)
         .execute(),
       this.kysely
-        .selectFrom('wars_incidents')
+        .selectFrom('incidents')
         .select([
           sql<string | null>`min(accident_date)::date::text`.as('min'),
           sql<string | null>`max(accident_date)::date::text`.as('max'),
@@ -294,7 +294,7 @@ export class DatabaseService {
         // Use xmax to distinguish inserts (xmax = 0) from updates (xmax > 0).
         // IS DISTINCT FROM and xmax aren't expressible via the query builder.
         const result = await trx
-          .insertInto('wars_incidents')
+          .insertInto('incidents')
           .values(
             batch.map((r) => ({
               hmcr_record_id: r.hmcr_record_id,
@@ -333,17 +333,17 @@ export class DatabaseService {
               }))
               .where(
                 sql<boolean>`
-                  wars_incidents.accident_date IS DISTINCT FROM excluded.accident_date
-                  OR wars_incidents.time_of_kill IS DISTINCT FROM excluded.time_of_kill
-                  OR wars_incidents.nearest_town IS DISTINCT FROM excluded.nearest_town
-                  OR wars_incidents.sex IS DISTINCT FROM excluded.sex
-                  OR wars_incidents.age IS DISTINCT FROM excluded.age
-                  OR wars_incidents.comments IS DISTINCT FROM excluded.comments
-                  OR wars_incidents.quantity IS DISTINCT FROM excluded.quantity
-                  OR wars_incidents.latitude IS DISTINCT FROM excluded.latitude
-                  OR wars_incidents.longitude IS DISTINCT FROM excluded.longitude
-                  OR wars_incidents.species_id IS DISTINCT FROM excluded.species_id
-                  OR wars_incidents.year IS DISTINCT FROM excluded.year
+                  incidents.accident_date IS DISTINCT FROM excluded.accident_date
+                  OR incidents.time_of_kill IS DISTINCT FROM excluded.time_of_kill
+                  OR incidents.nearest_town IS DISTINCT FROM excluded.nearest_town
+                  OR incidents.sex IS DISTINCT FROM excluded.sex
+                  OR incidents.age IS DISTINCT FROM excluded.age
+                  OR incidents.comments IS DISTINCT FROM excluded.comments
+                  OR incidents.quantity IS DISTINCT FROM excluded.quantity
+                  OR incidents.latitude IS DISTINCT FROM excluded.latitude
+                  OR incidents.longitude IS DISTINCT FROM excluded.longitude
+                  OR incidents.species_id IS DISTINCT FROM excluded.species_id
+                  OR incidents.year IS DISTINCT FROM excluded.year
                 `,
               ),
           )
@@ -452,11 +452,11 @@ export class DatabaseService {
       if (inserted > 0 || updated > 0 || deleted > 0) {
         this.log.debug('reassigning incidents to LKI segments')
         await sql`
-          UPDATE wars_incidents wi
+          UPDATE incidents wi
           SET lki_segment_id = sub.nearest_id
           FROM (
             SELECT wi2.id, nearest.chris_lki_segment_id AS nearest_id
-            FROM wars_incidents wi2
+            FROM incidents wi2
             CROSS JOIN LATERAL (
               SELECT chris_lki_segment_id, geom
               FROM lki_segments
@@ -471,13 +471,13 @@ export class DatabaseService {
         `.execute(trx)
 
         await sql`
-          UPDATE wars_incidents
+          UPDATE incidents
           SET lki_segment_id = NULL
           WHERE geom IS NOT NULL
             AND lki_segment_id IS NOT NULL
             AND NOT EXISTS (
               SELECT 1 FROM lki_segments s
-              WHERE ST_DWithin(geography(s.geom), geography(wars_incidents.geom), 200)
+              WHERE ST_DWithin(geography(s.geom), geography(incidents.geom), 200)
             )
         `.execute(trx)
       }
@@ -497,7 +497,7 @@ export class DatabaseService {
     const rows = await this.kysely
       .with('filtered', (db) =>
         db
-          .selectFrom('wars_incidents as wi')
+          .selectFrom('incidents as wi')
           .innerJoin('species as sp', 'sp.id', 'wi.species_id')
           .select(['wi.lki_segment_id', 'wi.quantity', 'sp.body_size'])
           .where('wi.lki_segment_id', 'is not', null)

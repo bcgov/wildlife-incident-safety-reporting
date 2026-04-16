@@ -15,14 +15,13 @@
     "strict": true,
     "target": "es2022",
     "types": ["bun-types"],
-    "baseUrl": "./src",
     "paths": {
-      "@root/*": ["./*"],
-      "@routes/*": ["./routes/*"],
-      "@utils/*": ["./utils/*"],
-      "@schemas/*": ["./schemas/*"],
-      "@services/*": ["./services/*"],
-      "@/*": ["./client/*"]
+      "@root/*": ["./src/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@schemas/*": ["./src/schemas/*"],
+      "@services/*": ["./src/services/*"],
+      "@/*": ["./src/client/*"]
     }
   },
   "include": ["src/**/*"],
