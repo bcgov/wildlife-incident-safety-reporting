@@ -1,5 +1,5 @@
 # Stage 1 - Base
-FROM oven/bun:1.3.10-alpine AS base
+FROM oven/bun:1.3.12-alpine AS base
 WORKDIR /app
 
 # Stage 2 - Production dependencies (cached independently)
