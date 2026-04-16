@@ -14,7 +14,7 @@ export default {
   root: resolve(import.meta.dirname, 'src/client'),
   plugins: [
     viteReact(),
-    viteFastify({ spa: true, useRelativePaths: true }),
+    viteFastify({ spa: true }),
     compression({ algorithms: ['gzip', 'brotliCompress'], threshold: 1024 }),
   ],
   build: {
