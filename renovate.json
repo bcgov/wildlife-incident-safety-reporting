@@ -1,6 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Presets from https://github.com/bcgov/renovate-config",
   "extends": ["github>bcgov/renovate-config#2026.01"],
   "customManagers": [
     {
@@ -16,15 +15,177 @@
   ],
   "packageRules": [
     {
+      "description": "Include bun manager alongside npm/yarn/pnpm for JS dependency grouping",
+      "matchManagers": ["bun"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "node dependencies",
+      "groupSlug": "node"
+    },
+    {
+      "description": "Group build tools (Vite, TypeScript, Biome)",
+      "groupName": "Build tools",
+      "matchPackageNames": [
+        "vite",
+        "@vitejs/plugin-react",
+        "typescript",
+        "tsc-alias",
+        "@biomejs/biome"
+      ]
+    },
+    {
       "description": "Keep biome.json schema in sync with @biomejs/biome package",
       "matchPackageNames": ["@biomejs/biome"],
-      "groupName": "biome",
+      "matchFileNames": ["biome.json"],
+      "groupName": "Build tools",
       "rangeStrategy": "bump"
+    },
+    {
+      "description": "Bump Biome range so package.json and biome.json stay in sync",
+      "matchPackageNames": ["@biomejs/biome"],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Group Fastify ecosystem",
+      "groupName": "Fastify ecosystem",
+      "matchPackageNames": [
+        "/^@fastify//",
+        "/^fastify/",
+        "fastify-zod-openapi",
+        "get-jwks",
+        "!fastify-cli",
+        "!fastify-tsconfig"
+      ]
+    },
+    {
+      "description": "Group React ecosystem",
+      "groupName": "React",
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "react-hook-form",
+        "react-router-dom",
+        "@hookform/resolvers",
+        "zod",
+        "@types/react",
+        "@types/react-dom"
+      ]
+    },
+    {
+      "description": "Group Radix UI components",
+      "groupName": "Radix UI",
+      "matchPackageNames": ["/^@radix-ui//", "radix-ui"]
+    },
+    {
+      "description": "Group TanStack packages",
+      "groupName": "TanStack",
+      "matchPackageNames": ["/^@tanstack//"]
+    },
+    {
+      "description": "Group Tailwind ecosystem",
+      "groupName": "Tailwind CSS",
+      "matchPackageNames": [
+        "tailwindcss",
+        "@tailwindcss/postcss",
+        "postcss",
+        "autoprefixer",
+        "tailwind-merge",
+        "class-variance-authority",
+        "tw-animate-css"
+      ]
+    },
+    {
+      "description": "Group database dependencies",
+      "groupName": "Database",
+      "matchPackageNames": [
+        "kysely",
+        "kysely-postgis",
+        "kysely-postgres-js",
+        "kysely-codegen",
+        "pg"
+      ]
+    },
+    {
+      "description": "Group testing dependencies",
+      "groupName": "Testing",
+      "matchPackageNames": ["vitest", "/^@vitest//", "msw"]
+    },
+    {
+      "description": "Group map dependencies",
+      "groupName": "Map",
+      "matchPackageNames": [
+        "maplibre-gl",
+        "maplibre-google-maps",
+        "terra-draw",
+        "terra-draw-maplibre-gl-adapter",
+        "@nazka/map-gl-js-spiderfy",
+        "/^@turf//"
+      ]
+    },
+    {
+      "description": "Group TypeScript types",
+      "groupName": "TypeScript types",
+      "matchPackageNames": ["/^@types//", "!@types/react", "!@types/react-dom"]
     },
     {
       "description": "Pin recharts to v2.x - shadcn chart component not compatible with v3",
       "matchPackageNames": ["recharts"],
       "allowedVersions": "< 3.0.0"
+    },
+    {
+      "description": "Auto-merge patch updates after 2 day stability period",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "2 days"
+    },
+    {
+      "description": "Auto-merge minor updates after 3 day stability period",
+      "matchUpdateTypes": ["minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Require manual review for major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major-update"],
+      "minimumReleaseAge": "7 days",
+      "prPriority": 10
+    },
+    {
+      "description": "Auto-merge GitHub Actions minor/patch updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch", "minor", "pinDigest"],
+      "groupName": "GitHub Actions",
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Require manual review for major GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Pin GitHub Actions to commit SHAs for security",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    },
+    {
+      "description": "Prioritize vulnerability alerts above all other updates",
+      "matchCategories": ["security"],
+      "prPriority": 20
     }
-  ]
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "automerge": true,
+    "automergeType": "pr",
+    "schedule": ["at any time"],
+    "labels": ["security", "dependencies"]
+  },
+  "osvVulnerabilityAlerts": true
 }
