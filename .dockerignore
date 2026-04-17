@@ -11,3 +11,7 @@ charts
 .github
 scripts
 *.md
+coverage
+.cache
+.vite
+*.log

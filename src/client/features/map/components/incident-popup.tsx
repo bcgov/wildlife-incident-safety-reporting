@@ -1,10 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { config } from '@/lib/config'
 import type { IncidentProperties } from '../index'
 import { getStreetViewUrl } from '../lib/street-view'
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string
+const GOOGLE_MAPS_API_KEY = config.googleMapsApiKey
 
 function titleCase(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()

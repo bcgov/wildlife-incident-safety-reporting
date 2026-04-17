@@ -8,10 +8,11 @@ import {
   useMap,
 } from '@/components/ui/map'
 import { Skeleton } from '@/components/ui/skeleton'
+import { config } from '@/lib/config'
 import { useLocationStore } from '@/stores/location-store'
 import { getStreetViewUrl } from '../lib/street-view'
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string
+const GOOGLE_MAPS_API_KEY = config.googleMapsApiKey
 
 type DetailRowProps = {
   label: string

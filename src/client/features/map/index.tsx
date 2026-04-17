@@ -10,6 +10,7 @@ import {
   useMap,
 } from '@/components/ui/map'
 import { useIncidents } from '@/hooks/use-incidents'
+import { config } from '@/lib/config'
 import { speciesIcons } from '@/lib/species-icons'
 import { useIncidentLocateStore } from '@/stores/incident-locate-store'
 import { useSegmentLocateStore } from '@/stores/segment-locate-store'
@@ -195,7 +196,7 @@ function LocateSegment() {
   return null
 }
 
-const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+const googleMapsApiKey = config.googleMapsApiKey
 
 export function Component() {
   const { data: response } = useIncidents()

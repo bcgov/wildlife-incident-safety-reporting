@@ -180,6 +180,11 @@
       "pinDigests": true
     },
     {
+      "description": "Pin Docker base images to digest for supply-chain hygiene",
+      "matchManagers": ["dockerfile"],
+      "pinDigests": true
+    },
+    {
       "description": "Prioritize vulnerability alerts above all other updates",
       "matchCategories": ["security"],
       "prPriority": 20

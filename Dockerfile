@@ -6,19 +6,11 @@ WORKDIR /app
 FROM base AS install
 WORKDIR /temp/prod
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production --ignore-scripts
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile --production --ignore-scripts
 
 # Stage 3 - Full install + build
 FROM base AS builder
-
-# VITE_ vars are baked into the client bundle at build time.
-# Pass via --build-arg or CI secrets. Server env vars are injected at runtime.
-# Required: VITE_KEYCLOAK_URL, VITE_KEYCLOAK_REALM, VITE_KEYCLOAK_CLIENT_ID
-# Optional: VITE_GOOGLE_MAPS_API_KEY
-ARG VITE_KEYCLOAK_URL
-ARG VITE_KEYCLOAK_REALM
-ARG VITE_KEYCLOAK_CLIENT_ID
-ARG VITE_GOOGLE_MAPS_API_KEY
 
 COPY package.json bun.lock ./
 
@@ -37,8 +29,8 @@ FROM base
 ENV NODE_ENV=production
 
 COPY package.json bun.lock ./
-COPY --from=install /temp/prod/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
+COPY --link --from=install /temp/prod/node_modules ./node_modules
+COPY --link --from=builder /app/dist ./dist
 
 EXPOSE 3033
 

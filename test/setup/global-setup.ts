@@ -18,6 +18,7 @@ export async function setup(): Promise<void> {
   process.env.KEYCLOAK_URL = 'http://localhost:8080'
   process.env.KEYCLOAK_REALM = 'test'
   process.env.KEYCLOAK_CLIENT_ID = 'test-client'
+  process.env.GOOGLE_MAPS_API_KEY = 'test-maps-key'
   process.env.HMCR_ID = 'test-hmcr-id'
   process.env.HMCR_SECRET = 'test-hmcr-secret'
   process.env.HMCR_API_URL = 'http://localhost:9090/api'

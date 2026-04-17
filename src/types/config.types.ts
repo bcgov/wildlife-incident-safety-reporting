@@ -15,6 +15,7 @@ export interface Config {
   keycloakUrl: string
   keycloakRealm: string
   keycloakClientId: string
+  googleMapsApiKey: string
   hmcrId: string
   hmcrSecret: string
   hmcrApiUrl: string
