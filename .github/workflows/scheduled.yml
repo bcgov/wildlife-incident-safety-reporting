@@ -93,7 +93,7 @@ jobs:
           mkdir -p output/schema
           chmod a+rwx -R output
       - name: Run SchemaSpy
-        run: docker run --network host -v "$PWD/output:/output" schemaspy/schemaspy:6.2.4@sha256:08290ff34c0fa4c1b28af555fbedf755159e42d02651a987e6077cb40a06f1ff -t pgsql11 -db wisr -host 127.0.0.1 -port 5432 -u postgres -p postgres -schemas public
+        run: docker run --network host -v "$PWD/output:/output" schemaspy/schemaspy:7.0.2@sha256:c8f98116a5cfe4b00b379eeb23b2022cdea4c9192cbccb843a75049e752479b7 -t pgsql11 -db wisr -host 127.0.0.1 -port 5432 -u postgres -p postgres -schemas public
       - name: Deploy to Pages
         uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4
         with:
