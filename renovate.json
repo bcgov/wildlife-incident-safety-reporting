@@ -11,6 +11,15 @@
       ],
       "depNameTemplate": "@biomejs/biome",
       "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "description": "Update SchemaSpy Docker image referenced in workflow run steps",
+      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/"],
+      "matchStrings": [
+        "(?<depName>schemaspy/schemaspy):(?<currentValue>[\\d.]+)@(?<currentDigest>sha256:[a-f0-9]+)"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
