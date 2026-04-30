@@ -76,9 +76,12 @@ export function ChartToolbar({
           </PopoverHeader>
           <div className="flex flex-col gap-1.5">
             {speciesKeys
-              .filter((s) => s !== REMAINING_KEY)
               .slice()
-              .sort((a, b) => a.localeCompare(b))
+              .sort((a, b) => {
+                if (a === REMAINING_KEY) return 1
+                if (b === REMAINING_KEY) return -1
+                return a.localeCompare(b)
+              })
               .map((species) => (
                 <div key={species} className="flex items-center gap-2 text-sm">
                   <div

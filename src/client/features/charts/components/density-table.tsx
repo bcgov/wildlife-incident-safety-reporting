@@ -100,18 +100,6 @@ function locateColumn(densityMode: DensityMode): ColumnDef<DensityRow> {
 
 const dataColumns: ColumnDef<DensityRow>[] = [
   {
-    id: 'rank',
-    header: '#',
-    enableSorting: false,
-    cell: ({ row, table }) => {
-      const sortedRows = table.getSortedRowModel().rows
-      const idx = sortedRows.indexOf(row)
-      return (
-        <span className="text-muted-foreground tabular-nums">{idx + 1}</span>
-      )
-    },
-  },
-  {
     accessorKey: 'segmentName',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Segment" />
@@ -219,7 +207,6 @@ const dataColumns: ColumnDef<DensityRow>[] = [
 ]
 
 const skeletonColumns: ColumnConfig[] = [
-  { type: 'text', width: 'w-6' },
   { type: 'text', width: 'w-28' },
   { type: 'text', width: 'w-12' },
   { type: 'text', width: 'w-14' },

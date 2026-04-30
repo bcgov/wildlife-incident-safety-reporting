@@ -140,8 +140,15 @@ const columns: ColumnDef<Incident>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Species" />
     ),
-    cell: ({ getValue }) => (
-      <span className="font-medium">{getValue<string>()}</span>
+    cell: ({ row, getValue }) => (
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden
+          className="size-2 shrink-0 rounded-sm"
+          style={{ backgroundColor: row.original.speciesColor }}
+        />
+        <span className="font-semibold">{getValue<string>()}</span>
+      </div>
     ),
   },
   {

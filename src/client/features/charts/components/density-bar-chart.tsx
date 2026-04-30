@@ -129,6 +129,7 @@ export function DensityBarChart({
                 axisLine={false}
                 width={120}
                 fontSize={11}
+                interval={0}
                 tick={({ x, y, payload }) => (
                   <text
                     x={x}
