@@ -9,7 +9,7 @@ const createCorsConfig = (fastify: FastifyInstance): FastifyCorsOptions => {
   )
 
   return {
-    origin: true,
+    origin: fastify.config.corsOrigin || true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [

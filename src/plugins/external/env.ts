@@ -71,6 +71,10 @@ const schema = {
       type: 'number',
       default: 500,
     },
+    CORS_ORIGIN: {
+      type: 'string',
+      default: '',
+    },
     KEYCLOAK_URL: {
       type: 'string',
     },
@@ -116,6 +120,7 @@ interface RawEnv {
   LOG_LEVEL: string
   CLOSE_GRACE_DELAY: number
   RATE_LIMIT_MAX: number
+  CORS_ORIGIN: string
   KEYCLOAK_URL: string
   KEYCLOAK_REALM: string
   KEYCLOAK_CLIENT_ID: string
@@ -160,6 +165,7 @@ export default fp(
       logLevel: raw.LOG_LEVEL,
       closeGraceDelay: raw.CLOSE_GRACE_DELAY,
       rateLimitMax: raw.RATE_LIMIT_MAX,
+      corsOrigin: raw.CORS_ORIGIN,
       keycloakUrl: raw.KEYCLOAK_URL,
       keycloakRealm: raw.KEYCLOAK_REALM,
       keycloakClientId: raw.KEYCLOAK_CLIENT_ID,
