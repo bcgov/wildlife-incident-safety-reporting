@@ -117,6 +117,35 @@ describe('Auth Security', () => {
     })
   })
 
+  describe('Cluster-internal Routes', () => {
+    it('rejects /health with 404 when x-forwarded-host is set', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/health',
+        headers: { 'x-forwarded-host': 'wisr.apps.silver.devops.gov.bc.ca' },
+      })
+      expect(res.statusCode).toBe(404)
+    })
+
+    it('rejects /internal/* with 404 when x-forwarded-host is set', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/internal/incidents/hmcr-sync',
+        headers: { 'x-forwarded-host': 'wisr.apps.silver.devops.gov.bc.ca' },
+      })
+      expect(res.statusCode).toBe(404)
+    })
+
+    it('does not reject /v1/* on x-forwarded-host (auth still applies)', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: protectedUrl,
+        headers: { 'x-forwarded-host': 'wisr.apps.silver.devops.gov.bc.ca' },
+      })
+      expect(res.statusCode).toBe(401)
+    })
+  })
+
   describe('Error Response Shape', () => {
     it('returns structured error with expected fields', async () => {
       const res = await app.inject({ method: 'GET', url: protectedUrl })
