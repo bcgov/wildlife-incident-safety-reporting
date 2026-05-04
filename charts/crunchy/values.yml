@@ -1,7 +1,7 @@
 global:
   config:
     dbName: app #test
-crunchy: # enable it for TEST and PROD, for PR based pipelines simply use single postgres
+crunchy: # base values are sized for PR ephemeral environments; values-prod.yml layers on the production overrides
   enabled: true
   postgresVersion: 18
   postGISVersion: 3.6
@@ -25,8 +25,8 @@ crunchy: # enable it for TEST and PROD, for PR based pipelines simply use single
     enabled: false
     target: ~ # 2024-03-24 17:16:00-07 this is the target timestamp to go back to in current cluster
   instances:
-    name: db # high availability
-    replicas: 2 # 2 or 3 for high availability in TEST and PROD.
+    name: db
+    replicas: 1 # PR/dev/test default; prod overrides to 2 via values-prod.yml
     metadata:
       annotations:
         prometheus.io/scrape: 'true'
@@ -106,7 +106,7 @@ crunchy: # enable it for TEST and PROD, for PR based pipelines simply use single
     enabled: true
     pgBouncer:
       image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
-      replicas: 2
+      replicas: 1 # PR/dev/test default; prod overrides to 2 via values-prod.yml
       requests:
         cpu: 5m
         memory: 32Mi

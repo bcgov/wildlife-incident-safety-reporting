@@ -1,0 +1,9 @@
+# Production overrides layered on top of charts/crunchy/values.yml.
+# Apply via the deploy workflow with: helm upgrade -f values.yml -f values-prod.yml
+# (or, when using bcgov/action-crunchy, point values_file at the layered set).
+crunchy:
+  instances:
+    replicas: 2
+  proxy:
+    pgBouncer:
+      replicas: 2
