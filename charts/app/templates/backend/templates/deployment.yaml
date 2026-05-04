@@ -21,7 +21,7 @@ spec:
         rollme: {{ randAlphaNum 5 | quote }}
         prometheus.io/scrape: 'true'
         prometheus.io/port: '3033'
-        prometheus.io/path: '/api/metrics'
+        prometheus.io/path: '/metrics'
       labels:
         {{- include "backend.labels" . | nindent 8 }}
     spec:
@@ -71,7 +71,7 @@ spec:
               protocol: TCP
           startupProbe:
             httpGet:
-              path: /api/health
+              path: /health
               port: http
               scheme: HTTP
             initialDelaySeconds: 5
@@ -81,7 +81,7 @@ spec:
             failureThreshold: 10
           readinessProbe:
             httpGet:
-              path: /api/health
+              path: /health
               port: http
               scheme: HTTP
             initialDelaySeconds: 5
@@ -93,7 +93,7 @@ spec:
             successThreshold: 1
             failureThreshold: 3
             httpGet:
-              path: /api/health
+              path: /health
               port: http
               scheme: HTTP
             initialDelaySeconds: 15
