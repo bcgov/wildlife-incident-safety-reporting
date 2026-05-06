@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import { sql } from 'kysely'
 import Papa from 'papaparse'
@@ -183,7 +184,26 @@ function parseComments(raw: string): string | null {
   return raw.trim()
 }
 
-function resolveDataFile(root: string, filename: string): string {
+async function resolveDataFile(
+  root: string,
+  filename: string,
+): Promise<string> {
+  const url = process.env.WARS_SEED_URL
+  if (url) {
+    const tmpPath = path.join(os.tmpdir(), filename)
+    console.log(`Downloading seed data for ${filename} from WARS_SEED_URL`)
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(
+        `Seed download failed: ${response.status} ${response.statusText}`,
+      )
+    }
+    const buffer = Buffer.from(await response.arrayBuffer())
+    writeFileSync(tmpPath, buffer)
+    console.log(`Downloaded ${buffer.byteLength} bytes to ${tmpPath}`)
+    return tmpPath
+  }
+
   const seedPath = path.join(root, 'data', 'seed', filename)
   const samplePath = path.join(root, 'data', 'sample', filename)
   const resolved = existsSync(seedPath) ? seedPath : samplePath
@@ -282,6 +302,21 @@ async function runLkiAssignment(): Promise<void> {
 async function seed() {
   console.log(DRY_RUN ? '=== DRY RUN (no DB writes) ===' : '=== SEED ===')
 
+  if (!DRY_RUN) {
+    const { count } = await db
+      .selectFrom('incidents')
+      .select(db.fn.countAll<number>().as('count'))
+      .executeTakeFirstOrThrow()
+
+    if (Number(count) > 0) {
+      console.log(
+        `Skipping seed: ${count} incidents already loaded. Truncate the table to re-seed.`,
+      )
+      await db.destroy()
+      return
+    }
+  }
+
   const root = path.resolve(import.meta.dir, '..')
 
   console.log('\n--- Service Areas ---')
@@ -303,7 +338,7 @@ async function seed() {
 
   const match = buildMatcher(speciesMap)
 
-  const csvPath = resolveDataFile(root, 'WARs.csv')
+  const csvPath = await resolveDataFile(root, 'WARs.csv')
   const csvText = readFileSync(csvPath, 'utf-8')
   const parsed = Papa.parse<CsvRow>(csvText, {
     header: true,

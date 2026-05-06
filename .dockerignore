@@ -9,7 +9,6 @@ test
 .vscode
 charts
 .github
-scripts
 *.md
 coverage
 .cache

@@ -79,6 +79,18 @@ backend:
   pdb:
     enabled: false # enable it in PRODUCTION for having pod disruption budget.
     minAvailable: 1 # the minimum number of pods that must be available during the disruption budget.
+  #-- one-shot historical seed Job; fires on first helm install only. enable in the prod release.
+  seed:
+    enabled: false
+    #-- name of an out-of-band Secret holding WARS_SEED_URL. created manually per environment.
+    secretName: wisr-seed
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
   #-- scheduled in-cluster sync jobs that POST to /internal/* endpoints. defaulted off; flip on for the production release only.
   cron:
     enabled: false

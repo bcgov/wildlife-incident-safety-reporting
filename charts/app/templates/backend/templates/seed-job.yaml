@@ -1,0 +1,47 @@
+{{- if and .Values.backend.enabled .Values.backend.seed.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "backend.fullname" . }}-seed
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "backend.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: seed
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          image: "{{ .Values.global.registry | default "ghcr.io" }}/{{ .Values.global.repository }}/seed:{{ .Values.global.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ default "Always" .Values.backend.imagePullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-migrations
+            - secretRef:
+                name: {{ .Values.backend.seed.secretName }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            {{- toYaml .Values.backend.seed.resources | nindent 12 }}
+{{- end }}
