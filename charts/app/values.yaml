@@ -73,6 +73,12 @@ backend:
     targetPort: 3033 # this is container port where app listens on
   ingress:
     enabled: true
+    #-- haproxy ip_whitelist applied per the restrict* flags below. BC Gov internal CIDR ranges.
+    ipWhitelist: "142.22.0.0/16 142.23.0.0/16 142.24.0.0/16 142.25.0.0/16 142.26.0.0/16 142.27.0.0/16 142.28.0.0/16 142.29.0.0/16 142.30.0.0/16 142.31.0.0/16 142.32.0.0/16 142.33.0.0/16 142.34.0.0/16 142.35.0.0/16 142.36.0.0/16"
+    #-- apply ipWhitelist to the main route. dev/PR/test default; prod sets false (public).
+    restrictMain: true
+    #-- render a separate /api/docs route with the ipWhitelist. prod-only; redundant when restrictMain is true.
+    restrictDocs: false
     annotations:
       haproxy.router.openshift.io/balance: "roundrobin"
       route.openshift.io/termination: "edge"
