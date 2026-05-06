@@ -122,7 +122,7 @@ describe('Auth Security', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/health',
-        headers: { 'x-forwarded-host': 'wisr.apps.silver.devops.gov.bc.ca' },
+        headers: { 'x-forwarded-host': 'wisr.apps.gold.devops.gov.bc.ca' },
       })
       expect(res.statusCode).toBe(404)
     })
@@ -131,7 +131,7 @@ describe('Auth Security', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/internal/incidents/hmcr-sync',
-        headers: { 'x-forwarded-host': 'wisr.apps.silver.devops.gov.bc.ca' },
+        headers: { 'x-forwarded-host': 'wisr.apps.gold.devops.gov.bc.ca' },
       })
       expect(res.statusCode).toBe(404)
     })
@@ -140,7 +140,7 @@ describe('Auth Security', () => {
       const res = await app.inject({
         method: 'GET',
         url: protectedUrl,
-        headers: { 'x-forwarded-host': 'wisr.apps.silver.devops.gov.bc.ca' },
+        headers: { 'x-forwarded-host': 'wisr.apps.gold.devops.gov.bc.ca' },
       })
       expect(res.statusCode).toBe(401)
     })

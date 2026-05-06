@@ -113,4 +113,4 @@ jobs:
   #         artifact_name: app
   #         issue_title: "ZAP Security Report"
   #         token: ${{ secrets.GITHUB_TOKEN }}
-  #         target: https://${{ github.event.repository.name }}-test.apps.silver.devops.gov.bc.ca/
+  #         target: https://${{ github.event.repository.name }}-test.apps.gold.devops.gov.bc.ca/

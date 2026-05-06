@@ -56,6 +56,7 @@ jobs:
   #     params:
   #       --set backend.deploymentStrategy=RollingUpdate
   #       --set global.autoscaling=true
+  #       --set backend.autoscaling.enabled=true
   #       --set backend.pdb.enabled=true
   #     tag: ${{ inputs.tag }}
 
@@ -67,7 +68,7 @@ jobs:
   #     packages: write
   #   strategy:
   #     matrix:
-  #       package: [migrations, backend]
+  #       package: [migrations, backend, seed]
   #   timeout-minutes: 1
   #   steps:
   #     - uses: shrink/actions-docker-registry-tag@f04afd0559f66b288586792eb150f45136a927fa # v4
