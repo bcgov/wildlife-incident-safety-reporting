@@ -37,15 +37,22 @@ jobs:
             fi
 
   cleanup_db:
-    name: Remove DB user from Crunchy
+    name: Remove PR-${{ inputs.pr }} database and user from Crunchy
     runs-on: ubuntu-slim
     timeout-minutes: 10
     steps:
-      - uses: bcgov/action-crunchy@2ccf22a61189e72f82728f0cd5d4b2bb9b629ee6 # v2.0.0
+      - uses: bcgov/action-oc-runner@d2fc921aaa9d70684c186dbb7754e6985d44d86f # v1.4.1
         with:
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_token: ${{ secrets.OC_TOKEN }}
           oc_server: ${{ vars.oc_server }}
-          values_file: charts/crunchy/values.yml
-          command: delete-user
-          db_user: app-${{ inputs.pr }}
+          commands: |
+            set -euo pipefail
+            USER="app-${{ inputs.pr }}"
+            POD=$(oc get pod -l postgres-operator.crunchydata.com/role=master -o jsonpath='{.items[0].metadata.name}')
+            if [ -z "$POD" ]; then
+              echo "No master Crunchy pod found; nothing to do."
+              exit 0
+            fi
+            oc exec "$POD" -c database -- psql -U postgres -c "DROP DATABASE IF EXISTS \"$USER\";"
+            oc exec "$POD" -c database -- psql -U postgres -c "DROP USER IF EXISTS \"$USER\";"
