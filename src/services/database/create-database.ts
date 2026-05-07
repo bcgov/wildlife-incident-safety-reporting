@@ -27,7 +27,7 @@ export function createDatabase(options?: CreateDatabaseOptions): Kysely<DB> {
             password:
               options?.password ?? process.env.DB_PASSWORD ?? 'postgres',
             database: options?.database ?? process.env.DB_NAME ?? 'wisr',
-            max: options?.max ?? 5,
+            max: options?.max ?? 10,
           }),
     }),
   })

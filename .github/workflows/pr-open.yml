@@ -17,6 +17,8 @@ jobs:
     name: Builds
     permissions:
       packages: write
+      id-token: write
+      attestations: write
     runs-on: ubuntu-24.04
     strategy:
       matrix:
