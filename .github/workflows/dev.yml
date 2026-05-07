@@ -67,7 +67,6 @@ jobs:
       environment: dev
       tag: ${{ inputs.tag || github.sha }}
       params: --set global.secrets.persist=false
-      triggers: ('src/' 'migrations/' 'charts/' 'Dockerfile' 'Dockerfile.migrations' 'package.json' '.github/workflows/.deployer.yml')
       db_triggers: ('charts/crunchy/')
 
   results:
