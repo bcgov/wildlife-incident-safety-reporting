@@ -1,37 +1,51 @@
 name: PR Closed
 
 on:
-  pull_request:
-    types: [closed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number whose helm release and DB user should be removed"
+        type: string
+        required: true
+  #pull_request:
+  #  types: [closed]
 
 concurrency:
-  # PR open and close use the same group, allowing only one at a time
-  group: ${{ github.event.number }}
+  group: pr-${{ inputs.pr }}
   cancel-in-progress: true
 
 permissions: {}
 
 jobs:
   cleanup:
-    name: Cleanup and Image Promotion
-    uses: bcgov/quickstart-openshift-helpers/.github/workflows/.pr-close.yml@ca6579bdadf383a2513397081f963889b92823a4 # v1.1.0
-    permissions:
-      packages: write
-    secrets:
-      oc_namespace: ${{ secrets.OC_NAMESPACE }}
-      oc_token: ${{ secrets.OC_TOKEN }}
-    with:
-      cleanup: helm
-      packages: backend migrations seed
+    name: Remove PR-${{ inputs.pr }} helm release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: bcgov/action-oc-runner@d2fc921aaa9d70684c186dbb7754e6985d44d86f # v1.4.1
+        with:
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          oc_server: ${{ vars.oc_server }}
+          commands: |
+            set -euo pipefail
+            RELEASE="${{ github.event.repository.name }}-${{ inputs.pr }}"
+            if helm status "${RELEASE}" >/dev/null 2>&1; then
+              helm uninstall --no-hooks "${RELEASE}"
+            else
+              echo "Release ${RELEASE} not found; nothing to remove."
+            fi
 
-  cleanup_db: # TODO move it off to another action later.
-    name: Remove DB User from Crunchy
+  cleanup_db:
+    name: Remove DB user from Crunchy
     runs-on: ubuntu-slim
+    timeout-minutes: 10
     steps:
       - uses: bcgov/action-crunchy@2ccf22a61189e72f82728f0cd5d4b2bb9b629ee6 # v2.0.0
-        name: Remove PR Specific User
         with:
-          oc_namespace: ${{ secrets.oc_namespace }}
-          oc_token: ${{ secrets.oc_token }}
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_token: ${{ secrets.OC_TOKEN }}
           oc_server: ${{ vars.oc_server }}
           values_file: charts/crunchy/values.yml
+          command: delete-user
+          db_user: app-${{ inputs.pr }}

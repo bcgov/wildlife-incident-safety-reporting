@@ -1,18 +1,27 @@
-name: PR
+name: Deploy to DEV
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '.github/graphics/**'
+      - '.github/**'
+      - '!.github/workflows/**'
   workflow_dispatch:
-  #pull_request:
+    inputs:
+      tag:
+        description: "Image tag to deploy; defaults to commit SHA"
+        type: string
+        required: false
 
 concurrency:
-  # Cancel in progress for PR open and close
-  group: ${{ github.event.number }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 permissions: {}
 
 jobs:
-  # https://github.com/bcgov/action-builder-ghcr
   builds:
     name: Builds
     permissions:
@@ -41,35 +50,32 @@ jobs:
           package: ${{ matrix.package }}
           build_context: ${{ matrix.build_context }}
           build_file: ${{ matrix.build_file }}
-          tags: ${{ github.event.number }}
+          tags: |
+            ${{ inputs.tag || github.sha }}
+            latest
           tag_fallback: latest
           triggers: ${{ matrix.triggers }}
 
-  deploys:
-    name: Deploys (${{ github.event.number }})
+  deploy:
+    name: Deploy (DEV)
     needs: [builds]
     uses: ./.github/workflows/.deployer.yml
     secrets:
       oc_namespace: ${{ secrets.OC_NAMESPACE }}
       oc_token: ${{ secrets.OC_TOKEN }}
     with:
-      db_user: app-${{ github.event.number }}
+      environment: dev
+      tag: ${{ inputs.tag || github.sha }}
       params: --set global.secrets.persist=false
       triggers: ('src/' 'migrations/' 'charts/' 'Dockerfile' 'Dockerfile.migrations' 'package.json' '.github/workflows/.deployer.yml')
       db_triggers: ('charts/crunchy/')
 
-  # tests:
-  #    name: Tests
-  #    if: needs.deploys.outputs.triggered == 'true'
-  #    needs: [deploys]
-  #    uses: ./.github/workflows/.tests.yml
-
   results:
-    name: PR Results
-    needs: [builds, deploys]
+    name: Dev Results
+    needs: [builds, deploy]
     if: always()
     runs-on: ubuntu-slim
     steps:
-      - if: contains(needs.*.result, 'failure')||contains(needs.*.result, 'canceled')
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: echo "At least one job has failed." && exit 1
       - run: echo "Success!"

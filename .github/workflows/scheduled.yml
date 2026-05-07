@@ -14,45 +14,26 @@ permissions: {}
 jobs:
   ageOutPRs:
     name: PR Deployment Purge
-    env:
-      # https://tecadmin.net/getting-yesterdays-date-in-bash/
-      CUTOFF: "1 week ago"
     runs-on: ubuntu-slim
     timeout-minutes: 10
     steps:
-      - name: Clean up Helm Releases
-        uses: bcgov/action-oc-runner@d2fc921aaa9d70684c186dbb7754e6985d44d86f # v1.4.1
+      - uses: bcgov/action-oc-runner@d2fc921aaa9d70684c186dbb7754e6985d44d86f # v1.4.1
         with:
-          oc_namespace: ${{ secrets.oc_namespace }}
-          oc_token: ${{ secrets.oc_token }}
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_token: ${{ secrets.OC_TOKEN }}
           oc_server: ${{ vars.oc_server }}
           commands: |
-            # Catch errors, unset variables, and pipe failures (e.g. grep || true )
             set -euo pipefail
-
-            # Echos
-            echo "Delete stale Helm releases"
-            echo "Cutoff: ${{ env.CUTOFF }}"
-
-            # Before date, list of releases
-            BEFORE=$(date +%s -d "${{ env.CUTOFF }}")
-            RELEASES=$(helm ls -aq | grep ${{ github.event.repository.name }} || :)
-
-            # If releases, then iterate
-            [ -z "${RELEASES}" ]|| for r in ${RELEASES[@]}; do
-
-              # Get last update and convert the date
-              UPDATED=$(date "+%s" -d <<< echo $(helm status $r -o json | jq -r .info.last_deployed))
-
-              # Compare to cutoff and delete as necessary
-              if [[ ${UPDATED} < ${BEFORE} ]]; then
-                echo -e "\nOlder than cutoff: ${r}"
-                helm uninstall --no-hooks ${r}
-                oc delete pvc/${r}-bitnami-pg-0 || true
-              else
-                echo -e "\nNewer than cutoff: ${r}"
-                echo "No need to delete"
-              fi
+            CUTOFF=$(date -u -d "7 days ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+                     || date -u -v-7d +%Y-%m-%dT%H:%M:%SZ)
+            helm list --namespace "${{ secrets.OC_NAMESPACE }}" \
+              --filter "^${{ github.event.repository.name }}-[0-9]+$" \
+              --output json | \
+              jq -r --arg cutoff "$CUTOFF" \
+                '.[] | select(.updated < $cutoff) | .name' | \
+            while read -r release; do
+              echo "Removing stale release: ${release}"
+              helm uninstall --no-hooks "${release}" --namespace "${{ secrets.OC_NAMESPACE }}" || true
             done
 
   schema-spy:
@@ -99,18 +80,17 @@ jobs:
         with:
           folder: output
 
-  # TODO: Re-enable once app is deployed to OpenShift
-  # zap:
-  #   name: ZAP Scan
-  #   permissions:
-  #     issues: write
-  #   runs-on: ubuntu-24.04
-  #   steps:
-  #     - name: ZAP Scan
-  #       uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
-  #       with:
-  #         allow_issue_writing: true
-  #         artifact_name: app
-  #         issue_title: "ZAP Security Report"
-  #         token: ${{ secrets.GITHUB_TOKEN }}
-  #         target: https://${{ github.event.repository.name }}-test.apps.gold.devops.gov.bc.ca/
+  zap:
+    name: ZAP Scan
+    permissions:
+      issues: write
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
+        with:
+          allow_issue_writing: true
+          artifact_name: app
+          issue_title: "ZAP Security Report"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: https://${{ github.event.repository.name }}-dev.apps.gold.devops.gov.bc.ca/
+          fail_action: false
