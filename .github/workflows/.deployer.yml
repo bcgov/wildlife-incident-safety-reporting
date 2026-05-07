@@ -30,9 +30,17 @@ on:
         description: Extra parameters to pass to helm upgrade
         required: false
         type: string
-      tag:
-        description: Specify a tag to deploy; defaults to PR number
-        required: false
+      backend_tag:
+        description: Image tag for the backend container
+        required: true
+        type: string
+      migrations_tag:
+        description: Image tag for the migrations init container
+        required: true
+        type: string
+      seed_tag:
+        description: Image tag for the seed Job container
+        required: true
         type: string
       triggers:
         description: Paths used to trigger a deployment; e.g. ('./backend/' './frontend/)
@@ -66,9 +74,6 @@ on:
         type: string
 
     outputs:
-      tag:
-        description: "Which tag was used for deployment?"
-        value: ${{ jobs.deploy.outputs.tag }}
       triggered:
         description: "Has a deployment has been triggered?"
         value: ${{ jobs.deploy.outputs.triggered }}
@@ -89,7 +94,6 @@ jobs:
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-24.04
     outputs:
-      tag: ${{ inputs.tag || steps.pr.outputs.pr }}
       triggered: ${{ steps.deploy.outputs.triggered }}
     steps:
       - uses: bcgov/action-crunchy@2ccf22a61189e72f82728f0cd5d4b2bb9b629ee6 # v2.0.0
@@ -103,31 +107,16 @@ jobs:
           values_file: charts/crunchy/values.yml
           triggers: ${{ inputs.db_triggers }}
 
-      # Variables
-      - if: inputs.tag  == ''
+      - if: inputs.environment == ''
         id: pr
         uses: bcgov/action-get-pr@bfa713a9ab410c0f0c13126c35983934fc80d15b # v0.1.1
 
       - id: vars
         run: |
-          # Vars: tag and release
-
-          # Tag defaults to PR number, but can be overridden by inputs.tag
-          tag=${{ inputs.tag || steps.pr.outputs.pr }}
-
-          # Release name includes run numbers to ensure uniqueness
-          release=${{ github.event.repository.name }}-${{ inputs.environment || steps.pr.outputs.pr || inputs.tag }}
-
-          # version, to support helm packaging for non-pr based releases (workflow_dispatch). default to 1.0.0+github run number
+          release=${{ github.event.repository.name }}-${{ inputs.environment || steps.pr.outputs.pr }}
           version=1.0.0+${{ github.run_number }}
-
-            # Summary
-          echo "tag=${tag}"
           echo "release=${release}"
           echo "version=${version}"
-
-          # Output
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "release=${release}" >> $GITHUB_OUTPUT
           echo "version=${version}" >> $GITHUB_OUTPUT
 
@@ -163,25 +152,30 @@ jobs:
           triggers: ${{ inputs.triggers }}
           ref: ${{ github.ref }}
           commands: |
-            # Deploy
-
-            # If directory provided, cd to it
+            set -euo pipefail
             [ -z "${{ inputs.directory }}" ]|| cd ${{ inputs.directory }}
 
-            # Helm package
+            # Per-environment values overlay; layered on top of base values.yaml
+            EXTRA_VALUES=""
+            case "${{ inputs.environment }}" in
+              test) EXTRA_VALUES="--values values-test.yaml" ;;
+              prod) EXTRA_VALUES="--values values-prod.yaml" ;;
+            esac
+
             sed -i 's/^name:.*/name: ${{ github.event.repository.name }}/' Chart.yaml
-            helm package -u . --app-version="tag-${{ steps.vars.outputs.tag }}_run-${{ github.run_number }}" --version=${{ steps.pr.outputs.pr || steps.vars.outputs.version }}
-            # print the values.yaml file to see the values being used
-            # Helm upgrade/rollout
+            helm package -u . --app-version="backend-${{ inputs.backend_tag }}_run-${{ github.run_number }}" --version=${{ steps.pr.outputs.pr || steps.vars.outputs.version }}
             helm upgrade \
               --set-string global.repository=${{ github.repository }} \
-              --set-string global.tag="${{ steps.vars.outputs.tag }}" \
+              --set-string backend.image.tag="${{ inputs.backend_tag }}" \
+              --set-string migrations.image.tag="${{ inputs.migrations_tag }}" \
+              --set-string seed.image.tag="${{ inputs.seed_tag }}" \
               --set-string global.config.databaseUser="${{ inputs.db_user }}" \
               --set-string global.databaseAlias="${{ steps.deploy_crunchy.outputs.release }}-crunchy" \
               ${{ inputs.params }} \
               --install --wait ${{ inputs.atomic && '--atomic' || '' }} ${{ steps.vars.outputs.release }} \
               --timeout ${{ inputs.timeout-minutes }}m \
               --values ${{ inputs.values }} \
+              ${EXTRA_VALUES} \
               ./${{ github.event.repository.name }}-${{ steps.pr.outputs.pr || steps.vars.outputs.version }}.tgz
 
             # Helm release history

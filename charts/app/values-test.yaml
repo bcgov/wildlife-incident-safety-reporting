@@ -1,0 +1,14 @@
+global:
+  autoscaling: true
+
+backend:
+  deploymentStrategy: RollingUpdate
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+  pdb:
+    enabled: true
+  ingress:
+    restrictMain: true
+    restrictDocs: false

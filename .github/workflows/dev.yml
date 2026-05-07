@@ -22,58 +22,123 @@ concurrency:
 permissions: {}
 
 jobs:
-  builds:
-    name: Builds
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-24.04
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      migrations: ${{ steps.filter.outputs.migrations }}
+      seed: ${{ steps.filter.outputs.seed }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'package.json'
+              - 'bun.lock'
+              - 'vite.config.js'
+              - 'tsconfig.json'
+              - 'postcss.config.mjs'
+              - 'Dockerfile'
+            migrations:
+              - 'migrations/**'
+              - 'src/services/database/**'
+              - 'Dockerfile.migrations'
+            seed:
+              - 'scripts/**'
+              - 'src/services/database/**'
+              - 'Dockerfile.seed'
+              - 'package.json'
+              - 'bun.lock'
+
+  build-backend:
+    name: Build backend
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     permissions:
       packages: write
       id-token: write
       attestations: write
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        package: [backend, migrations, seed]
-        include:
-          - package: backend
-            build_context: .
-            build_file: Dockerfile
-            triggers: "('src/' 'package.json' 'bun.lock' 'vite.config.js' 'tsconfig.json' 'Dockerfile')"
-          - package: migrations
-            build_context: .
-            build_file: Dockerfile.migrations
-            triggers: "('migrations/' 'src/services/database/' 'Dockerfile.migrations')"
-          - package: seed
-            build_context: .
-            build_file: Dockerfile.seed
-            triggers: "('scripts/' 'src/services/database/' 'Dockerfile.seed' 'package.json' 'bun.lock')"
     timeout-minutes: 10
     steps:
       - uses: bcgov/action-builder-ghcr@2b24ac7f95e6a019064151498660437cca3202c5 # v4.2.1
         with:
-          package: ${{ matrix.package }}
-          build_context: ${{ matrix.build_context }}
-          build_file: ${{ matrix.build_file }}
+          package: backend
+          build_context: .
+          build_file: Dockerfile
           tags: |
             ${{ inputs.tag || github.sha }}
             latest
           tag_fallback: latest
-          triggers: ${{ matrix.triggers }}
+
+  build-migrations:
+    name: Build migrations
+    needs: changes
+    if: needs.changes.outputs.migrations == 'true'
+    permissions:
+      packages: write
+      id-token: write
+      attestations: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: bcgov/action-builder-ghcr@2b24ac7f95e6a019064151498660437cca3202c5 # v4.2.1
+        with:
+          package: migrations
+          build_context: .
+          build_file: Dockerfile.migrations
+          tags: |
+            ${{ inputs.tag || github.sha }}
+            latest
+          tag_fallback: latest
+
+  build-seed:
+    name: Build seed
+    needs: changes
+    if: needs.changes.outputs.seed == 'true'
+    permissions:
+      packages: write
+      id-token: write
+      attestations: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: bcgov/action-builder-ghcr@2b24ac7f95e6a019064151498660437cca3202c5 # v4.2.1
+        with:
+          package: seed
+          build_context: .
+          build_file: Dockerfile.seed
+          tags: |
+            ${{ inputs.tag || github.sha }}
+            latest
+          tag_fallback: latest
 
   deploy:
     name: Deploy (DEV)
-    needs: [builds]
+    needs: [changes, build-backend, build-migrations, build-seed]
+    if: |
+      always() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     uses: ./.github/workflows/.deployer.yml
     secrets:
       oc_namespace: ${{ secrets.OC_NAMESPACE }}
       oc_token: ${{ secrets.OC_TOKEN }}
     with:
       environment: dev
-      tag: ${{ inputs.tag || github.sha }}
+      backend_tag: ${{ inputs.tag || (needs.build-backend.result == 'success' && github.sha || 'latest') }}
+      migrations_tag: ${{ inputs.tag || (needs.build-migrations.result == 'success' && github.sha || 'latest') }}
+      seed_tag: ${{ inputs.tag || (needs.build-seed.result == 'success' && github.sha || 'latest') }}
       params: --set global.secrets.persist=false
       db_triggers: ('charts/crunchy/')
 
   results:
     name: Dev Results
-    needs: [builds, deploy]
+    needs: [build-backend, build-migrations, build-seed, deploy]
     if: always()
     runs-on: ubuntu-slim
     steps:

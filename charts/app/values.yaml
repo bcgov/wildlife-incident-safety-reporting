@@ -22,10 +22,20 @@ global:
   domain: "apps.gold.devops.gov.bc.ca"
   databaseAlias: ~ # set using github action workflow during helm deploy.
 
+#-- per-component image tag overrides; deploy workflow sets these via --set-string. fall back to global.tag when unset.
+migrations:
+  image:
+    tag: ~
+seed:
+  image:
+    tag: ~
+
 #-- the components of the application, backend.
 backend:
   #-- enable or disable backend
   enabled: true
+  image:
+    tag: ~
   #-- runtime config Secret holding env-specific values (Keycloak, HMCR, Maps, SiteMinder). created out-of-band per namespace.
   config:
     secretName: wisr-app-config
@@ -102,9 +112,9 @@ backend:
       limits:
         cpu: 1
         memory: 1Gi
-  #-- scheduled in-cluster sync jobs that POST to /internal/* endpoints. defaulted off; flip on for the production release only.
+  #-- scheduled in-cluster sync jobs that POST to /internal/* endpoints. enabled across all environments so data tracks upstream after the initial seed.
   cron:
-    enabled: false
+    enabled: true
     image:
       repository: curlimages/curl
       tag: "8.10.1"

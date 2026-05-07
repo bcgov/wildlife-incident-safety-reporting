@@ -27,6 +27,7 @@ export function createDatabase(options?: CreateDatabaseOptions): Kysely<DB> {
             password:
               options?.password ?? process.env.DB_PASSWORD ?? 'postgres',
             database: options?.database ?? process.env.DB_NAME ?? 'wisr',
+            // Capped so total across replicas fits under PgBouncer's per-user pool.
             max: options?.max ?? 10,
           }),
     }),

@@ -36,7 +36,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-          image: "{{ .Values.global.registry | default "ghcr.io" }}/{{.Values.global.repository}}/migrations:{{ .Values.global.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.registry | default "ghcr.io" }}/{{.Values.global.repository}}/migrations:{{ .Values.migrations.image.tag | default .Values.global.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ default "Always" .Values.backend.imagePullPolicy }}
           envFrom:
             - secretRef:
@@ -74,7 +74,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-          image: "{{ .Values.global.registry | default "ghcr.io" }}/{{.Values.global.repository}}/backend:{{ .Values.global.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.registry | default "ghcr.io" }}/{{.Values.global.repository}}/backend:{{ .Values.backend.image.tag | default .Values.global.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ default "Always" .Values.backend.imagePullPolicy }}
           envFrom:
             - secretRef:

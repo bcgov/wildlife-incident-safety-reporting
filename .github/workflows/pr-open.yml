@@ -56,15 +56,11 @@ jobs:
       oc_token: ${{ secrets.OC_TOKEN }}
     with:
       db_user: app-${{ github.event.number }}
+      backend_tag: ${{ github.event.number }}
+      migrations_tag: ${{ github.event.number }}
+      seed_tag: ${{ github.event.number }}
       params: --set global.secrets.persist=false
-      triggers: ('src/' 'migrations/' 'charts/' 'Dockerfile' 'Dockerfile.migrations' 'package.json' '.github/workflows/.deployer.yml')
       db_triggers: ('charts/crunchy/')
-
-  # tests:
-  #    name: Tests
-  #    if: needs.deploys.outputs.triggered == 'true'
-  #    needs: [deploys]
-  #    uses: ./.github/workflows/.tests.yml
 
   results:
     name: PR Results

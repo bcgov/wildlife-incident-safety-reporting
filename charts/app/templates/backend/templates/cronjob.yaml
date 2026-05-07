@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "backend.fullname" $ }}-{{ $name | kebabcase }}
+  name: {{ printf "%s-%s" $.Release.Name ($name | kebabcase) | trunc 52 | trimSuffix "-" }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "backend.labels" $ | nindent 4 }}
