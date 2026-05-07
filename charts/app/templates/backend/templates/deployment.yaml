@@ -40,7 +40,24 @@ spec:
           imagePullPolicy: {{ default "Always" .Values.backend.imagePullPolicy }}
           envFrom:
             - secretRef:
-                name: {{.Release.Name}}-migrations
+                name: {{ .Release.Name }}-migrations
+          # Migrations connect as postgres (per-PR user lacks CREATE on public per PG 15+); APP_DB_USER lets the migrate script grant DML afterward.
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.databaseAlias }}-pguser-postgres
+                  key: user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.databaseAlias }}-pguser-postgres
+                  key: password
+            - name: APP_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.databaseAlias }}-pguser-{{ .Values.global.config.databaseUser }}
+                  key: user
           resources:
             requests:
               cpu: 50m

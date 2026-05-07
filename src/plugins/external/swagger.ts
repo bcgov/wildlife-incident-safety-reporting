@@ -92,11 +92,9 @@ export default fp(
 
     await fastify.register(fastifySwagger, createOpenapiConfig(fastify))
 
-    if (process.env.NODE_ENV !== 'production') {
-      await fastify.register(apiReference, {
-        routePrefix: '/api/docs',
-      })
-    }
+    await fastify.register(apiReference, {
+      routePrefix: '/api/docs',
+    })
   },
   {
     dependencies: ['config'],

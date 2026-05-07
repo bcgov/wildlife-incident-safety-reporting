@@ -5,10 +5,13 @@ metadata:
   name: {{ include "backend.fullname" . }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
-  {{- if and .Values.backend.ingress .Values.backend.ingress.annotations }}
-  {{- with .Values.backend.ingress.annotations }}
+  {{- if or .Values.backend.ingress.annotations (and .Values.backend.ingress.restrictMain .Values.backend.ingress.ipWhitelist) }}
   annotations:
+  {{- with .Values.backend.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if and .Values.backend.ingress.restrictMain .Values.backend.ingress.ipWhitelist }}
+    haproxy.router.openshift.io/ip_whitelist: {{ .Values.backend.ingress.ipWhitelist | quote }}
   {{- end }}
   {{- end }}
 spec:
@@ -24,4 +27,28 @@ spec:
                 name: {{ include "backend.fullname" . }}
                 port:
                   number: {{ .Values.backend.service.port }}
+{{- if and .Values.backend.ingress.restrictDocs .Values.backend.ingress.ipWhitelist }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "backend.fullname" . }}-docs
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+  annotations:
+    haproxy.router.openshift.io/ip_whitelist: {{ .Values.backend.ingress.ipWhitelist | quote }}
+spec:
+  ingressClassName: openshift-default
+  rules:
+    - host: {{ .Release.Name }}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /api/docs
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "backend.fullname" . }}
+                port:
+                  number: {{ .Values.backend.service.port }}
+{{- end }}
 {{- end }}

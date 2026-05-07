@@ -17,7 +17,7 @@ COPY package.json bun.lock ./
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
 
-COPY vite.config.js tsconfig.json ./
+COPY vite.config.js tsconfig.json postcss.config.mjs ./
 COPY src ./src
 
 RUN --mount=type=cache,target=/app/node_modules/.vite \

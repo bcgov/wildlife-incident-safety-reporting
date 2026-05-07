@@ -58,6 +58,8 @@ jobs:
   #       --set global.autoscaling=true
   #       --set backend.autoscaling.enabled=true
   #       --set backend.pdb.enabled=true
+  #       --set backend.ingress.restrictMain=false
+  #       --set backend.ingress.restrictDocs=true
   #     tag: ${{ inputs.tag }}
 
   # promote:
