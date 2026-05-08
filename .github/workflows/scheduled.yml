@@ -14,7 +14,7 @@ permissions: {}
 jobs:
   ageOutPRs:
     name: PR Deployment Purge
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: bcgov/action-oc-runner@d2fc921aaa9d70684c186dbb7754e6985d44d86f # v1.4.1

@@ -20,6 +20,7 @@ spec:
         metadata:
           labels:
             {{- include "backend.labels" $ | nindent 12 }}
+            app.kubernetes.io/component: cron
         spec:
           restartPolicy: Never
           securityContext:
