@@ -55,10 +55,6 @@
          <index name="idx_incidents_geom" unique="false">
             <column ascending="true" name="geom"/>
          </index>
-         <index name="idx_incidents_geom_geog" unique="false"/>
-         <index name="idx_incidents_hmcr_record_id" unique="false">
-            <column ascending="true" name="hmcr_record_id"/>
-         </index>
          <index name="idx_incidents_lki_segment_id" unique="false">
             <column ascending="true" name="lki_segment_id"/>
          </index>
@@ -67,9 +63,6 @@
          </index>
          <index name="idx_incidents_species_id" unique="false">
             <column ascending="true" name="species_id"/>
-         </index>
-         <index name="idx_incidents_year" unique="false">
-            <column ascending="true" name="year"/>
          </index>
          <index name="idx_incidents_year_species" unique="false">
             <column ascending="true" name="year"/>
