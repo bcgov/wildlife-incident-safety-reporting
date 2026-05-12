@@ -33,7 +33,7 @@ crunchy: # base values are sized for PR ephemeral environments; values-prod.yml 
         prometheus.io/scrape: 'true'
         prometheus.io/port: '9187'
     dataVolumeClaimSpec:
-      storage: 350Mi
+      storage: 3Gi
       storageClassName: netapp-block-standard
       walStorage: 550Mi
 
