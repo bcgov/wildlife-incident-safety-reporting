@@ -1,20 +1,54 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { sql } from 'kysely'
+import { sql, type Transaction } from 'kysely'
 import Papa from 'papaparse'
 
 import { createDatabase } from '../src/services/database/create-database.js'
-import type {
-  Age,
-  Sex,
-  TimeOfKill,
-} from '../src/services/database/types/database.js'
+import type { DB } from '../src/services/database/types/database.js'
 import { seedLkiSegments } from './seed-lki-segments.js'
 import { seedServiceAreas } from './seed-service-areas.js'
 
+const COPY_COLUMNS = [
+  'latitude',
+  'longitude',
+  'year',
+  'accident_date',
+  'time_of_kill',
+  'nearest_town',
+  'sex',
+  'age',
+  'comments',
+  'quantity',
+  'species_id',
+  'hmcr_record_id',
+] as const
+
+const INCIDENT_INDEXES = [
+  {
+    name: 'idx_incidents_geom',
+    ddl: 'CREATE INDEX idx_incidents_geom ON incidents USING gist (geom)',
+  },
+  {
+    name: 'idx_incidents_species_id',
+    ddl: 'CREATE INDEX idx_incidents_species_id ON incidents (species_id)',
+  },
+  {
+    name: 'idx_incidents_service_area_id',
+    ddl: 'CREATE INDEX idx_incidents_service_area_id ON incidents (service_area_id)',
+  },
+  {
+    name: 'idx_incidents_year_species',
+    ddl: 'CREATE INDEX idx_incidents_year_species ON incidents (year, species_id)',
+  },
+  {
+    name: 'idx_incidents_lki_segment_id',
+    ddl: 'CREATE INDEX idx_incidents_lki_segment_id ON incidents (lki_segment_id)',
+  },
+] as const
+
 const DRY_RUN = process.argv.includes('--dry-run')
-const db = createDatabase()
+const db = createDatabase({ max: 1 })
 
 interface CsvRow {
   'Accident.Date': string
@@ -213,7 +247,145 @@ async function resolveDataFile(
   return resolved
 }
 
-async function runSpatialJoin(): Promise<void> {
+function buildPsqlEnv(): Record<string, string> {
+  const env: Record<string, string> = {
+    PATH: process.env.PATH ?? '/usr/bin:/bin',
+  }
+  if (process.env.DATABASE_URL) {
+    const url = new URL(process.env.DATABASE_URL)
+    env.PGHOST = url.hostname
+    if (url.port) env.PGPORT = url.port
+    if (url.username) env.PGUSER = decodeURIComponent(url.username)
+    if (url.password) env.PGPASSWORD = decodeURIComponent(url.password)
+    const db = url.pathname.replace(/^\//, '')
+    if (db) env.PGDATABASE = db
+    const sslmode = url.searchParams.get('sslmode')
+    if (sslmode) env.PGSSLMODE = sslmode
+  } else {
+    if (process.env.DB_HOST) env.PGHOST = process.env.DB_HOST
+    if (process.env.DB_PORT) env.PGPORT = process.env.DB_PORT
+    if (process.env.DB_USER) env.PGUSER = process.env.DB_USER
+    if (process.env.DB_PASSWORD) env.PGPASSWORD = process.env.DB_PASSWORD
+    if (process.env.DB_NAME) env.PGDATABASE = process.env.DB_NAME
+  }
+  if (process.env.PGSSLMODE) env.PGSSLMODE = process.env.PGSSLMODE
+  return env
+}
+
+function escapeTsv(value: string | null): string {
+  if (value === null) return '\\N'
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\t/g, '\\t')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+}
+
+function formatNumeric(value: number | null): string {
+  return value === null ? '\\N' : String(value)
+}
+
+function rowToTsv(r: InsertRow): string {
+  return `${[
+    formatNumeric(r.latitude),
+    formatNumeric(r.longitude),
+    String(r.year),
+    escapeTsv(r.accident_date),
+    escapeTsv(r.time_of_kill),
+    escapeTsv(r.nearest_town),
+    escapeTsv(r.sex),
+    escapeTsv(r.age),
+    escapeTsv(r.comments),
+    String(r.quantity),
+    String(r.species_id),
+    formatNumeric(r.hmcr_record_id),
+  ].join('\t')}\n`
+}
+
+function qIdent(name: string): string {
+  return `"${name.replace(/"/g, '""')}"`
+}
+
+async function copyIncidents(rows: InsertRow[]): Promise<void> {
+  const cols = COPY_COLUMNS.map(qIdent).join(', ')
+  const copyCmd = `\\COPY ${qIdent('incidents')} (${cols}) FROM STDIN WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N')`
+
+  const proc = Bun.spawn(['psql', '-c', copyCmd], {
+    stdin: 'pipe',
+    stdout: 'ignore',
+    stderr: 'pipe',
+    env: buildPsqlEnv(),
+  })
+
+  for (const row of rows) {
+    proc.stdin.write(rowToTsv(row))
+  }
+  proc.stdin.end()
+
+  const [exit, stderr] = await Promise.all([
+    proc.exited,
+    new Response(proc.stderr).text(),
+  ])
+
+  if (exit !== 0) {
+    throw new Error(
+      `psql COPY failed (exit ${exit}): ${stderr.trim() || '<no stderr>'}`,
+    )
+  }
+}
+
+async function bulkLoadIncidents(rows: InsertRow[]): Promise<void> {
+  await sql`ALTER TABLE incidents SET UNLOGGED`.execute(db)
+
+  for (const idx of INCIDENT_INDEXES) {
+    await sql.raw(`DROP INDEX IF EXISTS ${idx.name}`).execute(db)
+  }
+
+  await sql`ALTER TABLE incidents DISABLE TRIGGER trg_incidents_geom`.execute(
+    db,
+  )
+  await sql`ALTER TABLE incidents DISABLE TRIGGER trg_incidents_lki_assign`.execute(
+    db,
+  )
+
+  console.log(`\nStreaming ${rows.length} rows via psql \\COPY...`)
+  const copyStart = Date.now()
+  await copyIncidents(rows)
+  console.log(
+    `  COPY complete in ${((Date.now() - copyStart) / 1000).toFixed(1)}s`,
+  )
+
+  // Post-COPY work in a transaction so a mid-flow failure rolls back atomically;
+  // the COPY itself runs through a separate psql subprocess and can't participate.
+  await db.transaction().execute(async (trx) => {
+    console.log('Computing geom from lat/lng...')
+    await sql`
+      UPDATE incidents
+      SET geom = ST_SetSRID(ST_MakePoint(longitude::float8, latitude::float8), 4326)
+      WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    `.execute(trx)
+
+    await runSpatialJoin(trx)
+    await runLkiAssignment(trx)
+
+    await sql`ALTER TABLE incidents ENABLE TRIGGER trg_incidents_lki_assign`.execute(
+      trx,
+    )
+    await sql`ALTER TABLE incidents ENABLE TRIGGER trg_incidents_geom`.execute(
+      trx,
+    )
+
+    console.log('\nRecreating indexes...')
+    for (const idx of INCIDENT_INDEXES) {
+      await sql.raw(idx.ddl).execute(trx)
+    }
+
+    console.log('Restoring LOGGED state...')
+    await sql`ALTER TABLE incidents SET LOGGED`.execute(trx)
+  })
+}
+
+async function runSpatialJoin(executor: Transaction<DB>): Promise<void> {
   if (DRY_RUN) return
 
   const result = await sql<{ matched: number }>`
@@ -226,18 +398,18 @@ async function runSpatialJoin(): Promise<void> {
       RETURNING wi.id
     )
     SELECT count(*)::int AS matched FROM updated
-  `.execute(db)
+  `.execute(executor)
 
   const matched = result.rows[0].matched
 
-  const { total } = await db
+  const { total } = await executor
     .selectFrom('incidents')
-    .select(db.fn.countAll<number>().as('total'))
+    .select(executor.fn.countAll<number>().as('total'))
     .executeTakeFirstOrThrow()
 
-  const { no_coords } = await db
+  const { no_coords } = await executor
     .selectFrom('incidents')
-    .select(db.fn.count<number>('id').as('no_coords'))
+    .select(executor.fn.count<number>('id').as('no_coords'))
     .where('geom', 'is', null)
     .executeTakeFirstOrThrow()
 
@@ -251,7 +423,7 @@ async function runSpatialJoin(): Promise<void> {
   }
 }
 
-async function runLkiAssignment(): Promise<void> {
+async function runLkiAssignment(executor: Transaction<DB>): Promise<void> {
   if (DRY_RUN) return
 
   const result = await sql<{ matched: number }>`
@@ -274,18 +446,18 @@ async function runLkiAssignment(): Promise<void> {
       RETURNING wi.id
     )
     SELECT count(*)::int AS matched FROM updated
-  `.execute(db)
+  `.execute(executor)
 
   const matched = result.rows[0].matched
 
-  const { total } = await db
+  const { total } = await executor
     .selectFrom('incidents')
-    .select(db.fn.countAll<number>().as('total'))
+    .select(executor.fn.countAll<number>().as('total'))
     .executeTakeFirstOrThrow()
 
-  const { no_coords } = await db
+  const { no_coords } = await executor
     .selectFrom('incidents')
-    .select(db.fn.count<number>('id').as('no_coords'))
+    .select(executor.fn.count<number>('id').as('no_coords'))
     .where('geom', 'is', null)
     .executeTakeFirstOrThrow()
 
@@ -434,57 +606,7 @@ async function seed() {
   console.log(`\nTotal rows to insert: ${insertRows.length}`)
 
   if (!DRY_RUN) {
-    const BATCH_SIZE = 1000
-    const totalBatches = Math.ceil(insertRows.length / BATCH_SIZE)
-
-    console.log(
-      `\nInserting ${insertRows.length} rows in ${totalBatches} batches...`,
-    )
-
-    await db.transaction().execute(async (trx) => {
-      // Disable per-row LKI trigger during bulk insert - we'll do a single
-      // bulk assignment after all rows are in
-      await sql`ALTER TABLE incidents DISABLE TRIGGER trg_incidents_lki_assign`.execute(
-        trx,
-      )
-
-      for (let i = 0; i < insertRows.length; i += BATCH_SIZE) {
-        const batch = insertRows.slice(i, i + BATCH_SIZE)
-        const batchNum = Math.floor(i / BATCH_SIZE) + 1
-
-        await trx
-          .insertInto('incidents')
-          .values(
-            batch.map((r) => ({
-              accident_date: r.accident_date
-                ? sql<Date>`${r.accident_date}::date`
-                : null,
-              time_of_kill: r.time_of_kill
-                ? sql<TimeOfKill>`${r.time_of_kill}::time_of_kill`
-                : null,
-              nearest_town: r.nearest_town,
-              sex: r.sex ? sql<Sex>`${r.sex}::sex` : null,
-              age: r.age ? sql<Age>`${r.age}::age` : null,
-              comments: r.comments,
-              quantity: r.quantity,
-              latitude: r.latitude,
-              longitude: r.longitude,
-              species_id: r.species_id,
-              year: r.year,
-              hmcr_record_id: r.hmcr_record_id,
-            })),
-          )
-          .execute()
-
-        if (batchNum % 20 === 0 || batchNum === totalBatches) {
-          console.log(`  Batch ${batchNum}/${totalBatches} complete`)
-        }
-      }
-
-      await sql`ALTER TABLE incidents ENABLE TRIGGER trg_incidents_lki_assign`.execute(
-        trx,
-      )
-    })
+    await bulkLoadIncidents(insertRows)
 
     const { count } = await db
       .selectFrom('incidents')
@@ -492,9 +614,6 @@ async function seed() {
       .executeTakeFirstOrThrow()
 
     console.log(`\nInserted ${count} incidents`)
-
-    await runSpatialJoin()
-    await runLkiAssignment()
   }
 
   console.log('\n=== SEED COMPLETE ===')
