@@ -30,7 +30,7 @@ export async function setup(): Promise<void> {
   const { createDatabase } = await import(
     '../../src/services/database/create-database.js'
   )
-  const { FileMigrationProvider, Migrator } = await import('kysely')
+  const { FileMigrationProvider, Migrator } = await import('kysely/migration')
 
   const db = createDatabase({ database: 'wisr_test' })
 

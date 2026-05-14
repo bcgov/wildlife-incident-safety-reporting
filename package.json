@@ -63,7 +63,7 @@
     "fastify-metrics": "^13.2.0",
     "fastify-zod-openapi": "^5.5.0",
     "get-jwks": "^11.0.3",
-    "kysely": "^0.28.11",
+    "kysely": "^0.29.0",
     "kysely-postgis": "^0.5.2",
     "kysely-postgres-js": "^3.0.0",
     "lru-cache": "^11.3.5",
