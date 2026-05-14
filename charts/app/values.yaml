@@ -116,7 +116,7 @@ backend:
     enabled: true
     image:
       repository: curlimages/curl
-      tag: "8.10.1"
+      tag: "8.20.0"
     jobs:
       hmcrSync:
         schedule: "0 9 * * *" # 01:00 PT (02:00 during PDT)
