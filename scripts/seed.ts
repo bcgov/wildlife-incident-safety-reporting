@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { S3Client } from 'bun'
 import { sql, type Transaction } from 'kysely'
 import Papa from 'papaparse'
 
@@ -218,10 +219,38 @@ function parseComments(raw: string): string | null {
   return raw.trim()
 }
 
+async function downloadFromS3(filename: string): Promise<string | null> {
+  const bucket = process.env.S3_BUCKET
+  const accessKeyId = process.env.S3_ACCESS_KEY
+  const secretAccessKey = process.env.S3_SECRET_KEY
+  const endpoint = process.env.S3_ENDPOINT_URL
+  if (!bucket || !accessKeyId || !secretAccessKey || !endpoint) return null
+
+  const objectKey = process.env.S3_OBJECT_KEY ?? filename
+  const tmpPath = path.join(os.tmpdir(), filename)
+
+  console.log(
+    `Downloading seed data for ${filename} from s3://${bucket}/${objectKey}`,
+  )
+  const client = new S3Client({
+    accessKeyId,
+    secretAccessKey,
+    endpoint,
+    bucket,
+  })
+  const buffer = Buffer.from(await client.file(objectKey).arrayBuffer())
+  writeFileSync(tmpPath, buffer)
+  console.log(`Downloaded ${buffer.byteLength} bytes to ${tmpPath}`)
+  return tmpPath
+}
+
 async function resolveDataFile(
   root: string,
   filename: string,
 ): Promise<string> {
+  const s3Path = await downloadFromS3(filename)
+  if (s3Path) return s3Path
+
   const url = process.env.WARS_SEED_URL
   if (url) {
     const tmpPath = path.join(os.tmpdir(), filename)
@@ -510,7 +539,10 @@ async function seed() {
 
   const match = buildMatcher(speciesMap)
 
-  const csvPath = await resolveDataFile(root, 'WARs.csv')
+  const csvPath = await resolveDataFile(
+    root,
+    process.env.WARS_SEED_FILE ?? 'WARs.csv',
+  )
   const csvText = readFileSync(csvPath, 'utf-8')
   const parsed = Papa.parse<CsvRow>(csvText, {
     header: true,

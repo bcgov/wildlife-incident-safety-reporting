@@ -27,6 +27,7 @@
     "typecheck:tests": "tsc --noEmit -p test/tsconfig.json",
     "seed": "bun run --bun scripts/seed.ts",
     "seed:dry-run": "bun run --bun scripts/seed.ts --dry-run",
+    "seed:upload": "bun run --bun scripts/upload-seed.ts",
     "seed:service-areas": "bun run --bun scripts/seed-service-areas.ts",
     "migrate": "bun run --bun migrations/migrate.ts && bun run db:codegen",
     "migrate:rollback": "bun run --bun migrations/rollback.ts && bun run db:codegen",

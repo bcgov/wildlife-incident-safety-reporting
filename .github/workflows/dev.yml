@@ -133,7 +133,7 @@ jobs:
       backend_tag: ${{ inputs.tag || (needs.build-backend.result == 'success' && github.sha || 'latest') }}
       migrations_tag: ${{ inputs.tag || (needs.build-migrations.result == 'success' && github.sha || 'latest') }}
       seed_tag: ${{ inputs.tag || (needs.build-seed.result == 'success' && github.sha || 'latest') }}
-      params: --set global.secrets.persist=false
+      params: --set global.secrets.persist=false --set backend.seed.enabled=true
       db_triggers: ('charts/crunchy/')
 
   results:

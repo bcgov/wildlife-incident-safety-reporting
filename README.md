@@ -49,6 +49,7 @@ Interactive API docs (Scalar) are available at [localhost:3033/api/docs](http://
 | `bun run migrate:rollback` | Rollback last migration |
 | `bun run seed` | Seed database (service areas + incidents) |
 | `bun run seed:dry-run` | Preview seed without writing to DB |
+| `bun run seed:upload` | Upload local seed CSV (`WARS_SEED_FILE`) to the configured S3 bucket |
 | `bun run test` | Run tests in watch mode |
 | `bun run test:run` | Run tests once (CI) |
 | `bun run typecheck` | Type check server and client |
