@@ -20,6 +20,7 @@ async function init() {
     pluginTimeout: 60000,
     forceCloseConnections: true,
     disableRequestLogging: !enableRequestLogging,
+    trustProxy: 1,
   })
 
   await app.register(fp(serviceApp))
