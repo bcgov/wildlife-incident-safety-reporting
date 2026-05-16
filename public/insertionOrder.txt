@@ -3,5 +3,6 @@ lki_segments
 service_areas
 species
 incidents
+google_tile_sessions
 kysely_migration
 kysely_migration_lock
