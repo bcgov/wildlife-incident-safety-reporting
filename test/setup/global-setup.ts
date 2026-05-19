@@ -21,7 +21,7 @@ export async function setup(): Promise<void> {
   process.env.SITEMINDER_LOGOUT_URL =
     'https://logontest7.gov.bc.ca/clp-cgi/logoff.cgi'
   process.env.GOOGLE_MAPS_CLIENT_API_KEY = 'test-maps-client-key'
-  process.env.GOOGLE_MAPS_SERVER_API_KEY = 'test-maps-server-key'
+  process.env.BASE_MAP_STYLE_URL = 'https://example.test/style.json'
   process.env.HMCR_ID = 'test-hmcr-id'
   process.env.HMCR_SECRET = 'test-hmcr-secret'
   process.env.HMCR_API_URL = 'http://localhost:9090/api'

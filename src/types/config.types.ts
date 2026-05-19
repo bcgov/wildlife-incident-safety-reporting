@@ -18,7 +18,7 @@ export interface Config {
   keycloakClientId: string
   siteminderLogoutUrl: string
   googleMapsClientApiKey: string
-  googleMapsServerApiKey: string
+  baseMapStyleUrl: string
   hmcrId: string
   hmcrSecret: string
   hmcrApiUrl: string

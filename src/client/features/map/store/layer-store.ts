@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
-export type Basemap = 'roadmap' | 'satellite' | 'hybrid' | 'traffic'
+export type Basemap = 'standard' | 'satellite' | 'hybrid'
 export type DensityMode = 'weighted' | 'raw'
 
 type LayerState = {
@@ -18,7 +18,7 @@ type LayerActions = {
 }
 
 const initialState: LayerState = {
-  basemap: 'roadmap',
+  basemap: 'standard',
   layers: {
     boundaries: false,
     density: false,
