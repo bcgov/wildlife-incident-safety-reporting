@@ -6,9 +6,6 @@ import convex from "@turf/convex";
 import MapLibreGL, { type MarkerOptions, type PopupOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Home, Loader2, Locate, Maximize, Minus, Plus, ScanSearch, X } from "lucide-react";
-import { googleProtocol } from "@/features/map/lib/google-protocol";
-
-MapLibreGL.addProtocol("google", googleProtocol);
 
 import {
   createContext,

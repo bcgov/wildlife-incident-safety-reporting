@@ -14,18 +14,6 @@ export type Generated<T> =
     ? ColumnType<S, I | undefined, U>
     : ColumnType<T, T | undefined, T>
 
-export type Json = JsonValue
-
-export type JsonArray = JsonValue[]
-
-export type JsonObject = {
-  [x: string]: JsonValue | undefined
-}
-
-export type JsonPrimitive = boolean | number | string | null
-
-export type JsonValue = JsonArray | JsonObject | JsonPrimitive
-
 export type Numeric = ColumnType<string, number | string, number | string>
 
 export type Sex = 'FEMALE' | 'MALE' | 'UNKNOWN'
@@ -52,14 +40,6 @@ export interface GeometryColumns {
   f_table_schema: string | null
   srid: number | null
   type: string | null
-}
-
-export interface GoogleTileSessions {
-  expiry: Timestamp
-  options: Json
-  options_hash: string
-  session_token: string
-  updated_at: Generated<Timestamp>
 }
 
 export interface Incidents {
@@ -129,7 +109,6 @@ export interface Species {
 export interface DB {
   geography_columns: GeographyColumns
   geometry_columns: GeometryColumns
-  google_tile_sessions: GoogleTileSessions
   incidents: Incidents
   lki_segments: LkiSegments
   service_areas: ServiceAreas

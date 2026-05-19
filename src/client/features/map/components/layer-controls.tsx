@@ -21,10 +21,9 @@ const positionClasses = {
 }
 
 const basemapOptions: { id: Basemap; label: string }[] = [
-  { id: 'roadmap', label: 'Standard' },
+  { id: 'standard', label: 'Standard' },
   { id: 'satellite', label: 'Satellite' },
   { id: 'hybrid', label: 'Hybrid' },
-  { id: 'traffic', label: 'Traffic' },
 ]
 
 const overlayLayers = [

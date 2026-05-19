@@ -12,7 +12,7 @@ const schema = {
     'KEYCLOAK_CLIENT_ID',
     'SITEMINDER_LOGOUT_URL',
     'GOOGLE_MAPS_CLIENT_API_KEY',
-    'GOOGLE_MAPS_SERVER_API_KEY',
+    'BASE_MAP_STYLE_URL',
     'HMCR_ID',
     'HMCR_SECRET',
     'HMCR_API_URL',
@@ -91,7 +91,7 @@ const schema = {
     GOOGLE_MAPS_CLIENT_API_KEY: {
       type: 'string',
     },
-    GOOGLE_MAPS_SERVER_API_KEY: {
+    BASE_MAP_STYLE_URL: {
       type: 'string',
     },
     HMCR_ID: {
@@ -130,7 +130,7 @@ interface RawEnv {
   KEYCLOAK_CLIENT_ID: string
   SITEMINDER_LOGOUT_URL: string
   GOOGLE_MAPS_CLIENT_API_KEY: string
-  GOOGLE_MAPS_SERVER_API_KEY: string
+  BASE_MAP_STYLE_URL: string
   HMCR_ID: string
   HMCR_SECRET: string
   HMCR_API_URL: string
@@ -176,7 +176,7 @@ export default fp(
       keycloakClientId: raw.KEYCLOAK_CLIENT_ID,
       siteminderLogoutUrl: raw.SITEMINDER_LOGOUT_URL,
       googleMapsClientApiKey: raw.GOOGLE_MAPS_CLIENT_API_KEY,
-      googleMapsServerApiKey: raw.GOOGLE_MAPS_SERVER_API_KEY,
+      baseMapStyleUrl: raw.BASE_MAP_STYLE_URL,
       hmcrId: raw.HMCR_ID,
       hmcrSecret: raw.HMCR_SECRET,
       hmcrApiUrl: raw.HMCR_API_URL,
@@ -225,11 +225,8 @@ export default fp(
       throw new Error('GOOGLE_MAPS_CLIENT_API_KEY is required.')
     }
 
-    if (
-      !config.googleMapsServerApiKey ||
-      config.googleMapsServerApiKey.trim() === ''
-    ) {
-      throw new Error('GOOGLE_MAPS_SERVER_API_KEY is required.')
+    if (!config.baseMapStyleUrl || config.baseMapStyleUrl.trim() === '') {
+      throw new Error('BASE_MAP_STYLE_URL is required.')
     }
 
     fastify.decorate('config', config)

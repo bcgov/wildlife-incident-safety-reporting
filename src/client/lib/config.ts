@@ -4,6 +4,7 @@ interface ClientConfig {
   keycloakClientId: string
   siteminderLogoutUrl: string
   googleMapsClientApiKey: string
+  baseMapStyleUrl: string
 }
 
 declare global {

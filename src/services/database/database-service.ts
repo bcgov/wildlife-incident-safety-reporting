@@ -7,7 +7,6 @@ import type {
   Incident,
   IncidentsQuery,
 } from '@schemas/incidents/incidents.schema.js'
-import type { TileSessionQuery } from '@schemas/maps/session.schema.js'
 import type { BoundariesResponse } from '@schemas/service-areas/boundaries.schema.js'
 import type { LookupResponse } from '@schemas/service-areas/lookup.schema.js'
 import { createServiceLogger } from '@utils/logger.js'
@@ -563,43 +562,5 @@ export class DatabaseService {
       weighted: Number(r.weighted),
       densityPerKm: r.density_per_km != null ? Number(r.density_per_km) : null,
     }))
-  }
-
-  async getTileSession(
-    optionsHash: string,
-  ): Promise<{ sessionToken: string; expiry: Date } | null> {
-    this.log.debug({ optionsHash }, 'querying tile session')
-    const row = await this.kysely
-      .selectFrom('google_tile_sessions')
-      .select(['session_token', 'expiry'])
-      .where('options_hash', '=', optionsHash)
-      .executeTakeFirst()
-    if (!row) return null
-    return { sessionToken: row.session_token, expiry: row.expiry }
-  }
-
-  async upsertTileSession(
-    optionsHash: string,
-    options: TileSessionQuery,
-    sessionToken: string,
-    expiry: Date,
-  ): Promise<void> {
-    this.log.debug({ optionsHash }, 'upserting tile session')
-    await this.kysely
-      .insertInto('google_tile_sessions')
-      .values({
-        options_hash: optionsHash,
-        options: sql`${JSON.stringify(options)}::jsonb`,
-        session_token: sessionToken,
-        expiry,
-      })
-      .onConflict((oc) =>
-        oc.column('options_hash').doUpdateSet({
-          session_token: sessionToken,
-          expiry,
-          updated_at: sql`now()`,
-        }),
-      )
-      .execute()
   }
 }

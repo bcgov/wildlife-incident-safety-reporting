@@ -10,18 +10,17 @@ import {
   useMap,
 } from '@/components/ui/map'
 import { useIncidents } from '@/hooks/use-incidents'
-import { config } from '@/lib/config'
 import { speciesIcons } from '@/lib/species-icons'
 import { useIncidentLocateStore } from '@/stores/incident-locate-store'
 import { useSegmentLocateStore } from '@/stores/segment-locate-store'
-import { BasemapDarkener } from './components/basemap-darkener'
 import { BoundaryLayer } from './components/boundary-layer'
 import { DensityLayer } from './components/density-layer'
 import { DrawControls } from './components/draw-controls'
 import { IncidentPopup } from './components/incident-popup'
 import { LayerControls } from './components/layer-controls'
 import { ZoomToLocation } from './components/zoom-to-location'
-import { createGoogleMapStyle } from './lib/google-styles'
+import { useBcBasemapStyle } from './hooks/use-basemap-style'
+import { buildBasemapStyle } from './lib/bc-basemap-styles'
 import { useLayerStore } from './store/layer-store'
 
 export type IncidentProperties = {
@@ -196,13 +195,12 @@ function LocateSegment() {
   return null
 }
 
-const googleMapsApiKey = config.googleMapsClientApiKey
-
 export function Component() {
   const { data: response } = useIncidents()
   const [selected, setSelected] = useState<SelectedIncident | null>(null)
   const basemap = useLayerStore((s) => s.basemap)
   const densityVisible = useLayerStore((s) => s.layers.density)
+  const { data: bcStyle } = useBcBasemapStyle()
 
   const incidents = response?.data
   const prevIncidentsRef = useRef(incidents)
@@ -214,10 +212,12 @@ export function Component() {
   const geojson = useMemo(() => toGeoJSON(incidents ?? []), [incidents])
 
   const styles = useMemo(() => {
-    if (!googleMapsApiKey) return undefined
-    const style = createGoogleMapStyle(basemap, googleMapsApiKey)
-    return { light: style, dark: style }
-  }, [basemap])
+    if (!bcStyle) return undefined
+    return {
+      light: buildBasemapStyle(basemap, bcStyle, 'light'),
+      dark: buildBasemapStyle(basemap, bcStyle, 'dark'),
+    }
+  }, [basemap, bcStyle])
 
   return (
     <MapView
@@ -241,7 +241,6 @@ export function Component() {
       <ZoomToLocation />
       <LayerControls position="top-right" />
       <DrawControls position="top-right" className="!top-12" />
-      <BasemapDarkener />
       <LocateIncident onLocate={setSelected} />
       <LocateSegment />
       <DensityLayer />
