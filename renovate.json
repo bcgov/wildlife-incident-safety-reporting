@@ -146,6 +146,11 @@
       "allowedVersions": "< 3.0.0"
     },
     {
+      "description": "Pin react-day-picker to v9.x - shadcn calendar not compatible with v10",
+      "matchPackageNames": ["react-day-picker"],
+      "allowedVersions": "< 10.0.0"
+    },
+    {
       "description": "Auto-merge patch updates after 2 day stability period",
       "matchUpdateTypes": ["patch"],
       "automerge": true,
