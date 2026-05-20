@@ -80,7 +80,7 @@ spec:
             - secretRef:
                 name: {{ .Release.Name }}-backend
             - secretRef:
-                name: {{ .Values.backend.config.secretName }}
+                name: {{ .Release.Name }}-app-config
           env:
             - name: LOG_LEVEL
               value: info

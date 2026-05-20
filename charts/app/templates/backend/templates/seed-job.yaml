@@ -38,7 +38,7 @@ spec:
             - secretRef:
                 name: {{ .Release.Name }}-migrations
             - secretRef:
-                name: {{ .Values.backend.seed.secretName }}
+                name: {{ .Release.Name }}-seed
           env:
             - name: DB_USER
               valueFrom:

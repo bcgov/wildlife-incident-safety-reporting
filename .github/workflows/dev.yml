@@ -128,6 +128,20 @@ jobs:
     secrets:
       oc_namespace: ${{ secrets.OC_NAMESPACE }}
       oc_token: ${{ secrets.OC_TOKEN }}
+      keycloak_url: ${{ secrets.KEYCLOAK_URL }}
+      keycloak_realm: ${{ secrets.KEYCLOAK_REALM }}
+      keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
+      siteminder_logout_url: ${{ secrets.SITEMINDER_LOGOUT_URL }}
+      hmcr_api_url: ${{ secrets.HMCR_API_URL }}
+      hmcr_token_url: ${{ secrets.HMCR_TOKEN_URL }}
+      hmcr_id: ${{ secrets.HMCR_ID }}
+      hmcr_secret: ${{ secrets.HMCR_SECRET }}
+      google_maps_client_api_key: ${{ secrets.GOOGLE_MAPS_CLIENT_API_KEY }}
+      base_map_style_url: ${{ secrets.BASE_MAP_STYLE_URL }}
+      seed_s3_endpoint_url: ${{ secrets.SEED_S3_ENDPOINT_URL }}
+      seed_s3_bucket: ${{ secrets.SEED_S3_BUCKET }}
+      seed_s3_access_key: ${{ secrets.SEED_S3_ACCESS_KEY }}
+      seed_s3_secret_key: ${{ secrets.SEED_S3_SECRET_KEY }}
     with:
       environment: dev
       backend_tag: ${{ inputs.tag || (needs.build-backend.result == 'success' && github.sha || 'latest') }}

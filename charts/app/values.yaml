@@ -36,9 +36,19 @@ backend:
   enabled: true
   image:
     tag: ~
-  #-- runtime config Secret holding env-specific values (Keycloak, HMCR, Maps, SiteMinder). created out-of-band per namespace.
+  #-- runtime config rendered into {release}-app-config Secret. values supplied per environment via helm --set at deploy time.
   config:
-    secretName: wisr-app-config
+    keycloakUrl: ~
+    keycloakRealm: ~
+    keycloakClientId: ~
+    siteminderLogoutUrl: ~
+    hmcrApiUrl: ~
+    hmcrTokenUrl: ~
+    hmcrId: ~
+    hmcrSecret: ~
+    googleMapsClientApiKey: ~
+    baseMapStyleUrl: ~
+    port: "3033"
   #-- the deployment strategy, can be "Recreate" or "RollingUpdate"
   deploymentStrategy: Recreate
   #-- single-replica default; test/prod re-enable autoscaling via deploy params.
@@ -102,8 +112,12 @@ backend:
   #-- historical seed Job; fires on every install/upgrade and short-circuits if incidents already loaded.
   seed:
     enabled: false
-    #-- name of an out-of-band Secret holding the S3_* seed-source vars. created manually per environment.
-    secretName: wisr-seed
+    #-- S3 source creds rendered into {release}-seed Secret. supplied per environment via helm --set at deploy time.
+    s3:
+      endpointUrl: ~
+      bucket: ~
+      accessKey: ~
+      secretKey: ~
     resources:
       requests:
         cpu: 100m

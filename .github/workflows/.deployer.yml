@@ -85,6 +85,34 @@ on:
       oc_token:
         description: OpenShift token
         required: true
+      keycloak_url:
+        required: true
+      keycloak_realm:
+        required: true
+      keycloak_client_id:
+        required: true
+      siteminder_logout_url:
+        required: true
+      hmcr_api_url:
+        required: true
+      hmcr_token_url:
+        required: true
+      hmcr_id:
+        required: true
+      hmcr_secret:
+        required: true
+      google_maps_client_api_key:
+        required: true
+      base_map_style_url:
+        required: true
+      seed_s3_endpoint_url:
+        required: true
+      seed_s3_bucket:
+        required: true
+      seed_s3_access_key:
+        required: true
+      seed_s3_secret_key:
+        required: true
 
 permissions: {}
 
@@ -175,6 +203,20 @@ jobs:
               --set-string seed.image.tag="${{ inputs.seed_tag }}" \
               --set-string global.config.databaseUser="${{ inputs.db_user }}" \
               --set-string global.databaseAlias="${{ steps.deploy_crunchy.outputs.release }}-crunchy" \
+              --set-string backend.config.keycloakUrl="${{ secrets.keycloak_url }}" \
+              --set-string backend.config.keycloakRealm="${{ secrets.keycloak_realm }}" \
+              --set-string backend.config.keycloakClientId="${{ secrets.keycloak_client_id }}" \
+              --set-string backend.config.siteminderLogoutUrl="${{ secrets.siteminder_logout_url }}" \
+              --set-string backend.config.hmcrApiUrl="${{ secrets.hmcr_api_url }}" \
+              --set-string backend.config.hmcrTokenUrl="${{ secrets.hmcr_token_url }}" \
+              --set-string backend.config.hmcrId="${{ secrets.hmcr_id }}" \
+              --set-string backend.config.hmcrSecret="${{ secrets.hmcr_secret }}" \
+              --set-string backend.config.googleMapsClientApiKey="${{ secrets.google_maps_client_api_key }}" \
+              --set-string backend.config.baseMapStyleUrl="${{ secrets.base_map_style_url }}" \
+              --set-string backend.seed.s3.endpointUrl="${{ secrets.seed_s3_endpoint_url }}" \
+              --set-string backend.seed.s3.bucket="${{ secrets.seed_s3_bucket }}" \
+              --set-string backend.seed.s3.accessKey="${{ secrets.seed_s3_access_key }}" \
+              --set-string backend.seed.s3.secretKey="${{ secrets.seed_s3_secret_key }}" \
               ${{ inputs.params }} \
               --install --wait ${{ inputs.atomic && '--atomic' || '' }} ${{ steps.vars.outputs.release }} \
               --timeout ${{ inputs.timeout-minutes }}m \
