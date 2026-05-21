@@ -21,6 +21,7 @@ export default {
     outDir: resolve(import.meta.dirname, 'dist'),
     emptyOutDir: false,
     assetsInclude: ['**/*.woff2', '**/*.woff'],
+    modulePreload: { polyfill: false },
     rolldownOptions: {
       output: {
         codeSplitting: {

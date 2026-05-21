@@ -16,7 +16,6 @@ async function clientConfigInjection(fastify: FastifyInstance) {
 
   // Escape '<' so a value containing '</script>' cannot break out of the tag.
   const json = JSON.stringify(clientConfig).replace(/</g, '\\u003c')
-  const script = `<script>window.__CONFIG__=${json};</script>`
 
   fastify.addHook('onSend', async (_request, reply, payload) => {
     const contentType = reply.getHeader('content-type')
@@ -26,6 +25,7 @@ async function clientConfigInjection(fastify: FastifyInstance) {
       typeof payload === 'string' &&
       payload.includes('<div id="app">')
     ) {
+      const script = `<script nonce="${reply.cspNonce.script}">window.__CONFIG__=${json};</script>`
       return payload.replace(/<head[^>]*>/i, (match) => `${match}${script}`)
     }
     return payload
@@ -34,5 +34,5 @@ async function clientConfigInjection(fastify: FastifyInstance) {
 
 export default fp(clientConfigInjection, {
   name: 'client-config-injection',
-  dependencies: ['config'],
+  dependencies: ['config', 'helmet-plugin'],
 })

@@ -3,6 +3,7 @@ import { createSigner } from 'fast-jwt'
 import { HttpResponse, http } from 'msw'
 
 export const TEST_ISSUER = 'http://localhost:8080/realms/test'
+export const TEST_AUDIENCE = 'test-client'
 
 const { publicKey, privateKey } = generateKeyPairSync('rsa', {
   modulusLength: 2048,
@@ -73,6 +74,7 @@ export function generateToken(
     sub: 'test-user-guid',
     identity_provider: 'idir',
     iss: TEST_ISSUER,
+    aud: TEST_AUDIENCE,
     iat: now,
     exp: now + (options?.expiresIn ?? 3600),
     ...claims,
@@ -103,6 +105,7 @@ export function wrongKeyToken(claims?: TokenClaims): string {
     sub: 'test-user-guid',
     identity_provider: 'idir',
     iss: TEST_ISSUER,
+    aud: TEST_AUDIENCE,
     iat: now,
     exp: now + 3600,
     ...claims,

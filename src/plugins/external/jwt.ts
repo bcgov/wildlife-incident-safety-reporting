@@ -24,7 +24,7 @@ type TokenOrHeader = JwtHeader | { header: JwtHeader; payload: unknown }
 
 export default fp(
   async (fastify: FastifyInstance) => {
-    const { keycloakUrl, keycloakRealm } = fastify.config
+    const { keycloakUrl, keycloakRealm, keycloakClientId } = fastify.config
     const issuer = `${keycloakUrl}/realms/${keycloakRealm}`
 
     const getJwks = buildGetJwks({
@@ -48,6 +48,7 @@ export default fp(
       },
       verify: {
         allowedIss: [issuer],
+        allowedAud: [keycloakClientId],
       },
     })
   },

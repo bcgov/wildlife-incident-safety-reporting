@@ -1,5 +1,6 @@
 import type { Incident } from '@schemas/incidents/incidents.schema'
 import bbox from '@turf/bbox'
+import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DensityLegend } from '@/components/density-legend'
 import {
@@ -218,6 +219,14 @@ export function Component() {
       dark: buildBasemapStyle(basemap, bcStyle, 'dark'),
     }
   }, [basemap, bcStyle])
+
+  if (!styles) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="text-muted-foreground size-6 animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <MapView
