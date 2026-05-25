@@ -10,18 +10,22 @@ declare module 'node:http' {
   }
 }
 
+const isDev = process.argv.includes('--dev')
+
 function createHelmetConfig(fastify: FastifyInstance): FastifyHelmetOptions {
   const { keycloakUrl, baseMapStyleUrl } = fastify.config
   const keycloakOrigin = new URL(keycloakUrl).origin
   const baseMapOrigin = new URL(baseMapStyleUrl).origin
-  const isDev = process.env.NODE_ENV !== 'production'
 
   return {
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", (_req, res) => `'nonce-${res.cspNonce ?? ''}'`],
+        // Vite HMR needs inline scripts and eval() in dev.
+        scriptSrc: isDev
+          ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
+          : ["'self'", (_req, res) => `'nonce-${res.cspNonce ?? ''}'`],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: [
           "'self'",
@@ -56,11 +60,13 @@ function createHelmetConfig(fastify: FastifyInstance): FastifyHelmetOptions {
 
 export default fp(
   async (fastify: FastifyInstance) => {
-    fastify.addHook('onRequest', async (_request, reply) => {
-      const nonce = randomBytes(16).toString('hex')
-      reply.cspNonce = { script: nonce, style: nonce }
-      reply.raw.cspNonce = nonce
-    })
+    if (!isDev) {
+      fastify.addHook('onRequest', async (_request, reply) => {
+        const nonce = randomBytes(16).toString('hex')
+        reply.cspNonce = { script: nonce, style: nonce }
+        reply.raw.cspNonce = nonce
+      })
+    }
     await fastify.register(helmet, createHelmetConfig(fastify))
   },
   {

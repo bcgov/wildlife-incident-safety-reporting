@@ -12,7 +12,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Crosshair } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataTableColumnHeader } from '@/components/table/data-table-column-header'
 import { DataTablePagination } from '@/components/table/data-table-pagination'
 import { DataTableToolbar } from '@/components/table/data-table-toolbar'
@@ -234,6 +234,14 @@ const DEFAULT_VISIBILITY: VisibilityState = {
   large: false,
   weighted: false,
 }
+const INITIAL_STATE = { pagination: { pageSize: 20 } } as const
+
+// Row model factories must be referentially stable - calling them inline on
+// every render invalidates TanStack's internal memos and rebuilds the cell tree.
+const coreRowModel = getCoreRowModel()
+const sortedRowModel = getSortedRowModel()
+const paginationRowModel = getPaginationRowModel()
+const filteredRowModel = getFilteredRowModel()
 
 export function DensityTable({
   segments,
@@ -282,22 +290,36 @@ export function DensityTable({
     [rows, visibleKeys],
   )
 
-  const table = useReactTable({
-    data: rows,
-    columns,
-    initialState: { pagination: { pageSize: 20 } },
-    state: { sorting, columnVisibility, globalFilter },
-    onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _columnId, filterValue) => {
+  const state = useMemo(
+    () => ({ sorting, columnVisibility, globalFilter }),
+    [sorting, columnVisibility, globalFilter],
+  )
+
+  const globalFilterFn = useCallback(
+    (
+      row: { original: DensityRow },
+      _columnId: string,
+      filterValue: unknown,
+    ) => {
       const indexed = searchIndex.get(row.original.segmentId)
       return indexed?.includes((filterValue as string).toLowerCase()) ?? false
     },
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    [searchIndex],
+  )
+
+  const table = useReactTable({
+    data: rows,
+    columns,
+    initialState: INITIAL_STATE,
+    state,
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn,
+    getCoreRowModel: coreRowModel,
+    getSortedRowModel: sortedRowModel,
+    getPaginationRowModel: paginationRowModel,
+    getFilteredRowModel: filteredRowModel,
   })
 
   // Keep a stable ref to the table so the highlight effect doesn't re-run

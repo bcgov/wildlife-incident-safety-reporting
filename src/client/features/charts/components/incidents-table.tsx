@@ -14,7 +14,7 @@ import {
 } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { Crosshair } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { DataTableColumnHeader } from '@/components/table/data-table-column-header'
 import { DataTablePagination } from '@/components/table/data-table-pagination'
 import { DataTableToolbar } from '@/components/table/data-table-toolbar'
@@ -289,6 +289,14 @@ const DEFAULT_VISIBILITY: VisibilityState = {
   id: false,
   comments: false,
 }
+const INITIAL_STATE = { pagination: { pageSize: 20 } } as const
+
+// Row model factories must be referentially stable - calling them inline on
+// every render invalidates TanStack's internal memos and rebuilds the cell tree.
+const coreRowModel = getCoreRowModel()
+const sortedRowModel = getSortedRowModel()
+const paginationRowModel = getPaginationRowModel()
+const filteredRowModel = getFilteredRowModel()
 
 export function IncidentsTable({ incidents, isLoading }: IncidentsTableProps) {
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
@@ -313,22 +321,32 @@ export function IncidentsTable({ incidents, isLoading }: IncidentsTableProps) {
     [incidents, visibleKeys],
   )
 
-  const table = useReactTable({
-    data: incidents,
-    columns,
-    initialState: { pagination: { pageSize: 20 } },
-    state: { sorting, columnVisibility, globalFilter },
-    onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _columnId, filterValue) => {
+  const state = useMemo(
+    () => ({ sorting, columnVisibility, globalFilter }),
+    [sorting, columnVisibility, globalFilter],
+  )
+
+  const globalFilterFn = useCallback(
+    (row: { original: Incident }, _columnId: string, filterValue: unknown) => {
       const indexed = searchIndex.get(row.original.id)
       return indexed?.includes((filterValue as string).toLowerCase()) ?? false
     },
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    [searchIndex],
+  )
+
+  const table = useReactTable({
+    data: incidents,
+    columns,
+    initialState: INITIAL_STATE,
+    state,
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn,
+    getCoreRowModel: coreRowModel,
+    getSortedRowModel: sortedRowModel,
+    getPaginationRowModel: paginationRowModel,
+    getFilteredRowModel: filteredRowModel,
   })
 
   const visibleSkeletonColumns = skeletonColumns.filter((_, i) => {
