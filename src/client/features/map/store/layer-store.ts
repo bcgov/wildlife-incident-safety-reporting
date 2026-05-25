@@ -22,6 +22,7 @@ const initialState: LayerState = {
   layers: {
     boundaries: false,
     density: false,
+    heatmap: false,
   },
   densityMode: 'weighted',
 }

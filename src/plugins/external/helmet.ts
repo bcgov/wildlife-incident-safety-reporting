@@ -60,13 +60,11 @@ function createHelmetConfig(fastify: FastifyInstance): FastifyHelmetOptions {
 
 export default fp(
   async (fastify: FastifyInstance) => {
-    if (!isDev) {
-      fastify.addHook('onRequest', async (_request, reply) => {
-        const nonce = randomBytes(16).toString('hex')
-        reply.cspNonce = { script: nonce, style: nonce }
-        reply.raw.cspNonce = nonce
-      })
-    }
+    fastify.addHook('onRequest', async (_request, reply) => {
+      const nonce = randomBytes(16).toString('hex')
+      reply.cspNonce = { script: nonce, style: nonce }
+      reply.raw.cspNonce = nonce
+    })
     await fastify.register(helmet, createHelmetConfig(fastify))
   },
   {

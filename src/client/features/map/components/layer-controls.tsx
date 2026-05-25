@@ -29,6 +29,7 @@ const basemapOptions: { id: Basemap; label: string }[] = [
 const overlayLayers = [
   { id: 'boundaries', label: 'Service area boundaries' },
   { id: 'density', label: 'LKI segment density' },
+  { id: 'heatmap', label: 'Heatmap' },
 ] as const
 
 const densityModeOptions: { id: DensityMode; label: string }[] = [

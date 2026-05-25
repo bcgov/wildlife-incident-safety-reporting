@@ -17,6 +17,7 @@ import { useSegmentLocateStore } from '@/stores/segment-locate-store'
 import { BoundaryLayer } from './components/boundary-layer'
 import { DensityLayer } from './components/density-layer'
 import { DrawControls } from './components/draw-controls'
+import { IncidentHeatmapLayer } from './components/incident-heatmap-layer'
 import { IncidentPopup } from './components/incident-popup'
 import { LayerControls } from './components/layer-controls'
 import { ZoomToLocation } from './components/zoom-to-location'
@@ -83,6 +84,11 @@ function toGeoJSON(
 }
 
 const CLUSTER_MAX_ZOOM = 22
+
+const EMPTY_INCIDENT_FC: GeoJSON.FeatureCollection<
+  GeoJSON.Point,
+  IncidentProperties
+> = { type: 'FeatureCollection', features: [] }
 
 function LocateIncident({
   onLocate,
@@ -201,6 +207,7 @@ export function Component() {
   const [selected, setSelected] = useState<SelectedIncident | null>(null)
   const basemap = useLayerStore((s) => s.basemap)
   const densityVisible = useLayerStore((s) => s.layers.density)
+  const heatmapVisible = useLayerStore((s) => s.layers.heatmap)
   const { data: bcStyle } = useBcBasemapStyle()
 
   const incidents = response?.data
@@ -210,7 +217,14 @@ export function Component() {
     setSelected(null)
   }
 
+  useEffect(() => {
+    if (heatmapVisible) setSelected(null)
+  }, [heatmapVisible])
+
   const geojson = useMemo(() => toGeoJSON(incidents ?? []), [incidents])
+
+  // Avoids the supercluster rebuild that unmounting MapClusterLayer would cause.
+  const clusterData = heatmapVisible ? EMPTY_INCIDENT_FC : geojson
 
   const styles = useMemo(() => {
     if (!bcStyle) return undefined
@@ -254,8 +268,9 @@ export function Component() {
       <LocateSegment />
       <DensityLayer />
       <BoundaryLayer />
+      {heatmapVisible && <IncidentHeatmapLayer data={geojson} />}
       <MapClusterLayer<IncidentProperties>
-        data={geojson}
+        data={clusterData}
         icons={speciesIcons}
         iconProperty="speciesGroupName"
         clusterRadius={80}
