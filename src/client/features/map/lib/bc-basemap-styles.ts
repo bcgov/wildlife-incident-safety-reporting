@@ -1,5 +1,6 @@
 import type {
   BackgroundLayerSpecification,
+  LayerSpecification,
   RasterSourceSpecification,
   SourceSpecification,
   StyleSpecification,
@@ -8,10 +9,7 @@ import type { Basemap } from '../store/layer-store'
 
 type Theme = 'light' | 'dark'
 
-const CANVAS_COLOR: Record<Theme, string> = {
-  light: '#ffffff',
-  dark: '#25221f',
-}
+const CANVAS_COLOR = '#ffffff'
 
 const DARK_OVERLAY: BackgroundLayerSpecification = {
   id: 'wisr-dark-overlay',
@@ -25,6 +23,53 @@ function withDarkOverlay(
 ): StyleSpecification {
   if (theme !== 'dark') return style
   return { ...style, layers: [...style.layers, DARK_OVERLAY] }
+}
+
+// ArcGIS ships no Bold Italic atlas, so Bold+Italic collapses to Bold.
+function rewriteTextFonts(layers: LayerSpecification[]): LayerSpecification[] {
+  return layers.map((l) => {
+    if (l.type !== 'symbol') return l
+    const original = l.layout?.['text-font']
+    if (!Array.isArray(original)) return l
+    const hasBold = original.some(
+      (f) => typeof f === 'string' && /bold/i.test(f),
+    )
+    const hasItalic = original.some(
+      (f) => typeof f === 'string' && /italic/i.test(f),
+    )
+    const font = hasBold
+      ? 'BC Sans Bold'
+      : hasItalic
+        ? 'BC Sans Italic'
+        : 'BC Sans Regular'
+    return { ...l, layout: { ...l.layout, 'text-font': [font] } }
+  })
+}
+
+// Upstream sometimes emits layer-id paths (with '/') as icon-image values;
+// real sprite keys never contain '/'. Remap known ones, strip the rest.
+const ICON_IMAGE_REMAP: Record<string, string> = {
+  'POLITICAL/Natural & Historic Sites/National Historic Site':
+    'Historic Site Point',
+  'POLITICAL/Populated Places/Cities': 'Cities Point',
+  'POLITICAL/Populated Places/Towns Villages': 'Towns and Villages Point',
+  'TRANSPORTATION/DRA Overpasses/Trail FO': 'Trail Overpass (FO)',
+  'TRANSPORTATION/DRA Overpasses/Trail OO': 'Trail Overpass (OO)',
+  'TRANSPORTATION/DRA Overpasses/Trail TO': 'Trail Overpass (TO)',
+}
+
+function fixIconImages(layers: LayerSpecification[]): LayerSpecification[] {
+  return layers.map((l) => {
+    if (l.type !== 'symbol') return l
+    const ii = l.layout?.['icon-image']
+    if (typeof ii !== 'string' || !ii.includes('/')) return l
+    const remap = ICON_IMAGE_REMAP[ii]
+    if (remap) {
+      return { ...l, layout: { ...l.layout, 'icon-image': remap } }
+    }
+    const { 'icon-image': _stripped, ...layout } = l.layout ?? {}
+    return { ...l, layout }
+  })
 }
 
 const ESRI_WORLD_IMAGERY_URL =
@@ -105,15 +150,12 @@ function buildHybridStyle(bcStyle: StyleSpecification): StyleSpecification {
   }
 }
 
-function buildStandardStyle(
-  bcStyle: StyleSpecification,
-  theme: Theme,
-): StyleSpecification {
+function buildStandardStyle(bcStyle: StyleSpecification): StyleSpecification {
   const base = transformEsriSources(bcStyle)
   const background: BackgroundLayerSpecification = {
     id: 'wisr-canvas-background',
     type: 'background',
-    paint: { 'background-color': CANVAS_COLOR[theme] },
+    paint: { 'background-color': CANVAS_COLOR },
   }
   return { ...base, layers: [background, ...base.layers] }
 }
@@ -123,12 +165,18 @@ export function buildBasemapStyle(
   bcStyle: StyleSpecification,
   theme: Theme,
 ): StyleSpecification {
-  switch (basemap) {
-    case 'standard':
-      return withDarkOverlay(buildStandardStyle(bcStyle, theme), theme)
-    case 'satellite':
-      return withDarkOverlay(buildSatelliteStyle(), theme)
-    case 'hybrid':
-      return withDarkOverlay(buildHybridStyle(bcStyle), theme)
-  }
+  const style = (() => {
+    switch (basemap) {
+      case 'standard':
+        return buildStandardStyle(bcStyle)
+      case 'satellite':
+        return buildSatelliteStyle()
+      case 'hybrid':
+        return buildHybridStyle(bcStyle)
+    }
+  })()
+  return withDarkOverlay(
+    { ...style, layers: fixIconImages(rewriteTextFonts(style.layers)) },
+    theme,
+  )
 }
