@@ -10,14 +10,24 @@ import {
 } from '@schemas/common/transforms.schema.js'
 import { z } from 'zod'
 
+// Bounds the result set; the full unfiltered query exceeds the pod's memory limit.
+export const MAX_SELECTED_YEARS = 10
+
 export const IncidentFilterFields = z.object({
-  year: commaNumbers.optional().meta({
-    override: {
-      type: 'string',
-      description: 'Comma-separated list of years (e.g. 2020,2021)',
-      example: '2020,2021',
-    },
-  }),
+  year: commaNumbers
+    .pipe(
+      z.array(z.number().int().positive()).max(MAX_SELECTED_YEARS, {
+        error: `Select at most ${MAX_SELECTED_YEARS} years`,
+      }),
+    )
+    .optional()
+    .meta({
+      override: {
+        type: 'string',
+        description: `Comma-separated list of years (e.g. 2020,2021), max ${MAX_SELECTED_YEARS}`,
+        example: '2020,2021',
+      },
+    }),
   species: commaNumbers.optional().meta({
     override: {
       type: 'string',

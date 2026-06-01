@@ -1,6 +1,8 @@
+import { MAX_SELECTED_YEARS } from '@schemas/common/incident-query.schema'
 import { format, parseISO } from 'date-fns'
 import { CalendarIcon, RotateCcw, X } from 'lucide-react'
 import { useMemo } from 'react'
+import { FieldError } from '@/components/field-error'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -173,16 +175,31 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             {isLoading ? (
               <FilterSkeleton />
             ) : (
-              <MultiSelect
-                options={(filters?.years ?? []).map((y) => ({
-                  value: String(y),
-                  label: String(y),
-                }))}
-                defaultValue={store.years.map(String)}
-                onValueChange={(values) => store.setYears(values.map(Number))}
-                placeholder="Select years"
-                maxCount={2}
-              />
+              <>
+                <MultiSelect
+                  options={(filters?.years ?? []).map((y) => ({
+                    value: String(y),
+                    label: String(y),
+                  }))}
+                  defaultValue={store.years.map(String)}
+                  selectAllValues={(filters?.years ?? [])
+                    .slice(0, MAX_SELECTED_YEARS)
+                    .map(String)}
+                  selectAllLabel={`(Most recent ${MAX_SELECTED_YEARS} years)`}
+                  onValueChange={(values) => store.setYears(values.map(Number))}
+                  placeholder="Select years"
+                  maxCount={2}
+                  className={
+                    store.years.length > MAX_SELECTED_YEARS
+                      ? 'border-destructive'
+                      : undefined
+                  }
+                />
+                <FieldError>
+                  {store.years.length > MAX_SELECTED_YEARS &&
+                    `Select at most ${MAX_SELECTED_YEARS} years (${store.years.length} selected)`}
+                </FieldError>
+              </>
             )}
           </SidebarGroupContent>
         </SidebarGroup>

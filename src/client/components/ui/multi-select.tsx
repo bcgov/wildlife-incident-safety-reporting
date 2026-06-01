@@ -161,6 +161,12 @@ interface MultiSelectProps
 	 */
 	hideSelectAll?: boolean;
 
+	/** Falls back to every option when unset. */
+	selectAllValues?: string[];
+
+	/** Defaults to "(Select All)" when unset. */
+	selectAllLabel?: string;
+
 	/**
 	 * If true, shows search functionality in the popover.
 	 * If false, hides the search input completely.
@@ -302,6 +308,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			maxCount = 3,
 			className,
 			hideSelectAll = false,
+			selectAllValues,
+			selectAllLabel,
 			searchable = true,
 			emptyIndicator,
 			autoSize = false,
@@ -635,15 +643,19 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			onValueChange(newSelectedValues);
 		};
 
+		const selectAllTarget =
+			selectAllValues ??
+			getAllOptions()
+				.filter((option) => !option.disabled)
+				.map((option) => option.value);
+
 		const toggleAll = () => {
 			if (disabled) return;
-			const allOptions = getAllOptions().filter((option) => !option.disabled);
-			if (selectedValues.length === allOptions.length) {
+			if (arraysEqual(selectedValues, selectAllTarget)) {
 				handleClear();
 			} else {
-				const allValues = allOptions.map((option) => option.value);
-				setSelectedValues(allValues);
-				onValueChange(allValues);
+				setSelectedValues(selectAllTarget);
+				onValueChange(selectAllTarget);
 			}
 
 			if (closeOnSelect) {
@@ -1034,27 +1046,26 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											key="all"
 											onSelect={toggleAll}
 											role="option"
-											aria-selected={
-												selectedValues.length ===
-												getAllOptions().filter((opt) => !opt.disabled).length
+											aria-selected={arraysEqual(
+												selectedValues,
+												selectAllTarget
+											)}
+											aria-label={
+												selectAllLabel ??
+												`Select all ${getAllOptions().length} options`
 											}
-											aria-label={`Select all ${
-												getAllOptions().length
-											} options`}
 											className="cursor-pointer">
 											<div
 												className={cn(
 													"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-													selectedValues.length ===
-														getAllOptions().filter((opt) => !opt.disabled)
-															.length
+													arraysEqual(selectedValues, selectAllTarget)
 														? "bg-primary text-primary-foreground"
 														: "opacity-50 [&_svg]:invisible"
 												)}
 												aria-hidden="true">
 												<CheckIcon className="h-4 w-4" />
 											</div>
-											<span>(Select All)</span>
+											<span>{selectAllLabel ?? "(Select All)"}</span>
 										</CommandItem>
 									</CommandGroup>
 								)}
