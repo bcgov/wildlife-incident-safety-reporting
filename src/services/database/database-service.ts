@@ -376,10 +376,9 @@ export class DatabaseService {
     this.log.debug({ count: rows.length }, 'upserting LKI segments')
 
     return await this.kysely.transaction().execute(async (trx) => {
-      // Disable bulk reassignment trigger - run it explicitly only if data changed
-      await sql`ALTER TABLE lki_segments DISABLE TRIGGER trg_reassign_incidents_on_lki_change`.execute(
-        trx,
-      )
+      // SET LOCAL (not DISABLE TRIGGER, which needs ownership) skips the per-statement
+      // reassignment; it runs once explicitly below and the GUC resets at commit.
+      await sql`SET LOCAL wisr.skip_lki_reassign = 'on'`.execute(trx)
 
       const incomingIds = rows.map((r) => r.chris_lki_segment_id)
 
@@ -481,10 +480,6 @@ export class DatabaseService {
             )
         `.execute(trx)
       }
-
-      await sql`ALTER TABLE lki_segments ENABLE TRIGGER trg_reassign_incidents_on_lki_change`.execute(
-        trx,
-      )
 
       this.log.debug({ upserted, deleted }, 'LKI upsert complete')
       return { upserted, deleted }
