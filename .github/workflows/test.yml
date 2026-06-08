@@ -1,0 +1,55 @@
+name: Deploy to TEST
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to promote to TEST; defaults to latest"
+        type: string
+        required: false
+        default: latest
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Deploy (TEST)
+    uses: ./.github/workflows/.deployer.yml
+    secrets:
+      oc_namespace: ${{ secrets.OC_NAMESPACE }}
+      oc_token: ${{ secrets.OC_TOKEN }}
+      keycloak_url: ${{ secrets.KEYCLOAK_URL }}
+      keycloak_realm: ${{ secrets.KEYCLOAK_REALM }}
+      keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
+      siteminder_logout_url: ${{ secrets.SITEMINDER_LOGOUT_URL }}
+      hmcr_api_url: ${{ secrets.HMCR_API_URL }}
+      hmcr_token_url: ${{ secrets.HMCR_TOKEN_URL }}
+      hmcr_id: ${{ secrets.HMCR_ID }}
+      hmcr_secret: ${{ secrets.HMCR_SECRET }}
+      google_maps_client_api_key: ${{ secrets.GOOGLE_MAPS_CLIENT_API_KEY }}
+      base_map_style_url: ${{ secrets.BASE_MAP_STYLE_URL }}
+      seed_s3_endpoint_url: ${{ secrets.SEED_S3_ENDPOINT_URL }}
+      seed_s3_bucket: ${{ secrets.SEED_S3_BUCKET }}
+      seed_s3_access_key: ${{ secrets.SEED_S3_ACCESS_KEY }}
+      seed_s3_secret_key: ${{ secrets.SEED_S3_SECRET_KEY }}
+    with:
+      environment: test
+      backend_tag: ${{ inputs.tag }}
+      migrations_tag: ${{ inputs.tag }}
+      seed_tag: ${{ inputs.tag }}
+      params: --set global.secrets.persist=false --set backend.seed.enabled=true
+      db_triggers: ('charts/crunchy/')
+
+  results:
+    name: Test Results
+    needs: [deploy]
+    if: always()
+    runs-on: ubuntu-slim
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: echo "At least one job has failed." && exit 1
+      - run: echo "Success!"
