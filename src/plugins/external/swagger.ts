@@ -92,8 +92,26 @@ export default fp(
 
     await fastify.register(fastifySwagger, createOpenapiConfig(fastify))
 
-    await fastify.register(apiReference, {
-      routePrefix: '/api/docs',
+    // Scalar's inline bootstrap script ships without a nonce, which our CSP blocks.
+    await fastify.register(async (scope) => {
+      scope.addHook('onSend', async (_request, reply, payload) => {
+        const nonce = reply.raw.cspNonce
+        const contentType = reply.getHeader('content-type')
+        if (
+          typeof payload !== 'string' ||
+          !nonce ||
+          typeof contentType !== 'string' ||
+          !contentType.includes('text/html')
+        ) {
+          return payload
+        }
+        return payload.replaceAll('<script', `<script nonce="${nonce}"`)
+      })
+
+      await scope.register(apiReference, {
+        routePrefix: '/api/docs',
+        configuration: { withDefaultFonts: false },
+      })
     })
   },
   {
