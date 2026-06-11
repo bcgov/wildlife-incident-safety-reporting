@@ -17,7 +17,7 @@ metadata:
 spec:
   ingressClassName: openshift-default
   rules:
-    - host: {{ .Release.Name }}.{{ .Values.global.domain }}
+    - host: {{ include "backend.host" . }}
       http:
         paths:
           - path: /
@@ -40,7 +40,7 @@ metadata:
 spec:
   ingressClassName: openshift-default
   rules:
-    - host: {{ .Release.Name }}.{{ .Values.global.domain }}
+    - host: {{ include "backend.host" . }}
       http:
         paths:
           - path: /api/docs

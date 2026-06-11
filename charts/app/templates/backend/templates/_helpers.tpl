@@ -20,6 +20,13 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
+Ingress host, overridable per environment via backend.ingress.host.
+*/}}
+{{- define "backend.host" -}}
+{{- .Values.backend.ingress.host | default (printf "%s.%s" .Release.Name .Values.global.domain) }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "backend.labels" -}}

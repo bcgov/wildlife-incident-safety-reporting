@@ -1,4 +1,5 @@
 backend:
   ingress:
+    host: wisr-test.apps.gold.devops.gov.bc.ca
     restrictMain: true
     restrictDocs: false

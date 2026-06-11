@@ -147,7 +147,7 @@ jobs:
       backend_tag: ${{ inputs.tag || (needs.build-backend.result == 'success' && github.sha || 'latest') }}
       migrations_tag: ${{ inputs.tag || (needs.build-migrations.result == 'success' && github.sha || 'latest') }}
       seed_tag: ${{ inputs.tag || (needs.build-seed.result == 'success' && github.sha || 'latest') }}
-      params: --set global.secrets.persist=false --set backend.seed.enabled=true
+      params: --set global.secrets.persist=false --set backend.seed.enabled=true --set backend.ingress.host=wisr-dev.apps.gold.devops.gov.bc.ca
       db_triggers: ('charts/crunchy/')
 
   results:
