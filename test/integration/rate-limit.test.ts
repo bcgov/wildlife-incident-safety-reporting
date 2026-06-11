@@ -15,7 +15,8 @@ describe('Rate Limit', () => {
     await app?.close()
   })
 
-  const protectedUrl = '/v1/incidents'
+  // year is required; without it validation 400s before the preHandler rate limiter runs
+  const protectedUrl = '/v1/incidents?year=2021'
 
   it('attaches rate-limit headers to authenticated /v1/* responses', async () => {
     const token = idirToken({ sub: `headers-${Date.now()}` })

@@ -1,4 +1,7 @@
-import { MAX_SELECTED_YEARS } from '@schemas/common/incident-query.schema'
+import {
+  MAX_SELECTED_YEARS,
+  YearSelectionSchema,
+} from '@schemas/common/incident-query.schema'
 import { format, parseISO } from 'date-fns'
 import { CalendarIcon, RotateCcw, X } from 'lucide-react'
 import { useMemo } from 'react'
@@ -87,6 +90,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { data: filters, isLoading } = useFilters()
   const { data: incidents } = useIncidents()
   const store = useFilterStore()
+
+  const yearValidation = useMemo(
+    () => YearSelectionSchema.safeParse(store.years),
+    [store.years],
+  )
 
   const speciesGroupMap = useMemo(() => {
     const map = new Map<string, number[]>()
@@ -190,15 +198,21 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   placeholder="Select years"
                   maxCount={2}
                   className={
-                    store.years.length > MAX_SELECTED_YEARS
+                    !yearValidation.success && store.years.length > 0
                       ? 'border-destructive'
                       : undefined
                   }
                 />
-                <FieldError>
-                  {store.years.length > MAX_SELECTED_YEARS &&
-                    `Select at most ${MAX_SELECTED_YEARS} years (${store.years.length} selected)`}
-                </FieldError>
+                {!yearValidation.success &&
+                  (store.years.length === 0 ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {yearValidation.error.issues[0]?.message}
+                    </p>
+                  ) : (
+                    <FieldError>
+                      {yearValidation.error.issues[0]?.message}
+                    </FieldError>
+                  ))}
               </>
             )}
           </SidebarGroupContent>
