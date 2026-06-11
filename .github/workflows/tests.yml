@@ -13,7 +13,7 @@ jobs:
 
     services:
       postgres:
-        image: postgis/postgis:18-3.6@sha256:9ee5e07e7600b079f4c1f7f4cf087f34df3a767f4738d9a38d8b90aecebdf5c1
+        image: postgis/postgis:18-3.6@sha256:804c0a7b287a58e40d7b6ea012d97346922f56a301de9f6c4860ef4c4059f259
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -27,7 +27,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Create test database
         run: psql -h localhost -U postgres -f docker/init-test-db.sql
