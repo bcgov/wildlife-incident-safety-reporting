@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: bcgov/action-oc-runner@1815ce17a815c71e9078851a2e3da84d191ea6c3 # v1.5.0
+      - uses: bcgov/action-oc-runner@b1c55b8a8bd5f42b19f72e6ea7df6d6a6eda44a1 # v1.5.1
         with:
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_token: ${{ secrets.OC_TOKEN }}
@@ -58,7 +58,7 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Set up Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
