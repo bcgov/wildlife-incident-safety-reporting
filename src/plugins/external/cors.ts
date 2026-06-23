@@ -8,8 +8,11 @@ const createCorsConfig = (fastify: FastifyInstance): FastifyCorsOptions => {
     `Using baseUrl: ${fastify.config.baseUrl} for service connections`,
   )
 
+  // SPA is served same-origin with the API, so the app's own host is the only legitimate cross-origin caller.
+  const isDev = process.env.NODE_ENV !== 'production'
+
   return {
-    origin: fastify.config.corsOrigin || true,
+    origin: fastify.config.corsOrigin || isDev,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
