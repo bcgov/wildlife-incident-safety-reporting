@@ -9,6 +9,8 @@ export interface Config {
   dbPassword: string
   databaseUrl: string
   dbPoolSize: number
+  dbIdleTimeout: number
+  dbMaxLifetime: number
   logLevel: string
   closeGraceDelay: number
   rateLimitMax: number

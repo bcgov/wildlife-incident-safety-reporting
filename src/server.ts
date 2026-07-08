@@ -1,3 +1,4 @@
+import { isConnectionError } from '@utils/db-errors.js'
 import { createLoggerConfig, isValidLogLevel } from '@utils/logger.js'
 import closeWithGrace from 'close-with-grace'
 import Fastify from 'fastify'
@@ -31,10 +32,24 @@ async function init() {
     app.log.level = configLogLevel
   }
 
+  // A dead socket's release-path rejection has no request to catch it; keep it from reaching close-with-grace as fatal.
+  process.on('unhandledRejection', (reason) => {
+    if (isConnectionError(reason)) {
+      app.log.warn(
+        { err: reason },
+        'discarded a stale database connection rejection; the pool will reconnect',
+      )
+      return
+    }
+    app.log.error({ err: reason }, 'unhandled rejection, shutting down')
+    app.close().finally(() => process.exit(1))
+  })
+
   closeWithGrace(
     {
       delay: app.config.closeGraceDelay,
       logger: app.log,
+      skip: ['unhandledRejection'],
     },
     async ({ signal, err }) => {
       if (err) {
