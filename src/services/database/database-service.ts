@@ -9,6 +9,7 @@ import type {
 } from '@schemas/incidents/incidents.schema.js'
 import type { BoundariesResponse } from '@schemas/service-areas/boundaries.schema.js'
 import type { LookupResponse } from '@schemas/service-areas/lookup.schema.js'
+import { withConnectionRetry } from '@utils/db-retry.js'
 import { createServiceLogger } from '@utils/logger.js'
 import type { FastifyBaseLogger } from 'fastify'
 import type { Kysely } from 'kysely'
@@ -283,56 +284,58 @@ export class DatabaseService {
     const batchSize = 1000
     const totalBatches = Math.ceil(rows.length / batchSize)
 
-    return await this.kysely.transaction().execute(async (trx) => {
-      let created = 0
-      let updated = 0
+    return await withConnectionRetry(
+      () =>
+        this.kysely.transaction().execute(async (trx) => {
+          let created = 0
+          let updated = 0
 
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize)
-        const batchNum = Math.floor(i / batchSize) + 1
+          for (let i = 0; i < rows.length; i += batchSize) {
+            const batch = rows.slice(i, i + batchSize)
+            const batchNum = Math.floor(i / batchSize) + 1
 
-        // Use xmax to distinguish inserts (xmax = 0) from updates (xmax > 0).
-        // IS DISTINCT FROM and xmax aren't expressible via the query builder.
-        const result = await trx
-          .insertInto('incidents')
-          .values(
-            batch.map((r) => ({
-              hmcr_record_id: r.hmcr_record_id,
-              accident_date: r.accident_date
-                ? sql<Date>`${r.accident_date}::date`
-                : null,
-              time_of_kill: r.time_of_kill
-                ? sql<TimeOfKill>`${r.time_of_kill}::time_of_kill`
-                : null,
-              nearest_town: r.nearest_town,
-              sex: r.sex ? sql<Sex>`${r.sex}::sex` : null,
-              age: r.age ? sql<Age>`${r.age}::age` : null,
-              comments: r.comments,
-              quantity: r.quantity,
-              latitude: r.latitude,
-              longitude: r.longitude,
-              species_id: r.species_id,
-              year: r.year,
-            })),
-          )
-          .onConflict((oc) =>
-            oc
-              .column('hmcr_record_id')
-              .doUpdateSet((eb) => ({
-                accident_date: eb.ref('excluded.accident_date'),
-                time_of_kill: eb.ref('excluded.time_of_kill'),
-                nearest_town: eb.ref('excluded.nearest_town'),
-                sex: eb.ref('excluded.sex'),
-                age: eb.ref('excluded.age'),
-                comments: eb.ref('excluded.comments'),
-                quantity: eb.ref('excluded.quantity'),
-                latitude: eb.ref('excluded.latitude'),
-                longitude: eb.ref('excluded.longitude'),
-                species_id: eb.ref('excluded.species_id'),
-                year: eb.ref('excluded.year'),
-              }))
-              .where(
-                sql<boolean>`
+            // Use xmax to distinguish inserts (xmax = 0) from updates (xmax > 0).
+            // IS DISTINCT FROM and xmax aren't expressible via the query builder.
+            const result = await trx
+              .insertInto('incidents')
+              .values(
+                batch.map((r) => ({
+                  hmcr_record_id: r.hmcr_record_id,
+                  accident_date: r.accident_date
+                    ? sql<Date>`${r.accident_date}::date`
+                    : null,
+                  time_of_kill: r.time_of_kill
+                    ? sql<TimeOfKill>`${r.time_of_kill}::time_of_kill`
+                    : null,
+                  nearest_town: r.nearest_town,
+                  sex: r.sex ? sql<Sex>`${r.sex}::sex` : null,
+                  age: r.age ? sql<Age>`${r.age}::age` : null,
+                  comments: r.comments,
+                  quantity: r.quantity,
+                  latitude: r.latitude,
+                  longitude: r.longitude,
+                  species_id: r.species_id,
+                  year: r.year,
+                })),
+              )
+              .onConflict((oc) =>
+                oc
+                  .column('hmcr_record_id')
+                  .doUpdateSet((eb) => ({
+                    accident_date: eb.ref('excluded.accident_date'),
+                    time_of_kill: eb.ref('excluded.time_of_kill'),
+                    nearest_town: eb.ref('excluded.nearest_town'),
+                    sex: eb.ref('excluded.sex'),
+                    age: eb.ref('excluded.age'),
+                    comments: eb.ref('excluded.comments'),
+                    quantity: eb.ref('excluded.quantity'),
+                    latitude: eb.ref('excluded.latitude'),
+                    longitude: eb.ref('excluded.longitude'),
+                    species_id: eb.ref('excluded.species_id'),
+                    year: eb.ref('excluded.year'),
+                  }))
+                  .where(
+                    sql<boolean>`
                   incidents.accident_date IS DISTINCT FROM excluded.accident_date
                   OR incidents.time_of_kill IS DISTINCT FROM excluded.time_of_kill
                   OR incidents.nearest_town IS DISTINCT FROM excluded.nearest_town
@@ -345,27 +348,29 @@ export class DatabaseService {
                   OR incidents.species_id IS DISTINCT FROM excluded.species_id
                   OR incidents.year IS DISTINCT FROM excluded.year
                 `,
-              ),
-          )
-          .returning(sql<boolean>`(xmax = 0)`.as('is_new'))
-          .execute()
+                  ),
+              )
+              .returning(sql<boolean>`(xmax = 0)`.as('is_new'))
+              .execute()
 
-        for (const row of result) {
-          if (row.is_new) created++
-          else updated++
-        }
+            for (const row of result) {
+              if (row.is_new) created++
+              else updated++
+            }
 
-        if (batchNum % 10 === 0 || batchNum === totalBatches) {
-          this.log.debug(
-            { batch: batchNum, totalBatches },
-            'upsert batch complete',
-          )
-        }
-      }
+            if (batchNum % 10 === 0 || batchNum === totalBatches) {
+              this.log.debug(
+                { batch: batchNum, totalBatches },
+                'upsert batch complete',
+              )
+            }
+          }
 
-      this.log.debug({ created, updated }, 'HMCR upsert complete')
-      return { created, updated }
-    })
+          this.log.debug({ created, updated }, 'HMCR upsert complete')
+          return { created, updated }
+        }),
+      this.log,
+    )
   }
 
   async upsertLkiSegments(
@@ -375,51 +380,55 @@ export class DatabaseService {
 
     this.log.debug({ count: rows.length }, 'upserting LKI segments')
 
-    return await this.kysely.transaction().execute(async (trx) => {
-      // SET LOCAL (not DISABLE TRIGGER, which needs ownership) skips the per-statement
-      // reassignment; it runs once explicitly below and the GUC resets at commit.
-      await sql`SET LOCAL wisr.skip_lki_reassign = 'on'`.execute(trx)
+    return await withConnectionRetry(
+      () =>
+        this.kysely.transaction().execute(async (trx) => {
+          // SET LOCAL (not DISABLE TRIGGER, which needs ownership) skips the per-statement
+          // reassignment; it runs once explicitly below and the GUC resets at commit.
+          await sql`SET LOCAL wisr.skip_lki_reassign = 'on'`.execute(trx)
 
-      const incomingIds = rows.map((r) => r.chris_lki_segment_id)
+          const incomingIds = rows.map((r) => r.chris_lki_segment_id)
 
-      const result = await trx
-        .insertInto('lki_segments')
-        .values(
-          rows.map((r) => ({
-            chris_lki_segment_id: r.chris_lki_segment_id,
-            lki_segment_name: r.lki_segment_name,
-            lki_segment_description: r.lki_segment_description,
-            lki_segment_direction: r.lki_segment_direction,
-            lki_segment_length: r.lki_segment_length
-              ? String(r.lki_segment_length)
-              : null,
-            lki_route_id: r.lki_route_id,
-            highway_number: r.highway_number,
-            geom: sql`ST_GeomFromGeoJSON(${r.geom})`,
-            feature_length_m: r.feature_length_m
-              ? String(r.feature_length_m)
-              : null,
-            objectid: r.objectid,
-          })),
-        )
-        .onConflict((oc) =>
-          oc
-            .column('chris_lki_segment_id')
-            .doUpdateSet((eb) => ({
-              lki_segment_name: eb.ref('excluded.lki_segment_name'),
-              lki_segment_description: eb.ref(
-                'excluded.lki_segment_description',
-              ),
-              lki_segment_direction: eb.ref('excluded.lki_segment_direction'),
-              lki_segment_length: eb.ref('excluded.lki_segment_length'),
-              lki_route_id: eb.ref('excluded.lki_route_id'),
-              highway_number: eb.ref('excluded.highway_number'),
-              geom: eb.ref('excluded.geom'),
-              feature_length_m: eb.ref('excluded.feature_length_m'),
-              objectid: eb.ref('excluded.objectid'),
-            }))
-            .where(
-              sql<boolean>`
+          const result = await trx
+            .insertInto('lki_segments')
+            .values(
+              rows.map((r) => ({
+                chris_lki_segment_id: r.chris_lki_segment_id,
+                lki_segment_name: r.lki_segment_name,
+                lki_segment_description: r.lki_segment_description,
+                lki_segment_direction: r.lki_segment_direction,
+                lki_segment_length: r.lki_segment_length
+                  ? String(r.lki_segment_length)
+                  : null,
+                lki_route_id: r.lki_route_id,
+                highway_number: r.highway_number,
+                geom: sql`ST_GeomFromGeoJSON(${r.geom})`,
+                feature_length_m: r.feature_length_m
+                  ? String(r.feature_length_m)
+                  : null,
+                objectid: r.objectid,
+              })),
+            )
+            .onConflict((oc) =>
+              oc
+                .column('chris_lki_segment_id')
+                .doUpdateSet((eb) => ({
+                  lki_segment_name: eb.ref('excluded.lki_segment_name'),
+                  lki_segment_description: eb.ref(
+                    'excluded.lki_segment_description',
+                  ),
+                  lki_segment_direction: eb.ref(
+                    'excluded.lki_segment_direction',
+                  ),
+                  lki_segment_length: eb.ref('excluded.lki_segment_length'),
+                  lki_route_id: eb.ref('excluded.lki_route_id'),
+                  highway_number: eb.ref('excluded.highway_number'),
+                  geom: eb.ref('excluded.geom'),
+                  feature_length_m: eb.ref('excluded.feature_length_m'),
+                  objectid: eb.ref('excluded.objectid'),
+                }))
+                .where(
+                  sql<boolean>`
                 lki_segments.lki_segment_name IS DISTINCT FROM excluded.lki_segment_name
                 OR lki_segments.lki_segment_description IS DISTINCT FROM excluded.lki_segment_description
                 OR lki_segments.lki_segment_direction IS DISTINCT FROM excluded.lki_segment_direction
@@ -430,27 +439,27 @@ export class DatabaseService {
                 OR lki_segments.feature_length_m IS DISTINCT FROM excluded.feature_length_m
                 OR lki_segments.objectid IS DISTINCT FROM excluded.objectid
               `,
-            ),
-        )
-        .returning(sql<boolean>`(xmax = 0)`.as('is_insert'))
-        .execute()
+                ),
+            )
+            .returning(sql<boolean>`(xmax = 0)`.as('is_insert'))
+            .execute()
 
-      const inserted = result.filter((r) => r.is_insert).length
-      const updated = result.length - inserted
+          const inserted = result.filter((r) => r.is_insert).length
+          const updated = result.length - inserted
 
-      // Delete orphaned segments no longer in the WFS source
-      const deleteResult = await trx
-        .deleteFrom('lki_segments')
-        .where('chris_lki_segment_id', 'not in', incomingIds)
-        .execute()
+          // Delete orphaned segments no longer in the WFS source
+          const deleteResult = await trx
+            .deleteFrom('lki_segments')
+            .where('chris_lki_segment_id', 'not in', incomingIds)
+            .execute()
 
-      const deleted = Number(deleteResult[0].numDeletedRows)
-      const upserted = inserted + updated
+          const deleted = Number(deleteResult[0].numDeletedRows)
+          const upserted = inserted + updated
 
-      // Only reassign if segments were added, removed, or had data changes
-      if (inserted > 0 || updated > 0 || deleted > 0) {
-        this.log.debug('reassigning incidents to LKI segments')
-        await sql`
+          // Only reassign if segments were added, removed, or had data changes
+          if (inserted > 0 || updated > 0 || deleted > 0) {
+            this.log.debug('reassigning incidents to LKI segments')
+            await sql`
           UPDATE incidents wi
           SET lki_segment_id = sub.nearest_id
           FROM (
@@ -469,7 +478,7 @@ export class DatabaseService {
             AND wi.lki_segment_id IS DISTINCT FROM sub.nearest_id
         `.execute(trx)
 
-        await sql`
+            await sql`
           UPDATE incidents
           SET lki_segment_id = NULL
           WHERE geom IS NOT NULL
@@ -479,11 +488,13 @@ export class DatabaseService {
               WHERE ST_DWithin(geography(s.geom), geography(incidents.geom), 200)
             )
         `.execute(trx)
-      }
+          }
 
-      this.log.debug({ upserted, deleted }, 'LKI upsert complete')
-      return { upserted, deleted }
-    })
+          this.log.debug({ upserted, deleted }, 'LKI upsert complete')
+          return { upserted, deleted }
+        }),
+      this.log,
+    )
   }
 
   async findLkiDensity(filters: DensityQuery): Promise<DensityResponse> {

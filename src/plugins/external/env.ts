@@ -59,6 +59,14 @@ const schema = {
       type: 'number',
       default: 20,
     },
+    DB_IDLE_TIMEOUT: {
+      type: 'number',
+      default: 30,
+    },
+    DB_MAX_LIFETIME: {
+      type: 'number',
+      default: 1800,
+    },
     LOG_LEVEL: {
       type: 'string',
       enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'],
@@ -121,6 +129,8 @@ interface RawEnv {
   DB_PASSWORD: string
   DATABASE_URL: string
   DB_POOL_SIZE: number
+  DB_IDLE_TIMEOUT: number
+  DB_MAX_LIFETIME: number
   LOG_LEVEL: string
   CLOSE_GRACE_DELAY: number
   RATE_LIMIT_MAX: number
@@ -167,6 +177,8 @@ export default fp(
       dbPassword: raw.DB_PASSWORD,
       databaseUrl: raw.DATABASE_URL,
       dbPoolSize: raw.DB_POOL_SIZE,
+      dbIdleTimeout: raw.DB_IDLE_TIMEOUT,
+      dbMaxLifetime: raw.DB_MAX_LIFETIME,
       logLevel: raw.LOG_LEVEL,
       closeGraceDelay: raw.CLOSE_GRACE_DELAY,
       rateLimitMax: raw.RATE_LIMIT_MAX,

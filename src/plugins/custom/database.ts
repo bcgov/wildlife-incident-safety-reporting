@@ -22,6 +22,8 @@ export default fp(
         password: config.dbPassword,
         database: config.dbName,
         max: config.dbPoolSize,
+        idleTimeout: config.dbIdleTimeout,
+        maxLifetime: config.dbMaxLifetime,
       }),
       fastify.log,
     )

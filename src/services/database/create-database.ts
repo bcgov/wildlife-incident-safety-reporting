@@ -11,17 +11,30 @@ interface CreateDatabaseOptions {
   password?: string
   database?: string
   max?: number
+  idleTimeout?: number
+  maxLifetime?: number
 }
 
 export function createDatabase(options?: CreateDatabaseOptions): Kysely<DB> {
   const url = options?.url ?? process.env.DATABASE_URL
   // Capped so total across replicas fits under PgBouncer's per-user pool.
   const max = options?.max ?? 10
+  // Recycle idle connections before the network or server drops them; Bun does not re-check liveness on reuse.
+  const idleTimeout = options?.idleTimeout ?? 30
+  const maxLifetime = options?.maxLifetime ?? 1800
+
+  const pool = {
+    max,
+    idleTimeout,
+    maxLifetime,
+    // Named prepared statements are session-scoped, which breaks under PgBouncer transaction pooling.
+    prepare: false,
+  }
 
   return new Kysely<DB>({
     dialect: new PostgresJSDialect({
       postgres: url
-        ? new SQL({ url, max })
+        ? new SQL({ url, ...pool })
         : new SQL({
             hostname: options?.hostname ?? process.env.DB_HOST ?? 'localhost',
             port: options?.port ?? (Number(process.env.DB_PORT) || 5432),
@@ -29,7 +42,7 @@ export function createDatabase(options?: CreateDatabaseOptions): Kysely<DB> {
             password:
               options?.password ?? process.env.DB_PASSWORD ?? 'postgres',
             database: options?.database ?? process.env.DB_NAME ?? 'wisr',
-            max,
+            ...pool,
           }),
     }),
   })
