@@ -22,6 +22,11 @@ interface ResponseCacheOptions {
   maxSize: number
 }
 
+interface CacheGeneration {
+  read: () => Promise<number>
+  bump: () => Promise<void>
+}
+
 function entrySize(buffers: CompressedBuffers): number {
   return buffers.br.byteLength + buffers.gzip.byteLength
 }
@@ -29,12 +34,15 @@ function entrySize(buffers: CompressedBuffers): number {
 export class ResponseCacheService {
   private readonly cache: LRUCache<string, CompressedBuffers>
   private readonly log: FastifyBaseLogger
+  private readonly generation: CacheGeneration
 
   constructor(
     baseLog: FastifyBaseLogger,
+    generation: CacheGeneration,
     options?: Partial<ResponseCacheOptions>,
   ) {
     this.log = createServiceLogger(baseLog, 'CACHE')
+    this.generation = generation
     this.cache = new LRUCache({
       max: options?.maxEntries ?? DEFAULT_MAX_ENTRIES,
       sizeCalculation: entrySize,
@@ -70,6 +78,15 @@ export class ResponseCacheService {
       'cached compressed response',
     )
     return buffers
+  }
+
+  async versionedKey(baseKey: string): Promise<string> {
+    return `g${await this.generation.read()}:${baseKey}`
+  }
+
+  // Bumping the shared generation re-keys every replica at once; no local clear needed.
+  async invalidate(): Promise<void> {
+    await this.generation.bump()
   }
 
   delete(key: string): boolean {

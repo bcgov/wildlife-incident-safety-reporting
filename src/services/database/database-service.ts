@@ -569,4 +569,21 @@ export class DatabaseService {
       densityPerKm: r.density_per_km != null ? Number(r.density_per_km) : null,
     }))
   }
+
+  async readCacheGeneration(): Promise<number> {
+    const row = await this.kysely
+      .selectFrom('cache_generation')
+      .select('version')
+      .where('id', '=', 1)
+      .executeTakeFirstOrThrow()
+    return row.version
+  }
+
+  async bumpCacheGeneration(): Promise<void> {
+    await this.kysely
+      .updateTable('cache_generation')
+      .set({ version: sql<number>`version + 1` })
+      .where('id', '=', 1)
+      .execute()
+  }
 }

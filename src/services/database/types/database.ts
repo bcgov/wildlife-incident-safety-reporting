@@ -22,6 +22,11 @@ export type TimeOfKill = 'DARK' | 'DAWN' | 'DAY' | 'DUSK' | 'UNKNOWN'
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>
 
+export interface CacheGeneration {
+  id: number
+  version: Generated<number>
+}
+
 export interface GeographyColumns {
   coord_dimension: number | null
   f_geography_column: string | null
@@ -107,6 +112,7 @@ export interface Species {
 }
 
 export interface DB {
+  cache_generation: CacheGeneration
   geography_columns: GeographyColumns
   geometry_columns: GeometryColumns
   incidents: Incidents

@@ -29,9 +29,10 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
     async (request, reply) => {
       try {
         const encoding = negotiateEncoding(request.headers['accept-encoding'])
+        const cacheKey = await fastify.responseCache.versionedKey(request.url)
 
         if (encoding) {
-          const cached = fastify.responseCache.get(request.url, encoding)
+          const cached = fastify.responseCache.get(cacheKey, encoding)
           if (cached) {
             return sendCompressed(reply, cached, encoding)
           }
@@ -47,7 +48,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
 
         if (encoding) {
           const buffers = await fastify.responseCache.set(
-            request.url,
+            cacheKey,
             JSON.stringify(body),
           )
           return sendCompressed(reply, buffers[encoding], encoding)

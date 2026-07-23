@@ -24,7 +24,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
       try {
         const result = await fastify.lkiSync.sync()
         if (result.upserted > 0 || result.deleted > 0) {
-          fastify.responseCache.clear()
+          await fastify.responseCache.invalidate()
         }
         return result
       } catch (error) {

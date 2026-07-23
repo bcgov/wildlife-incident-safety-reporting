@@ -31,10 +31,12 @@ export function getTestDatabase(): Kysely<DB> {
 export async function resetDatabase(): Promise<void> {
   const db = getTestDatabase()
 
+  // Preserve cache_generation: a migration-seeded singleton the cached routes read every request.
   const result = await sql<{ tablename: string }>`
     SELECT tablename FROM pg_tables
     WHERE schemaname = 'public'
     AND tablename NOT LIKE 'kysely_%'
+    AND tablename <> 'cache_generation'
   `.execute(db)
 
   const tables = result.rows.map((r) => r.tablename)

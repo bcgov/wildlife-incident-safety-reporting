@@ -10,7 +10,10 @@ declare module 'fastify' {
 
 export default fp(
   async (fastify: FastifyInstance) => {
-    const cache = new ResponseCacheService(fastify.log)
+    const cache = new ResponseCacheService(fastify.log, {
+      read: () => fastify.db.readCacheGeneration(),
+      bump: () => fastify.db.bumpCacheGeneration(),
+    })
     fastify.decorate('responseCache', cache)
     fastify.addHook('onClose', async () => {
       cache.clear()

@@ -24,7 +24,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
       try {
         const result = await fastify.hmcrSync.sync()
         if (result.created > 0 || result.updated > 0) {
-          fastify.responseCache.clear()
+          await fastify.responseCache.invalidate()
         }
         return result
       } catch (error) {
