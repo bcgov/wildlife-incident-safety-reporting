@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { config } from '@/lib/config'
 import type { IncidentProperties } from '../index'
+import { formatIncidentDate } from '../lib/incident-date'
 import { getStreetViewUrl } from '../lib/street-view'
 
 const GOOGLE_MAPS_API_KEY = config.googleMapsClientApiKey
@@ -45,11 +46,7 @@ export function IncidentPopup({
 
   const [lng, lat] = coordinates
 
-  const formattedDate = properties.accidentDate
-    ? new Date(properties.accidentDate).toLocaleDateString(undefined, {
-        timeZone: 'UTC',
-      })
-    : null
+  const formattedDate = formatIncidentDate(properties.accidentDate)
 
   const handleToggle = useCallback(async () => {
     if (view === 'streetview') {

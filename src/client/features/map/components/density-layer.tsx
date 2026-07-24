@@ -14,7 +14,7 @@ type DensityProperties = Omit<DensitySegment, 'geometry'> & {
   rawDensityPerKm: number | null
 }
 
-type SelectedSegment = {
+type SegmentTarget = {
   coordinates: [number, number]
   properties: DensityProperties
 }
@@ -109,12 +109,16 @@ export function DensityLayer() {
   const visible = useLayerStore((s) => s.layers.density)
   const { data } = useDensityData({ enabled: visible })
   const densityMode = useLayerStore((s) => s.densityMode)
-  const [selected, setSelected] = useState<SelectedSegment | null>(null)
+  const [selected, setSelected] = useState<SegmentTarget | null>(null)
+  const [hovered, setHovered] = useState<SegmentTarget | null>(null)
 
   const geojson = useMemo(() => toGeoJSON(data ?? []), [data])
 
   useEffect(() => {
-    if (!visible) setSelected(null)
+    if (!visible) {
+      setSelected(null)
+      setHovered(null)
+    }
   }, [visible])
 
   useEffect(() => {
@@ -194,6 +198,7 @@ export function DensityLayer() {
     let hoveredId: string | number | null = null
 
     const clearHover = () => {
+      setHovered(null)
       if (hoveredId !== null) {
         map.setFeatureState(
           { source: SOURCE_ID, id: hoveredId },
@@ -263,6 +268,12 @@ export function DensityLayer() {
             map.setFeatureState({ source: SOURCE_ID, id }, { hover: true })
           }
         }
+        setHovered({
+          coordinates: [e.lngLat.lng, e.lngLat.lat],
+          properties: parseProperties(
+            features[0].properties as Record<string, string>,
+          ),
+        })
         map.getCanvas().style.cursor = 'pointer'
       } else {
         clearHover()
@@ -288,54 +299,87 @@ export function DensityLayer() {
     }
   }, [isLoaded, map])
 
-  return selected ? (
-    <MapPopup
-      key={selected.properties.segmentId}
-      longitude={selected.coordinates[0]}
-      latitude={selected.coordinates[1]}
-      onClose={() => setSelected(null)}
-      closeButton
-      focusAfterOpen={false}
-    >
-      <div className="flex flex-col gap-1 pr-4">
-        <p className="text-sm font-semibold">
-          {selected.properties.segmentName}
-        </p>
-        {selected.properties.highwayNumber && (
-          <div className="flex justify-between gap-4 text-xs">
-            <span className="text-muted-foreground">Highway</span>
-            <span className="font-medium">
-              {selected.properties.highwayNumber}
-            </span>
-          </div>
+  const hoverMetric = densityMode === 'weighted' ? 'Weighted/km' : 'Animals/km'
+  const hoverValue =
+    densityMode === 'weighted'
+      ? hovered?.properties.densityPerKm
+      : hovered?.properties.rawDensityPerKm
+
+  return (
+    <>
+      {hovered &&
+        hovered.properties.segmentId !== selected?.properties.segmentId && (
+          <MapPopup
+            longitude={hovered.coordinates[0]}
+            latitude={hovered.coordinates[1]}
+            closeOnClick={false}
+            focusAfterOpen={false}
+            interactive={false}
+          >
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-semibold">
+                {hovered.properties.segmentName}
+              </p>
+              {hoverValue != null && (
+                <p className="text-muted-foreground text-xs">
+                  {hoverMetric} {hoverValue}
+                </p>
+              )}
+            </div>
+          </MapPopup>
         )}
-        <div className="flex justify-between gap-4 text-xs">
-          <span className="text-muted-foreground">Total animals</span>
-          <span className="font-medium">
-            {selected.properties.totalAnimals}
-          </span>
-        </div>
-        <div className="flex justify-between gap-4 text-xs">
-          <span className="text-muted-foreground">Weighted score</span>
-          <span className="font-medium">{selected.properties.weighted}</span>
-        </div>
-        {selected.properties.densityPerKm != null && (
-          <div className="flex justify-between gap-4 text-xs">
-            <span className="text-muted-foreground">Weighted/km</span>
-            <span className="font-medium">
-              {selected.properties.densityPerKm}
-            </span>
+      {selected && (
+        <MapPopup
+          key={selected.properties.segmentId}
+          longitude={selected.coordinates[0]}
+          latitude={selected.coordinates[1]}
+          onClose={() => setSelected(null)}
+          closeButton
+          focusAfterOpen={false}
+        >
+          <div className="flex flex-col gap-1 pr-4">
+            <p className="text-sm font-semibold">
+              {selected.properties.segmentName}
+            </p>
+            {selected.properties.highwayNumber && (
+              <div className="flex justify-between gap-4 text-xs">
+                <span className="text-muted-foreground">Highway</span>
+                <span className="font-medium">
+                  {selected.properties.highwayNumber}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between gap-4 text-xs">
+              <span className="text-muted-foreground">Total animals</span>
+              <span className="font-medium">
+                {selected.properties.totalAnimals}
+              </span>
+            </div>
+            <div className="flex justify-between gap-4 text-xs">
+              <span className="text-muted-foreground">Weighted score</span>
+              <span className="font-medium">
+                {selected.properties.weighted}
+              </span>
+            </div>
+            {selected.properties.densityPerKm != null && (
+              <div className="flex justify-between gap-4 text-xs">
+                <span className="text-muted-foreground">Weighted/km</span>
+                <span className="font-medium">
+                  {selected.properties.densityPerKm}
+                </span>
+              </div>
+            )}
+            {selected.properties.rawDensityPerKm != null && (
+              <div className="flex justify-between gap-4 text-xs">
+                <span className="text-muted-foreground">Animals/km</span>
+                <span className="font-medium">
+                  {selected.properties.rawDensityPerKm}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-        {selected.properties.rawDensityPerKm != null && (
-          <div className="flex justify-between gap-4 text-xs">
-            <span className="text-muted-foreground">Animals/km</span>
-            <span className="font-medium">
-              {selected.properties.rawDensityPerKm}
-            </span>
-          </div>
-        )}
-      </div>
-    </MapPopup>
-  ) : null
+        </MapPopup>
+      )}
+    </>
+  )
 }

@@ -1004,6 +1004,8 @@ type MapPopupProps = {
   className?: string;
   /** Show a close button in the popup (default: false) */
   closeButton?: boolean;
+  /** Let pointer events reach the popup. Disable for hover tooltips so they cannot take the cursor off the feature underneath. (default: true) */
+  interactive?: boolean;
 } & Omit<PopupOptions, "className" | "closeButton">;
 
 function MapPopup({
@@ -1013,6 +1015,7 @@ function MapPopup({
   children,
   className,
   closeButton = false,
+  interactive = true,
   ...popupOptions
 }: MapPopupProps) {
   const { map } = useMap();
@@ -1026,6 +1029,9 @@ function MapPopup({
       offset: 16,
       ...popupOptions,
       closeButton: false,
+      className: interactive
+        ? undefined
+        : "[&_.maplibregl-popup-content]:pointer-events-none",
     })
       .setMaxWidth("none")
       .setLngLat([longitude, latitude]);
@@ -1241,6 +1247,13 @@ function MapRoute({
   return null;
 }
 
+type ClusterPointHover<
+  P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonProperties
+> = {
+  feature: GeoJSON.Feature<GeoJSON.Point, P>;
+  coordinates: [number, number];
+};
+
 type MapClusterLayerProps<
   P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonProperties
 > = {
@@ -1265,6 +1278,8 @@ type MapClusterLayerProps<
     feature: GeoJSON.Feature<GeoJSON.Point, P>,
     coordinates: [number, number]
   ) => void;
+  /** Callback when an unclustered point or spiderfied leaf is hovered, called with null when the pointer leaves */
+  onPointHover?: (hover: ClusterPointHover<P> | null) => void;
   /** Callback when a cluster is clicked. If not provided, zooms into the cluster. Ignored when spiderfy is enabled. */
   onClusterClick?: (
     clusterId: number,
@@ -1291,6 +1306,7 @@ function MapClusterLayer<
   iconProperty = "icon",
   iconSize = 1,
   onPointClick,
+  onPointHover,
   onClusterClick,
   spiderfy: spiderfyEnabled = false,
   spiderLegColor,
@@ -1313,6 +1329,12 @@ function MapClusterLayer<
 
   const onPointClickRef = useRef(onPointClick);
   onPointClickRef.current = onPointClick;
+
+  const onPointHoverRef = useRef(onPointHover);
+  onPointHoverRef.current = onPointHover;
+
+  // A ref, not a local, because the handler effect rebinds on every render
+  const hoveredPointKeyRef = useRef<string | null>(null);
 
   // Add source and layers on mount
   useEffect(() => {
@@ -1716,6 +1738,37 @@ function MapClusterLayer<
     ) => {
       if (!isExternalCursor() && !hasSpiderLeafAt(e.point))
         map.getCanvas().style.cursor = "";
+      hoveredPointKeyRef.current = null;
+      onPointHoverRef.current?.(null);
+    };
+
+    // mouseenter fires once per layer entry, so it misses point-to-point swaps
+    const handleMouseMovePoint = (
+      e: MapLibreGL.MapMouseEvent & {
+        features?: MapLibreGL.MapGeoJSONFeature[];
+      },
+    ) => {
+      if (!onPointHoverRef.current || !e.features?.length) return;
+
+      const feature = e.features[0];
+      const coordinates = (
+        feature.geometry as GeoJSON.Point
+      ).coordinates.slice() as [number, number];
+
+      // Handle world copies
+      while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+      }
+
+      // Clustered sources do not carry stable feature ids
+      const key = `${coordinates[0]},${coordinates[1]}`;
+      if (key === hoveredPointKeyRef.current) return;
+      hoveredPointKeyRef.current = key;
+
+      onPointHoverRef.current({
+        feature: feature as unknown as GeoJSON.Feature<GeoJSON.Point, P>,
+        coordinates,
+      });
     };
 
     // Clear hull immediately on click so spiderfy's queryRenderedFeatures
@@ -1729,6 +1782,7 @@ function MapClusterLayer<
     map.on("mouseleave", clusterLayerId, handleMouseLeaveCluster);
     map.on("mouseenter", unclusteredLayerId, handleMouseEnterPoint);
     map.on("mouseleave", unclusteredLayerId, handleMouseLeavePoint);
+    map.on("mousemove", unclusteredLayerId, handleMouseMovePoint);
 
     return () => {
       disposed = true;
@@ -1740,6 +1794,7 @@ function MapClusterLayer<
       map.off("mouseleave", clusterLayerId, handleMouseLeaveCluster);
       map.off("mouseenter", unclusteredLayerId, handleMouseEnterPoint);
       map.off("mouseleave", unclusteredLayerId, handleMouseLeavePoint);
+      map.off("mousemove", unclusteredLayerId, handleMouseMovePoint);
     };
   }, [
     isLoaded,
@@ -1780,6 +1835,20 @@ function MapClusterLayer<
         const c = map.getCanvas().style.cursor;
         const external = c === "crosshair" || c === "grab" || c === "grabbing";
         if (!external) map.getCanvas().style.cursor = leaf ? "pointer" : "";
+
+        if (!onPointHoverRef.current) return;
+        if (!leaf) {
+          onPointHoverRef.current(null);
+          return;
+        }
+
+        const coords = (
+          leaf.geometry as GeoJSON.Point
+        ).coordinates.slice() as [number, number];
+        onPointHoverRef.current({
+          feature: leaf as GeoJSON.Feature<GeoJSON.Point, P>,
+          coordinates: coords,
+        });
       },
       spiderLegsColor: legColor,
       spiderLegsWidth: 1,
@@ -1803,7 +1872,7 @@ function MapClusterLayer<
 }
 
 
-export type { MapRef, MapViewport };
+export type { ClusterPointHover, MapRef, MapViewport };
 export {
   ControlButton,
   ControlGroup,

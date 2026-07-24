@@ -9,7 +9,7 @@ const SOURCE_ID = 'boundaries-source'
 const FILL_LAYER_ID = 'boundaries-fill'
 const LINE_LAYER_ID = 'boundaries-line'
 
-type SelectedBoundary = {
+type BoundaryTarget = {
   coordinates: [number, number]
   properties: BoundaryProperties
 }
@@ -18,10 +18,14 @@ export function BoundaryLayer() {
   const { map, isLoaded } = useMap()
   const { data } = useBoundaries()
   const visible = useLayerStore((s) => s.layers.boundaries)
-  const [selected, setSelected] = useState<SelectedBoundary | null>(null)
+  const [selected, setSelected] = useState<BoundaryTarget | null>(null)
+  const [hovered, setHovered] = useState<BoundaryTarget | null>(null)
 
   useEffect(() => {
-    if (!visible) setSelected(null)
+    if (!visible) {
+      setSelected(null)
+      setHovered(null)
+    }
   }, [visible])
 
   useEffect(() => {
@@ -115,6 +119,7 @@ export function BoundaryLayer() {
     let hoveredId: string | number | null = null
 
     const clearHover = () => {
+      setHovered(null)
       if (hoveredId !== null) {
         map.setFeatureState(
           { source: SOURCE_ID, id: hoveredId },
@@ -137,7 +142,8 @@ export function BoundaryLayer() {
           (f) =>
             f.layer.id !== FILL_LAYER_ID &&
             f.layer.id !== LINE_LAYER_ID &&
-            (f.layer.id.startsWith('clusters-') ||
+            (f.layer.id === 'density-line' ||
+              f.layer.id.startsWith('clusters-') ||
               f.layer.id.startsWith('unclustered-point-') ||
               f.layer.id.startsWith('cluster-count-') ||
               f.layer.id.startsWith('cluster-hull-') ||
@@ -185,6 +191,11 @@ export function BoundaryLayer() {
             map.setFeatureState({ source: SOURCE_ID, id }, { hover: true })
           }
         }
+        // Cursor-anchored, since a service area can span most of the viewport
+        setHovered({
+          coordinates: [e.lngLat.lng, e.lngLat.lat],
+          properties: features[0].properties as BoundaryProperties,
+        })
         map.getCanvas().style.cursor = 'pointer'
       } else {
         clearHover()
@@ -210,32 +221,54 @@ export function BoundaryLayer() {
     }
   }, [isLoaded, map])
 
-  return selected ? (
-    <MapPopup
-      key={selected.properties.id}
-      longitude={selected.coordinates[0]}
-      latitude={selected.coordinates[1]}
-      onClose={() => setSelected(null)}
-      closeButton
-      focusAfterOpen={false}
-    >
-      <div className="flex flex-col gap-1 pr-4">
-        <p className="text-sm font-semibold">{selected.properties.name}</p>
-        <div className="flex justify-between gap-4 text-xs">
-          <span className="text-muted-foreground">Service Area</span>
-          <span className="font-medium">
-            {selected.properties.contractAreaNumber}
-          </span>
-        </div>
-        <div className="flex justify-between gap-4 text-xs">
-          <span className="text-muted-foreground">District</span>
-          <span className="font-medium">{selected.properties.district}</span>
-        </div>
-        <div className="flex justify-between gap-4 text-xs">
-          <span className="text-muted-foreground">Region</span>
-          <span className="font-medium">{selected.properties.region}</span>
-        </div>
-      </div>
-    </MapPopup>
-  ) : null
+  return (
+    <>
+      {hovered && hovered.properties.id !== selected?.properties.id && (
+        <MapPopup
+          longitude={hovered.coordinates[0]}
+          latitude={hovered.coordinates[1]}
+          closeOnClick={false}
+          focusAfterOpen={false}
+          interactive={false}
+        >
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-semibold">{hovered.properties.name}</p>
+            <p className="text-muted-foreground text-xs">
+              Service Area {hovered.properties.contractAreaNumber}
+            </p>
+          </div>
+        </MapPopup>
+      )}
+      {selected && (
+        <MapPopup
+          key={selected.properties.id}
+          longitude={selected.coordinates[0]}
+          latitude={selected.coordinates[1]}
+          onClose={() => setSelected(null)}
+          closeButton
+          focusAfterOpen={false}
+        >
+          <div className="flex flex-col gap-1 pr-4">
+            <p className="text-sm font-semibold">{selected.properties.name}</p>
+            <div className="flex justify-between gap-4 text-xs">
+              <span className="text-muted-foreground">Service Area</span>
+              <span className="font-medium">
+                {selected.properties.contractAreaNumber}
+              </span>
+            </div>
+            <div className="flex justify-between gap-4 text-xs">
+              <span className="text-muted-foreground">District</span>
+              <span className="font-medium">
+                {selected.properties.district}
+              </span>
+            </div>
+            <div className="flex justify-between gap-4 text-xs">
+              <span className="text-muted-foreground">Region</span>
+              <span className="font-medium">{selected.properties.region}</span>
+            </div>
+          </div>
+        </MapPopup>
+      )}
+    </>
+  )
 }

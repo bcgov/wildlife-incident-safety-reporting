@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { ChartTooltipRow, ChartTooltipShell } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { SeasonalHeatmapRow } from '../types/chart-types'
 
@@ -136,8 +137,8 @@ export function SeasonalHeatmap({
             </div>
 
             {tooltip && (
-              <div
-                className="pointer-events-none absolute z-10 grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl"
+              <ChartTooltipShell
+                className="pointer-events-none absolute z-10"
                 style={{
                   left: tooltip.x,
                   top: tooltip.flipBelow ? tooltip.y + 24 : tooltip.y,
@@ -147,21 +148,12 @@ export function SeasonalHeatmap({
                 }}
               >
                 <div className="font-medium">{tooltip.month}</div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                    style={{ backgroundColor: tooltip.color }}
-                  />
-                  <div className="flex flex-1 items-center justify-between gap-2 leading-none">
-                    <span className="text-muted-foreground">
-                      {tooltip.species}
-                    </span>
-                    <span className="font-mono font-medium tabular-nums text-foreground">
-                      {tooltip.count.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                <ChartTooltipRow
+                  color={tooltip.color}
+                  label={tooltip.species}
+                  value={tooltip.count.toLocaleString()}
+                />
+              </ChartTooltipShell>
             )}
           </div>
         )}

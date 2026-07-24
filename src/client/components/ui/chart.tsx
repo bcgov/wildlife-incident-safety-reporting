@@ -102,6 +102,59 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+// Shared so non-recharts charts can match these tooltips exactly
+function ChartTooltipShell({ className, children, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
+
+function ChartTooltipRow({
+  color,
+  label,
+  value,
+  className,
+}: {
+  color?: string
+  label?: React.ReactNode
+  value?: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn("flex w-full flex-wrap items-center gap-2", className)}>
+      {color && (
+        <div
+          className="h-2.5 w-2.5 shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)"
+          style={
+            {
+              "--color-bg": color,
+              "--color-border": color,
+            } as React.CSSProperties
+          }
+        />
+      )}
+      <div className="flex flex-1 items-center justify-between leading-none">
+        <div className="grid gap-1.5">
+          <span className="text-muted-foreground">{label}</span>
+        </div>
+        {value != null && (
+          <span className="font-mono font-medium text-foreground tabular-nums">
+            {value}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ChartTooltipContent({
   active,
   payload,
@@ -169,12 +222,7 @@ function ChartTooltipContent({
   const nestLabel = payload.length === 1 && indicator !== "dot"
 
   return (
-    <div
-      className={cn(
-        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
-        className
-      )}
-    >
+    <ChartTooltipShell className={className}>
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
         {payload
@@ -183,6 +231,23 @@ function ChartTooltipContent({
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
             const indicatorColor = color || item.payload.fill || item.color
+
+            const useSharedRow =
+              !formatter &&
+              !itemConfig?.icon &&
+              !nestLabel &&
+              indicator === "dot"
+
+            if (useSharedRow) {
+              return (
+                <ChartTooltipRow
+                  key={item.dataKey}
+                  color={hideIndicator ? undefined : indicatorColor}
+                  label={itemConfig?.label || item.name}
+                  value={item.value ? item.value.toLocaleString() : undefined}
+                />
+              )
+            }
 
             return (
               <div
@@ -244,7 +309,7 @@ function ChartTooltipContent({
             )
           })}
       </div>
-    </div>
+    </ChartTooltipShell>
   )
 }
 
@@ -351,4 +416,6 @@ export {
   ChartStyle,
   ChartTooltip,
   ChartTooltipContent,
+  ChartTooltipRow,
+  ChartTooltipShell,
 }

@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DensityLegend } from '@/components/density-legend'
 import {
+  type ClusterPointHover,
   MapClusterLayer,
   MapControls,
   MapPopup,
@@ -19,6 +20,7 @@ import { DensityLayer } from './components/density-layer'
 import { DrawControls } from './components/draw-controls'
 import { IncidentHeatmapLayer } from './components/incident-heatmap-layer'
 import { IncidentPopup } from './components/incident-popup'
+import { IncidentTooltip } from './components/incident-tooltip'
 import { LayerControls } from './components/layer-controls'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useBcBasemapStyle } from './hooks/use-basemap-style'
@@ -205,6 +207,8 @@ function LocateSegment() {
 export function Component() {
   const { data: response } = useIncidents()
   const [selected, setSelected] = useState<SelectedIncident | null>(null)
+  const [hovered, setHovered] =
+    useState<ClusterPointHover<IncidentProperties> | null>(null)
   const basemap = useLayerStore((s) => s.basemap)
   const densityVisible = useLayerStore((s) => s.layers.density)
   const heatmapVisible = useLayerStore((s) => s.layers.heatmap)
@@ -215,10 +219,14 @@ export function Component() {
   if (prevIncidentsRef.current !== incidents) {
     prevIncidentsRef.current = incidents
     setSelected(null)
+    setHovered(null)
   }
 
   useEffect(() => {
-    if (heatmapVisible) setSelected(null)
+    if (heatmapVisible) {
+      setSelected(null)
+      setHovered(null)
+    }
   }, [heatmapVisible])
 
   const geojson = useMemo(() => toGeoJSON(incidents ?? []), [incidents])
@@ -281,6 +289,7 @@ export function Component() {
         onPointClick={(feature, coordinates) =>
           setSelected({ coordinates, properties: feature.properties })
         }
+        onPointHover={setHovered}
       />
       {selected && (
         <MapPopup
@@ -294,6 +303,18 @@ export function Component() {
             coordinates={selected.coordinates}
             onClose={() => setSelected(null)}
           />
+        </MapPopup>
+      )}
+      {hovered && hovered.feature.properties.id !== selected?.properties.id && (
+        <MapPopup
+          key={`hover-${hovered.feature.properties.id}`}
+          longitude={hovered.coordinates[0]}
+          latitude={hovered.coordinates[1]}
+          closeOnClick={false}
+          focusAfterOpen={false}
+          interactive={false}
+        >
+          <IncidentTooltip properties={hovered.feature.properties} />
         </MapPopup>
       )}
       {densityVisible && (
