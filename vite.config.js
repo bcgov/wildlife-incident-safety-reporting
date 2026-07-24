@@ -18,6 +18,7 @@ export default {
     compression({ algorithms: ['gzip', 'brotliCompress'], threshold: 1024 }),
   ],
   build: {
+    target: 'baseline-widely-available',
     outDir: resolve(import.meta.dirname, 'dist'),
     emptyOutDir: false,
     assetsInclude: ['**/*.woff2', '**/*.woff'],
