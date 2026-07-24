@@ -17,6 +17,7 @@ import {
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { useMap } from '@/components/ui/map'
 import { useFilterStore } from '@/stores/filter-store'
+import { ensureSlots, SLOTS } from '../lib/layer-slots'
 
 export type DrawMode = 'polygon' | 'rectangle' | 'circle' | 'measure' | 'select'
 
@@ -209,20 +210,11 @@ export function useTerraDraw() {
       snapshotRef.current = null
     }
 
-    // Move terra-draw layers below cluster/marker layers so drawn shapes
-    // sit between the basemap and interactive point layers
-    const styleLayers = map.getStyle()?.layers ?? []
-    const firstClusterLayer = styleLayers.find(
-      (l) =>
-        l.id.startsWith('clusters-') ||
-        l.id.startsWith('unclustered-point-') ||
-        l.id.startsWith('cluster-hull-'),
-    )
-    if (firstClusterLayer) {
-      for (const layer of styleLayers) {
-        if (layer.id.startsWith('td-')) {
-          map.moveLayer(layer.id, firstClusterLayer.id)
-        }
+    // The adapter appends its layers with no way to pass beforeId
+    ensureSlots(map)
+    for (const layer of map.getStyle()?.layers ?? []) {
+      if (layer.id.startsWith('td-')) {
+        map.moveLayer(layer.id, SLOTS.draw)
       }
     }
 

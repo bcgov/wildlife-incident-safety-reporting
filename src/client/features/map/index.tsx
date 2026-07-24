@@ -25,6 +25,7 @@ import { LayerControls } from './components/layer-controls'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useBcBasemapStyle } from './hooks/use-basemap-style'
 import { buildBasemapStyle } from './lib/bc-basemap-styles'
+import { SLOTS } from './lib/layer-slots'
 import { useLayerStore } from './store/layer-store'
 
 export type IncidentProperties = {
@@ -286,6 +287,7 @@ export function Component() {
         clusterThresholds={[50, 200]}
         spiderfy
         clusterHull
+        beforeId={SLOTS.incidents}
         onPointClick={(feature, coordinates) =>
           setSelected({ coordinates, properties: feature.properties })
         }

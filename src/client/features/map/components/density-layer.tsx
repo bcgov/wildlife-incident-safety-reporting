@@ -4,6 +4,7 @@ import { MapPopup, useMap } from '@/components/ui/map'
 import { useDensityData } from '@/hooks/use-density-data'
 import type { DensitySegment } from '@/lib/density-api'
 import { DENSITY_COLORS } from '@/lib/density-colors'
+import { ensureSlots, SLOTS } from '../lib/layer-slots'
 import type { DensityMode } from '../store/layer-store'
 import { useLayerStore } from '../store/layer-store'
 
@@ -124,32 +125,37 @@ export function DensityLayer() {
   useEffect(() => {
     if (!isLoaded || !map) return
 
+    ensureSlots(map)
+
     map.addSource(SOURCE_ID, {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] },
       promoteId: 'segmentId',
     })
 
-    map.addLayer({
-      id: LINE_LAYER_ID,
-      type: 'line',
-      source: SOURCE_ID,
-      paint: {
-        'line-color': COLOR_RAMPS.weighted,
-        'line-width': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          5,
-          3,
-        ],
-        'line-opacity': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          1,
-          0.85,
-        ],
+    map.addLayer(
+      {
+        id: LINE_LAYER_ID,
+        type: 'line',
+        source: SOURCE_ID,
+        paint: {
+          'line-color': COLOR_RAMPS.weighted,
+          'line-width': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false],
+            5,
+            3,
+          ],
+          'line-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false],
+            1,
+            0.85,
+          ],
+        },
       },
-    })
+      SLOTS.density,
+    )
 
     return () => {
       try {

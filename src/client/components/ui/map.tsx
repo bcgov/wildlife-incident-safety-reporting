@@ -1292,6 +1292,8 @@ type MapClusterLayerProps<
   spiderLegColor?: string;
   /** Show a convex hull polygon on cluster hover showing the geographic extent of its points (default: false) */
   clusterHull?: boolean;
+  /** Id of an existing layer to insert these layers beneath */
+  beforeId?: string;
 };
 
 function MapClusterLayer<
@@ -1311,6 +1313,7 @@ function MapClusterLayer<
   spiderfy: spiderfyEnabled = false,
   spiderLegColor,
   clusterHull = false,
+  beforeId,
 }: MapClusterLayerProps<P>) {
   const { map, isLoaded } = useMap();
   const id = useId();
@@ -1340,6 +1343,8 @@ function MapClusterLayer<
   useEffect(() => {
     if (!isLoaded || !map) return;
 
+    const before = beforeId && map.getLayer(beforeId) ? beforeId : undefined;
+
     // Add clustered GeoJSON source
     map.addSource(sourceId, {
       type: "geojson",
@@ -1364,7 +1369,7 @@ function MapClusterLayer<
           "fill-color": "#3470B1",
           "fill-opacity": 0.1,
         },
-      });
+      }, before);
       map.addLayer({
         id: hullLineLayerId,
         type: "line",
@@ -1374,7 +1379,7 @@ function MapClusterLayer<
           "line-width": 1.5,
           "line-opacity": 1.0,
         },
-      });
+      }, before);
     }
 
     // Add cluster circles layer
@@ -1406,7 +1411,7 @@ function MapClusterLayer<
         "circle-stroke-color": "#fff",
         "circle-opacity": 0.85,
       },
-    });
+    }, before);
 
     // Add unclustered point layer (symbol for icon rendering)
     map.addLayer({
@@ -1419,7 +1424,7 @@ function MapClusterLayer<
         "icon-size": iconSize,
         "icon-allow-overlap": true,
       },
-    });
+    }, before);
 
     // Transparent 1x1 pixel image used as an invisible icon on the cluster
     // count symbol layer. This expands the symbol's hitbox to match the full
@@ -1466,7 +1471,7 @@ function MapClusterLayer<
       paint: {
         "text-color": "#fff",
       },
-    });
+    }, before);
 
     return () => {
       try {
@@ -1817,6 +1822,7 @@ function MapClusterLayer<
     clusterMaxZoom,
     clusterHull,
     hullSourceId,
+    beforeId,
   ]);
 
   // Spiderfy: fan out clusters that can't expand further
