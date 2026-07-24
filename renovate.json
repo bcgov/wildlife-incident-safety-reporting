@@ -4,6 +4,10 @@
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "branchConcurrentLimit": 0,
+  "lockFileMaintenance": {
+    "description": "Weekly rather than the org preset's monthly cadence",
+    "schedule": ["before 4am on monday"]
+  },
   "customManagers": [
     {
       "customType": "regex",
