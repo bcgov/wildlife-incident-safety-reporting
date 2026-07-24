@@ -3,13 +3,26 @@ import type MapLibreGL from 'maplibre-gl'
 import { useEffect, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
 import { useBoundaries } from '../hooks/use-boundaries'
+import { ensureSlots, SLOTS } from '../lib/layer-slots'
 import { useLayerStore } from '../store/layer-store'
 
 const SOURCE_ID = 'boundaries-source'
 const FILL_LAYER_ID = 'boundaries-fill'
 const LINE_LAYER_ID = 'boundaries-line'
+const HIGHLIGHT_LINE_LAYER_ID = 'boundaries-highlight-line'
 
-type BoundaryTarget = {
+const BOUNDARY_COLOR = '#42814A'
+const HIGHLIGHT_LINE_COLOR = '#ffffff'
+
+const MATCH_NONE: MapLibreGL.FilterSpecification = [
+  'in',
+  ['get', 'id'],
+  ['literal', []],
+]
+
+const LAYER_IDS = [FILL_LAYER_ID, LINE_LAYER_ID, HIGHLIGHT_LINE_LAYER_ID]
+
+type SelectedBoundary = {
   coordinates: [number, number]
   properties: BoundaryProperties
 }
@@ -18,18 +31,16 @@ export function BoundaryLayer() {
   const { map, isLoaded } = useMap()
   const { data } = useBoundaries()
   const visible = useLayerStore((s) => s.layers.boundaries)
-  const [selected, setSelected] = useState<BoundaryTarget | null>(null)
-  const [hovered, setHovered] = useState<BoundaryTarget | null>(null)
+  const [selected, setSelected] = useState<SelectedBoundary | null>(null)
 
   useEffect(() => {
-    if (!visible) {
-      setSelected(null)
-      setHovered(null)
-    }
+    if (!visible) setSelected(null)
   }, [visible])
 
   useEffect(() => {
     if (!isLoaded || !map) return
+
+    ensureSlots(map)
 
     map.addSource(SOURCE_ID, {
       type: 'geojson',
@@ -37,53 +48,55 @@ export function BoundaryLayer() {
       promoteId: 'id',
     })
 
-    // Add on top of all basemap layers. Other app layers (clusters, draw shapes)
-    // mount after this component and will stack above these.
-    map.addLayer({
-      id: FILL_LAYER_ID,
-      type: 'fill',
-      source: SOURCE_ID,
-      paint: {
-        'fill-color': '#42814A',
-        'fill-opacity': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          0.18,
-          0.1,
-        ],
+    map.addLayer(
+      {
+        id: FILL_LAYER_ID,
+        type: 'fill',
+        source: SOURCE_ID,
+        paint: {
+          'fill-color': BOUNDARY_COLOR,
+          'fill-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false],
+            0.18,
+            0.1,
+          ],
+        },
       },
-    })
+      SLOTS.boundaries,
+    )
 
-    map.addLayer({
-      id: LINE_LAYER_ID,
-      type: 'line',
-      source: SOURCE_ID,
-      paint: {
-        'line-color': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          '#ffffff',
-          '#42814A',
-        ],
-        'line-width': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          2,
-          1,
-        ],
-        'line-opacity': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          0.9,
-          1.0,
-        ],
+    map.addLayer(
+      {
+        id: LINE_LAYER_ID,
+        type: 'line',
+        source: SOURCE_ID,
+        paint: { 'line-color': BOUNDARY_COLOR, 'line-width': 1 },
       },
-    })
+      SLOTS.boundaries,
+    )
+
+    // Neighbours clip a shared border, so the hovered outline needs its own layer
+    map.addLayer(
+      {
+        id: HIGHLIGHT_LINE_LAYER_ID,
+        type: 'line',
+        source: SOURCE_ID,
+        filter: MATCH_NONE,
+        paint: {
+          'line-color': HIGHLIGHT_LINE_COLOR,
+          'line-width': 2,
+          'line-opacity': 0.9,
+        },
+      },
+      SLOTS.boundaryHighlight,
+    )
 
     return () => {
       try {
-        if (map.getLayer(LINE_LAYER_ID)) map.removeLayer(LINE_LAYER_ID)
-        if (map.getLayer(FILL_LAYER_ID)) map.removeLayer(FILL_LAYER_ID)
+        for (const id of LAYER_IDS) {
+          if (map.getLayer(id)) map.removeLayer(id)
+        }
         if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID)
       } catch {
         // Map may already be removed
@@ -105,11 +118,10 @@ export function BoundaryLayer() {
 
     const visibility = visible ? 'visible' : 'none'
 
-    if (map.getLayer(FILL_LAYER_ID)) {
-      map.setLayoutProperty(FILL_LAYER_ID, 'visibility', visibility)
-    }
-    if (map.getLayer(LINE_LAYER_ID)) {
-      map.setLayoutProperty(LINE_LAYER_ID, 'visibility', visibility)
+    for (const id of LAYER_IDS) {
+      if (map.getLayer(id)) {
+        map.setLayoutProperty(id, 'visibility', visibility)
+      }
     }
   }, [isLoaded, map, visible])
 
@@ -118,13 +130,22 @@ export function BoundaryLayer() {
 
     let hoveredId: string | number | null = null
 
+    // Filtering the base layers would break the mousemove binding they carry
+    const setHighlight = (id: string | number | null) => {
+      if (!map.getLayer(HIGHLIGHT_LINE_LAYER_ID)) return
+      map.setFilter(
+        HIGHLIGHT_LINE_LAYER_ID,
+        id === null ? MATCH_NONE : ['==', ['get', 'id'], id],
+      )
+    }
+
     const clearHover = () => {
-      setHovered(null)
       if (hoveredId !== null) {
         map.setFeatureState(
           { source: SOURCE_ID, id: hoveredId },
           { hover: false },
         )
+        setHighlight(null)
         hoveredId = null
       }
     }
@@ -140,8 +161,7 @@ export function BoundaryLayer() {
         .queryRenderedFeatures(point)
         .some(
           (f) =>
-            f.layer.id !== FILL_LAYER_ID &&
-            f.layer.id !== LINE_LAYER_ID &&
+            !LAYER_IDS.includes(f.layer.id) &&
             (f.layer.id === 'density-line' ||
               f.layer.id.startsWith('clusters-') ||
               f.layer.id.startsWith('unclustered-point-') ||
@@ -189,13 +209,9 @@ export function BoundaryLayer() {
           if (id !== undefined) {
             hoveredId = id
             map.setFeatureState({ source: SOURCE_ID, id }, { hover: true })
+            setHighlight(id)
           }
         }
-        // Cursor-anchored, since a service area can span most of the viewport
-        setHovered({
-          coordinates: [e.lngLat.lng, e.lngLat.lat],
-          properties: features[0].properties as BoundaryProperties,
-        })
         map.getCanvas().style.cursor = 'pointer'
       } else {
         clearHover()
@@ -221,54 +237,32 @@ export function BoundaryLayer() {
     }
   }, [isLoaded, map])
 
-  return (
-    <>
-      {hovered && hovered.properties.id !== selected?.properties.id && (
-        <MapPopup
-          longitude={hovered.coordinates[0]}
-          latitude={hovered.coordinates[1]}
-          closeOnClick={false}
-          focusAfterOpen={false}
-          interactive={false}
-        >
-          <div className="flex flex-col gap-0.5">
-            <p className="text-xs font-semibold">{hovered.properties.name}</p>
-            <p className="text-muted-foreground text-xs">
-              Service Area {hovered.properties.contractAreaNumber}
-            </p>
-          </div>
-        </MapPopup>
-      )}
-      {selected && (
-        <MapPopup
-          key={selected.properties.id}
-          longitude={selected.coordinates[0]}
-          latitude={selected.coordinates[1]}
-          onClose={() => setSelected(null)}
-          closeButton
-          focusAfterOpen={false}
-        >
-          <div className="flex flex-col gap-1 pr-4">
-            <p className="text-sm font-semibold">{selected.properties.name}</p>
-            <div className="flex justify-between gap-4 text-xs">
-              <span className="text-muted-foreground">Service Area</span>
-              <span className="font-medium">
-                {selected.properties.contractAreaNumber}
-              </span>
-            </div>
-            <div className="flex justify-between gap-4 text-xs">
-              <span className="text-muted-foreground">District</span>
-              <span className="font-medium">
-                {selected.properties.district}
-              </span>
-            </div>
-            <div className="flex justify-between gap-4 text-xs">
-              <span className="text-muted-foreground">Region</span>
-              <span className="font-medium">{selected.properties.region}</span>
-            </div>
-          </div>
-        </MapPopup>
-      )}
-    </>
-  )
+  return selected ? (
+    <MapPopup
+      key={selected.properties.id}
+      longitude={selected.coordinates[0]}
+      latitude={selected.coordinates[1]}
+      onClose={() => setSelected(null)}
+      closeButton
+      focusAfterOpen={false}
+    >
+      <div className="flex flex-col gap-1 pr-4">
+        <p className="text-sm font-semibold">{selected.properties.name}</p>
+        <div className="flex justify-between gap-4 text-xs">
+          <span className="text-muted-foreground">Service Area</span>
+          <span className="font-medium">
+            {selected.properties.contractAreaNumber}
+          </span>
+        </div>
+        <div className="flex justify-between gap-4 text-xs">
+          <span className="text-muted-foreground">District</span>
+          <span className="font-medium">{selected.properties.district}</span>
+        </div>
+        <div className="flex justify-between gap-4 text-xs">
+          <span className="text-muted-foreground">Region</span>
+          <span className="font-medium">{selected.properties.region}</span>
+        </div>
+      </div>
+    </MapPopup>
+  ) : null
 }
