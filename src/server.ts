@@ -1,7 +1,7 @@
 import { isConnectionError } from '@utils/db-errors.js'
 import { createLoggerConfig, isValidLogLevel } from '@utils/logger.js'
 import closeWithGrace from 'close-with-grace'
-import Fastify from 'fastify'
+import Fastify, { LogController } from 'fastify'
 import fp from 'fastify-plugin'
 import serviceApp from './app.js'
 
@@ -20,7 +20,9 @@ async function init() {
     },
     pluginTimeout: 60000,
     forceCloseConnections: true,
-    disableRequestLogging: !enableRequestLogging,
+    logController: new LogController({
+      disableRequestLogging: !enableRequestLogging,
+    }),
     trustProxy: 1,
   })
 
