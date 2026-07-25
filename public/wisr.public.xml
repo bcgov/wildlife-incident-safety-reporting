@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <database name="wisr" schema="public" type="PostgreSQL - 17.0 (Debian 17.0-1.pgdg110+1)">
    <tables>
+      <table name="cache_generation" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="5" type="int2" typeCode="5"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="1" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="cache_generation_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <checkConstraint constraint="(id = 1)" name="cache_generation_id_check"/>
+      </table>
       <table name="geography_columns" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT current_database() AS f_table_catalog,&#10;    n.nspname AS f_table_schema,&#10;    c.relname AS f_table_name,&#10;    a.attname AS f_geography_column,&#10;    postgis_typmod_dims(a.atttypmod) AS coord_dimension,&#10;    postgis_typmod_srid(a.atttypmod) AS srid,&#10;    postgis_typmod_type(a.atttypmod) AS type&#10;   FROM pg_class c,&#10;    pg_attribute a,&#10;    pg_type t,&#10;    pg_namespace n&#10;  WHERE ((t.typname = 'geography'::name) AND (a.attisdropped = false) AND (a.atttypid = t.oid) AND (a.attrelid = c.oid) AND (c.relnamespace = n.oid) AND (c.relkind = ANY (ARRAY['r'::&quot;char&quot;, 'v'::&quot;char&quot;, 'm'::&quot;char&quot;, 'f'::&quot;char&quot;, 'p'::&quot;char&quot;])) AND (NOT pg_is_other_temp_schema(c.relnamespace)) AND has_table_privilege(c.oid, 'SELECT'::text));">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="f_table_catalog" nullable="true" remarks="" size="2147483647" type="name" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="f_table_schema" nullable="true" remarks="" size="2147483647" type="name" typeCode="12"/>

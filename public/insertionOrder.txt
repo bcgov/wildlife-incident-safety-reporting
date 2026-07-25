@@ -3,5 +3,6 @@ lki_segments
 service_areas
 species
 incidents
+cache_generation
 kysely_migration
 kysely_migration_lock
