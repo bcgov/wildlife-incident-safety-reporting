@@ -30,7 +30,7 @@ root.render(<App />)
 
 keycloak.onTokenExpired = () => {
   keycloak.updateToken(5).catch(() => {
-    keycloak.login({ redirectUri: window.location.href })
+    keycloak.login({ redirectUri: window.location.origin })
   })
 }
 

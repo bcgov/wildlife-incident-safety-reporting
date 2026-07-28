@@ -2,13 +2,11 @@ global:
   autoscaling: true
 
 backend:
-  deploymentStrategy: RollingUpdate
   autoscaling:
     enabled: true
-    minReplicas: 3
-    maxReplicas: 7
-  pdb:
-    enabled: true
+    minReplicas: 1
+    maxReplicas: 2
   ingress:
+    host: wisr.apps.gold.devops.gov.bc.ca
     restrictMain: false
     restrictDocs: true

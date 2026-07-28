@@ -113,6 +113,15 @@ on:
         required: true
       seed_s3_secret_key:
         required: true
+      # the crunchy action enables s3 backups only when all four are set
+      backup_s3_endpoint_url:
+        required: false
+      backup_s3_bucket:
+        required: false
+      backup_s3_access_key:
+        required: false
+      backup_s3_secret_key:
+        required: false
 
 permissions: {}
 
@@ -138,6 +147,10 @@ jobs:
               'charts/crunchy/values.yml'
             }}
           triggers: ${{ inputs.db_triggers }}
+          s3_endpoint: ${{ secrets.backup_s3_endpoint_url }}
+          s3_bucket: ${{ secrets.backup_s3_bucket }}
+          s3_access_key: ${{ secrets.backup_s3_access_key }}
+          s3_secret_key: ${{ secrets.backup_s3_secret_key }}
 
       - if: inputs.environment == ''
         id: pr

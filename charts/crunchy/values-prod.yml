@@ -1,41 +1,130 @@
-# Production values for the Crunchy PostgreSQL chart.
-# Selected by .github/workflows/.deployer.yml when inputs.environment == 'prod'.
-# Replaces values.yml for prod deploys (single-file selection via bcgov/action-crunchy).
+# Prod values, selected by .github/workflows/.deployer.yml. Must stay a complete
+# standalone copy of values.yml - the crunchy action applies exactly one values
+# file to a chart with no defaults, so edits to values.yml do not carry over.
+global:
+  config:
+    dbName: app
 crunchy:
+  enabled: true
+  postgresVersion: 18
+  postGISVersion: 3.6
+  image: "artifacts.developer.gov.bc.ca/bcgov-docker-local/crunchy-postgres-gis:ubi9-18.1-3.6-2547"
+  openshift: true
+  imagePullPolicy: IfNotPresent
+  # enable below to start a new crunchy cluster after disaster from a backed-up location, crunchy will choose the best place to recover from.
+  # follow https://access.crunchydata.com/documentation/postgres-operator/5.2.0/tutorial/disaster-recovery/
+  # Clone From Backups Stored in S3 / GCS / Azure Blob Storage
+  clone:
+    enabled: false
+    s3:
+      enabled: false
+    pvc:
+      enabled: false
+    path: ~ # provide the proper path to source the cluster. ex: /backups/cluster/version/1, if current new cluster being created, this should be current cluster version -1, ideally
+  # enable this to go back to a specific timestamp in history in the current cluster.
+  # follow https://access.crunchydata.com/documentation/postgres-operator/5.2.0/tutorial/disaster-recovery/
+  # Perform an In-Place Point-in-time-Recovery (PITR)
+  restore:
+    repoName: ~ # provide repo name
+    enabled: false
+    target: ~ # 2024-03-24 17:16:00-07 this is the target timestamp to go back to in current cluster
   instances:
+    name: db
     replicas: 2
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9187'
+    # sized to fit the 1 CPU / 4Gi / 16Gi block storage quotas with the backend at 2 replicas
     dataVolumeClaimSpec:
-      storage: 10Gi
+      storage: 6Gi
+      storageClassName: netapp-block-standard
       walStorage: 1Gi
-    requests:
-      cpu: 250m
-      memory: 512Mi
 
-  proxy:
-    pgBouncer:
-      replicas: 2
+    requests:
+      cpu: 150m
+      memory: 512Mi
+    replicaCertCopy:
+      requests:
+        cpu: 1m
+        memory: 32Mi
 
   pgBackRest:
     enabled: true
-    backupPath: /backups/prod/cluster/version
-    clusterCounter: 1
+    backupPath: /backups/prod/cluster/version # only used when s3 is enabled
+    clusterCounter: 1 # this is the number to identify what is the current counter for the cluster, each time it is cloned it should be incremented.
+    # If retention-full-type set to 'count' then the oldest backups will expire when the number of backups reach the number defined in retention
+    # If retention-full-type set to 'time' then the number defined in retention will take that many days worth of full backups before expiration
     retentionFullType: count
     s3:
-      enabled: true
-      retention: 7
-      # bucket / endpoint / accessKey / secretKey are injected via secrets at deploy time
+      # the deployer-passed BACKUP_S3_* secrets enable s3 at deploy time
+      enabled: false
+      retention: 7 # one weeks backup in object store.
       bucket: ~
       endpoint: ~
       accessKey: ~
       secretKey: ~
-      fullBackupSchedule: "0 3 * * 0"
-      incrementalBackupSchedule: "0 1 * * 1-6"
+      # staggered after the pvc schedules; only one backup can run per stanza at a time
+      fullBackupSchedule: 0 10 * * 0
+      incrementalBackupSchedule: 0 10 * * 1-6
     pvc:
-      retention: 1
+      retention: 1 # one day hot active backup in pvc
       retentionFullType: count
-      fullBackupSchedule: "0 4 * * 0"
-      incrementalBackupSchedule: "0 1 * * 1-6"
+      fullBackupSchedule: 0 8 * * 0
+      incrementalBackupSchedule: 0 8 * * 1-6
       volume:
         accessModes: "ReadWriteOnce"
-        storage: 10Gi
+        storage: 8Gi # netapp-file-backup quota is 8Gi total
         storageClassName: netapp-file-backup
+
+    config:
+      requests:
+        cpu: 5m
+        memory: 32Mi
+    repoHost:
+      requests:
+        cpu: 20m
+        memory: 128Mi
+    sidecars:
+      requests:
+        cpu: 5m
+        memory: 16Mi
+    jobs:
+      requests:
+        cpu: 20m
+        memory: 128Mi
+
+  patroni:
+    postgresql:
+      pg_hba:
+        - "host all all 0.0.0.0/0 scram-sha-256"
+        - "host all all ::1/128 scram-sha-256"
+      parameters:
+        shared_buffers: 128MB # 25% of the 512Mi instance memory request
+        wal_buffers: "64kB" # this can be set to -1 to automatically set as 1/32 of shared_buffers or 64kB, whichever is larger
+        min_wal_size: 32MB
+        max_wal_size: 64MB # default is 1GB
+        max_slot_wal_keep_size: 128MB # default is -1, allowing unlimited wal growth when replicas fall behind
+        work_mem: 2MB # a work_mem value of 2 MB
+        log_min_duration_statement: 1000ms # log queries taking more than 1 second to respond.
+        effective_io_concurrency: 20 #If the underlying disk can handle multiple simultaneous requests, then you should increase the effective_io_concurrency value and test what value provides the best application performance. All BCGov clusters have SSD.
+
+  proxy:
+    enabled: true
+    pgBouncer:
+      image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
+      replicas: 2
+      requests:
+        cpu: 5m
+        memory: 32Mi
+      maxConnections: 100 # make sure less than postgres max connections
+      poolMode: 'transaction'
+
+  # Postgres Cluster resource values:
+  pgmonitor:
+    enabled: true
+    exporter:
+      image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
+      requests:
+        cpu: 10m
+        memory: 32Mi
