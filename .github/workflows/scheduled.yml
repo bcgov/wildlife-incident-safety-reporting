@@ -92,5 +92,6 @@ jobs:
           artifact_name: app
           issue_title: "ZAP Security Report"
           token: ${{ secrets.GITHUB_TOKEN }}
-          target: https://${{ github.event.repository.name }}-dev.apps.gold.devops.gov.bc.ca/
+          # prod is the only environment reachable from GitHub runners; dev/test routes are IP-restricted to the gov network
+          target: https://wisr.apps.gold.devops.gov.bc.ca/
           fail_action: false
