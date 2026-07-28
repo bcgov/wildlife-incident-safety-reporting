@@ -35,15 +35,14 @@ crunchy:
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '9187'
-    # sized to fit the 1 CPU / 4Gi / 16Gi block storage quotas with the backend at 2 replicas
     dataVolumeClaimSpec:
-      storage: 6Gi
+      storage: 3Gi
       storageClassName: netapp-block-standard
       walStorage: 1Gi
 
     requests:
-      cpu: 150m
-      memory: 512Mi
+      cpu: 100m
+      memory: 256Mi
     replicaCertCopy:
       requests:
         cpu: 1m
@@ -74,7 +73,7 @@ crunchy:
       incrementalBackupSchedule: 0 8 * * 1-6
       volume:
         accessModes: "ReadWriteOnce"
-        storage: 8Gi # netapp-file-backup quota is 8Gi total
+        storage: 4Gi
         storageClassName: netapp-file-backup
 
     config:
@@ -100,7 +99,7 @@ crunchy:
         - "host all all 0.0.0.0/0 scram-sha-256"
         - "host all all ::1/128 scram-sha-256"
       parameters:
-        shared_buffers: 128MB # 25% of the 512Mi instance memory request
+        shared_buffers: 64MB # default is 128MB; a good tuned default for shared_buffers is 25% of the memory allocated to the pod
         wal_buffers: "64kB" # this can be set to -1 to automatically set as 1/32 of shared_buffers or 64kB, whichever is larger
         min_wal_size: 32MB
         max_wal_size: 64MB # default is 1GB
