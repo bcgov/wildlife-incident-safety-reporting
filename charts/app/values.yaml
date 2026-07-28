@@ -135,7 +135,7 @@ backend:
       tag: "8.21.0"
     jobs:
       hmcrSync:
-        schedule: "0 9 * * *" # 01:00 PT (02:00 during PDT)
+        schedule: "0 9 1 * *" # dev/PR value; values-test and values-prod override
         endpoint: /internal/incidents/hmcr-sync
       lkiSync:
         schedule: "0 9 1 * *" # 01:00 PT, 1st of each month; upstream LKI publishes annually in July

@@ -1,4 +1,8 @@
 backend:
+  cron:
+    jobs:
+      hmcrSync:
+        schedule: "0 9 1,15 * *"
   ingress:
     host: wisr-test.apps.gold.devops.gov.bc.ca
     restrictMain: true

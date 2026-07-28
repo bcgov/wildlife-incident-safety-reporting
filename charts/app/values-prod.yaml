@@ -2,6 +2,10 @@ global:
   autoscaling: true
 
 backend:
+  cron:
+    jobs:
+      hmcrSync:
+        schedule: "0 9 * * *"
   autoscaling:
     enabled: true
     minReplicas: 1
