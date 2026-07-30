@@ -1356,6 +1356,8 @@ function MapClusterLayer<
       cluster: true,
       clusterMaxZoom,
       clusterRadius,
+      // maplibre warns unless tile generation extends past the last clustered zoom
+      maxzoom: Math.min(24, Math.max(18, clusterMaxZoom + 1)),
     });
 
     // Hull source + layers (rendered below clusters)

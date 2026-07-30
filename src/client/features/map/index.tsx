@@ -88,6 +88,8 @@ function toGeoJSON(
 
 const CLUSTER_MAX_ZOOM = 22
 
+const IS_TOUCH_DEVICE = window.matchMedia('(pointer: coarse)').matches
+
 const EMPTY_INCIDENT_FC: GeoJSON.FeatureCollection<
   GeoJSON.Point,
   IncidentProperties
@@ -257,6 +259,7 @@ export function Component() {
       center={[-124.5, 54.5]}
       zoom={5}
       styles={styles}
+      cooperativeGestures={IS_TOUCH_DEVICE}
     >
       <MapControls
         position="top-left"
