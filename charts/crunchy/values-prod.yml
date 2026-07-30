@@ -120,8 +120,9 @@ crunchy:
       poolMode: 'transaction'
 
   # Postgres Cluster resource values:
+  # disabled because postgres_exporter does not support PG18
   pgmonitor:
-    enabled: true
+    enabled: false
     exporter:
       image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
       requests:
