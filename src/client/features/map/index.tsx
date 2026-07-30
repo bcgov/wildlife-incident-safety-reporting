@@ -288,6 +288,7 @@ export function Component() {
         clusterRadius={80}
         clusterMaxZoom={CLUSTER_MAX_ZOOM}
         clusterThresholds={[50, 200]}
+        countFont={['BC Sans Regular']}
         spiderfy
         clusterHull
         beforeId={SLOTS.incidents}

@@ -107,7 +107,7 @@ function transformEsriSources(style: StyleSpecification): StyleSpecification {
   return { ...style, sources }
 }
 
-function buildSatelliteStyle(): StyleSpecification {
+function buildSatelliteStyle(glyphs?: string): StyleSpecification {
   const imagery: RasterSourceSpecification = {
     type: 'raster',
     tiles: [ESRI_WORLD_IMAGERY_URL],
@@ -117,6 +117,7 @@ function buildSatelliteStyle(): StyleSpecification {
   }
   return {
     version: 8,
+    ...(glyphs ? { glyphs } : {}),
     sources: { imagery },
     layers: [{ id: SATELLITE_LAYER_ID, type: 'raster', source: 'imagery' }],
   }
@@ -170,7 +171,7 @@ export function buildBasemapStyle(
       case 'standard':
         return buildStandardStyle(bcStyle)
       case 'satellite':
-        return buildSatelliteStyle()
+        return buildSatelliteStyle(bcStyle.glyphs)
       case 'hybrid':
         return buildHybridStyle(bcStyle)
     }

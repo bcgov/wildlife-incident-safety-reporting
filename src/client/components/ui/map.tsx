@@ -1271,6 +1271,8 @@ type MapClusterLayerProps<
   clusterColors?: [string, string, string];
   /** Point count thresholds for color/size steps: [medium, large] (default: [100, 750]) */
   clusterThresholds?: [number, number];
+  /** Font stack for cluster count labels, must exist on the style's glyph server (default: ["Open Sans"]) */
+  countFont?: string[];
   /** Map of icon names to image URLs for unclustered points */
   icons?: Record<string, string>;
   /** GeoJSON property name whose value matches icon keys (default: "icon") */
@@ -1308,6 +1310,7 @@ function MapClusterLayer<
   clusterRadius = 50,
   clusterColors = ["#22c55e", "#eab308", "#ef4444"],
   clusterThresholds = [100, 750],
+  countFont = ["Open Sans"],
   icons,
   iconProperty = "icon",
   iconSize = 1,
@@ -1459,7 +1462,7 @@ function MapClusterLayer<
       filter: ["has", "point_count"],
       layout: {
         "text-field": "{point_count_abbreviated}",
-        "text-font": ["Open Sans"],
+        "text-font": countFont,
         "text-size": 12,
         "icon-image": hitboxId,
         "icon-size": [
