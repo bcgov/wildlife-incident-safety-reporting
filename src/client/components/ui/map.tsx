@@ -3,9 +3,11 @@
 import Spiderfy from "@nazka/map-gl-js-spiderfy";
 import bbox from "@turf/bbox";
 import convex from "@turf/convex";
-import MapLibreGL, { type MarkerOptions, type PopupOptions } from "maplibre-gl";
+import type { MarkerOptions, PopupOptions } from "maplibre-gl";
+import * as MapLibreGL from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Home, Loader2, Locate, Maximize, Minus, Plus, ScanSearch, X } from "lucide-react";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 
 import {
   createContext,
@@ -23,6 +25,8 @@ import {
 import { createPortal } from "react-dom";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+
+MapLibreGL.setWorkerUrl(workerUrl);
 
 const defaultStyles = {
   dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
