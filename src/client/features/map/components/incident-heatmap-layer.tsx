@@ -1,4 +1,4 @@
-import type MapLibreGL from 'maplibre-gl'
+import type * as MapLibreGL from 'maplibre-gl'
 import { useEffect } from 'react'
 import { useMap } from '@/components/ui/map'
 import type { IncidentProperties } from '../index'

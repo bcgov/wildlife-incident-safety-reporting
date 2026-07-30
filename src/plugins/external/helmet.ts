@@ -52,7 +52,7 @@ function createHelmetConfig(fastify: FastifyInstance): FastifyHelmetOptions {
         ],
         frameSrc: ["'self'", keycloakOrigin, 'https://*.google.com'],
         fontSrc: ["'self'", 'data:'],
-        workerSrc: ["'self'", 'blob:'],
+        workerSrc: ["'self'"],
         formAction: ["'self'", keycloakOrigin],
         // Safari auto-upgrades http://localhost when set, breaking local dev.
         ...(isDev && { 'upgrade-insecure-requests': null }),

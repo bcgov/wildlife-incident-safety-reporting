@@ -1,5 +1,5 @@
 import type { BoundaryProperties } from '@schemas/service-areas/boundaries.schema'
-import type MapLibreGL from 'maplibre-gl'
+import type * as MapLibreGL from 'maplibre-gl'
 import { useEffect, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
 import { useBoundaries } from '../hooks/use-boundaries'

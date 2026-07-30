@@ -1,4 +1,4 @@
-import type MapLibreGL from 'maplibre-gl'
+import type * as MapLibreGL from 'maplibre-gl'
 import { useEffect, useMemo, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
 import { useDensityData } from '@/hooks/use-density-data'
