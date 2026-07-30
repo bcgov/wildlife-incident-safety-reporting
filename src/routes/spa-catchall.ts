@@ -26,6 +26,8 @@ export default async function spaRoute(fastify: FastifyInstance) {
       },
     },
     (_req, reply) => {
+      // stale HTML would point at hashed bundles that no longer exist after a deploy
+      reply.header('cache-control', 'no-cache')
       return reply.html()
     },
   )

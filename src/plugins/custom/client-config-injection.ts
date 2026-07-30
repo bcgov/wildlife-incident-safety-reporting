@@ -18,14 +18,16 @@ async function clientConfigInjection(fastify: FastifyInstance) {
   const json = JSON.stringify(clientConfig).replace(/</g, '\\u003c')
 
   fastify.addHook('onSend', async (_request, reply, payload) => {
+    const nonce = reply.raw.cspNonce
     const contentType = reply.getHeader('content-type')
     if (
+      nonce &&
       typeof contentType === 'string' &&
       contentType.includes('text/html') &&
       typeof payload === 'string' &&
       payload.includes('<div id="app">')
     ) {
-      const script = `<script nonce="${reply.cspNonce.script}">window.__CONFIG__=${json};</script>`
+      const script = `<script nonce="${nonce}">window.__CONFIG__=${json};</script>`
       return payload.replace(/<head[^>]*>/i, (match) => `${match}${script}`)
     }
     return payload

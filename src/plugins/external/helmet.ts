@@ -26,6 +26,7 @@ function createHelmetConfig(fastify: FastifyInstance): FastifyHelmetOptions {
         scriptSrc: isDev
           ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
           : ["'self'", (_req, res) => `'nonce-${res.cspNonce ?? ''}'`],
+        // React and MapLibre emit inline styles that can't carry a nonce
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: [
           "'self'",
@@ -62,10 +63,9 @@ function createHelmetConfig(fastify: FastifyInstance): FastifyHelmetOptions {
 
 export default fp(
   async (fastify: FastifyInstance) => {
+    // helmet's enableCSPNonces would nonce style-src too, disabling its unsafe-inline
     fastify.addHook('onRequest', async (_request, reply) => {
-      const nonce = randomBytes(16).toString('hex')
-      reply.cspNonce = { script: nonce, style: nonce }
-      reply.raw.cspNonce = nonce
+      reply.raw.cspNonce = randomBytes(16).toString('hex')
     })
     await fastify.register(helmet, createHelmetConfig(fastify))
   },
