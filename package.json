@@ -7,9 +7,6 @@
   "engines": {
     "bun": ">=1.3.10"
   },
-  "overrides": {
-    "@fastify/static": "^10.1.2"
-  },
   "scripts": {
     "clean:client": "rimraf dist/client",
     "clean:server": "rimraf dist",
