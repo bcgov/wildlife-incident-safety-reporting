@@ -8,6 +8,8 @@ import {
   dateRangeMessage,
   dateRangeRefinement,
   IncidentFilterFields,
+  routeParamsMessage,
+  routeParamsRefinement,
 } from '@schemas/common/incident-query.schema.js'
 import {
   PaginationQuerySchema,
@@ -17,7 +19,9 @@ import { z } from 'zod'
 
 export const IncidentsQuerySchema = IncidentFilterFields.merge(
   PaginationQuerySchema,
-).refine(dateRangeRefinement, dateRangeMessage)
+)
+  .refine(dateRangeRefinement, dateRangeMessage)
+  .refine(routeParamsRefinement, routeParamsMessage)
 
 export type IncidentsQuery = z.infer<typeof IncidentsQuerySchema>
 

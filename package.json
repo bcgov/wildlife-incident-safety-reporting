@@ -83,6 +83,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@turf/area": "^7.3.4",
     "@turf/bbox": "^7.3.4",
+    "@turf/buffer": "^7.3.5",
     "@turf/convex": "^7.3.4",
     "@turf/length": "^7.3.4",
     "@types/papaparse": "^5.5.2",

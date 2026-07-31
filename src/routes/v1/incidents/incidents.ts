@@ -38,7 +38,13 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           }
         }
 
-        const result = await fastify.db.findIncidents(request.query)
+        const routeLine = await fastify.routePlanner.resolveRouteLine(
+          request.query,
+        )
+        const result = await fastify.db.findIncidents({
+          ...request.query,
+          routeLine,
+        })
         const body = {
           data: result.data,
           total: result.total,

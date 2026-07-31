@@ -22,6 +22,7 @@ import { IncidentHeatmapLayer } from './components/incident-heatmap-layer'
 import { IncidentPopup } from './components/incident-popup'
 import { IncidentTooltip } from './components/incident-tooltip'
 import { LayerControls } from './components/layer-controls'
+import { RouteLayer } from './components/route-layer'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useBcBasemapStyle } from './hooks/use-basemap-style'
 import { buildBasemapStyle } from './lib/bc-basemap-styles'
@@ -277,6 +278,7 @@ export function Component() {
       <LocateSegment />
       <DensityLayer />
       <BoundaryLayer />
+      <RouteLayer />
       {heatmapVisible && <IncidentHeatmapLayer data={geojson} />}
       <MapClusterLayer<IncidentProperties>
         data={clusterData}

@@ -1,8 +1,15 @@
 import type { IncidentFilterQuery } from '@schemas/common/incident-query.schema.js'
+import type { RouteLine } from '@schemas/route-planner/route.schema.js'
 import type { Expression, ExpressionBuilder, SqlBool } from 'kysely'
 import { sql } from 'kysely'
 import { geomFromGeoJSON, within } from 'kysely-postgis'
 import type { DB } from './types/database.js'
+
+// The route line is resolved from the Route Planner by the handler, not
+// carried in the query string
+export type ResolvedRouteLine = {
+  routeLine?: RouteLine | null
+}
 
 type FilterFields = Pick<
   IncidentFilterQuery,
@@ -15,7 +22,9 @@ type FilterFields = Pick<
   | 'startDate'
   | 'endDate'
   | 'geometry'
->
+  | 'routeCorridorM'
+> &
+  ResolvedRouteLine
 
 type IncidentEB = ExpressionBuilder<
   DB & {
@@ -73,6 +82,12 @@ export function applyFilters(
   }
   if (filters.geometry) {
     conditions.push(within(w, 'wi.geom', geomFromGeoJSON(w, filters.geometry)))
+  }
+  if (filters.routeLine && filters.routeCorridorM) {
+    // Geography ST_DWithin gives true metre distances along the corridor
+    conditions.push(
+      sql<boolean>`ST_DWithin(wi.geom::geography, ${geomFromGeoJSON(w, filters.routeLine)}::geography, ${filters.routeCorridorM})`,
+    )
   }
 
   return w.and(conditions)

@@ -2,6 +2,14 @@ import type { Geometry } from 'geojson'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
+export type RouteFilter = {
+  startLng: number
+  startLat: number
+  endLng: number
+  endLat: number
+  corridorMeters: number
+}
+
 type FilterState = {
   years: number[]
   species: number[]
@@ -12,6 +20,7 @@ type FilterState = {
   startDate: string | null
   endDate: string | null
   geometry: Geometry | null
+  routeFilter: RouteFilter | null
 }
 
 type FilterActions = {
@@ -24,6 +33,7 @@ type FilterActions = {
   setStartDate: (date: string | null) => void
   setEndDate: (date: string | null) => void
   setGeometry: (geometry: Geometry | null) => void
+  setRouteFilter: (routeFilter: RouteFilter | null) => void
   clearAll: () => void
 }
 
@@ -37,6 +47,7 @@ const initialState: FilterState = {
   startDate: null,
   endDate: null,
   geometry: null,
+  routeFilter: null,
 }
 
 export const useFilterStore = create<FilterState & FilterActions>()(
@@ -51,7 +62,17 @@ export const useFilterStore = create<FilterState & FilterActions>()(
       setAge: (age) => set({ age }),
       setStartDate: (date) => set({ startDate: date }),
       setEndDate: (date) => set({ endDate: date }),
-      setGeometry: (geometry) => set({ geometry }),
+      // Drawn shapes and route corridors are both spatial filters, only one applies
+      setGeometry: (geometry) =>
+        set((state) => ({
+          geometry,
+          routeFilter: geometry ? null : state.routeFilter,
+        })),
+      setRouteFilter: (routeFilter) =>
+        set((state) => ({
+          routeFilter,
+          geometry: routeFilter ? null : state.geometry,
+        })),
       clearAll: () => set(initialState),
     }),
     { name: 'filter-store' },

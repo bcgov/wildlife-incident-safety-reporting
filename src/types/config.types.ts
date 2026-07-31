@@ -25,4 +25,6 @@ export interface Config {
   hmcrSecret: string
   hmcrApiUrl: string
   hmcrTokenUrl: string
+  bcRoutePlannerUrl: string
+  bcRoutePlannerApiKey: string
 }

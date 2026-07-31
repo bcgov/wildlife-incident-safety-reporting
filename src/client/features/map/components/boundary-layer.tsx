@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
 import { useBoundaries } from '../hooks/use-boundaries'
 import { ensureSlots, SLOTS } from '../lib/layer-slots'
+import { hasOverlappingAppFeatures } from '../lib/map-interactions'
 import { useLayerStore } from '../store/layer-store'
 
 const SOURCE_ID = 'boundaries-source'
@@ -155,21 +156,8 @@ export function BoundaryLayer() {
       return c === 'crosshair' || c === 'grab' || c === 'grabbing'
     }
 
-    // Check if any non-boundary app layer features are at this point
     const hasOverlappingFeatures = (point: MapLibreGL.PointLike) =>
-      map
-        .queryRenderedFeatures(point)
-        .some(
-          (f) =>
-            !LAYER_IDS.includes(f.layer.id) &&
-            (f.layer.id === 'density-line' ||
-              f.layer.id.startsWith('clusters-') ||
-              f.layer.id.startsWith('unclustered-point-') ||
-              f.layer.id.startsWith('cluster-count-') ||
-              f.layer.id.startsWith('cluster-hull-') ||
-              f.layer.id.startsWith('td-') ||
-              f.layer.id.includes('-spiderfy-leaf')),
-        )
+      hasOverlappingAppFeatures(map, point, LAYER_IDS)
 
     const handleClick = (
       e: MapLibreGL.MapMouseEvent & {

@@ -14,6 +14,7 @@ export function useFilterSelection(): IncidentFilters {
       startDate: s.startDate,
       endDate: s.endDate,
       geometry: s.geometry,
+      routeFilter: s.routeFilter,
     })),
   )
 }

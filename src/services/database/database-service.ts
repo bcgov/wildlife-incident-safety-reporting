@@ -15,7 +15,7 @@ import type { FastifyBaseLogger } from 'fastify'
 import type { Kysely } from 'kysely'
 import { sql } from 'kysely'
 import { asGeoJSON, contains, makePoint, setSRID } from 'kysely-postgis'
-import { applyFilters } from './filters.js'
+import { applyFilters, type ResolvedRouteLine } from './filters.js'
 import { toIncident } from './mappers/incidents.js'
 import type { Age, DB, Sex, TimeOfKill } from './types/database.js'
 import type { HmcrUpsertRow } from './types/hmcr.js'
@@ -42,7 +42,7 @@ export class DatabaseService {
   }
 
   async findIncidents(
-    filters: IncidentsQuery,
+    filters: IncidentsQuery & ResolvedRouteLine,
   ): Promise<{ data: Incident[]; total: number }> {
     this.log.debug({ filters }, 'querying incidents')
 
@@ -507,7 +507,9 @@ export class DatabaseService {
     )
   }
 
-  async findLkiDensity(filters: DensityQuery): Promise<DensityResponse> {
+  async findLkiDensity(
+    filters: DensityQuery & ResolvedRouteLine,
+  ): Promise<DensityResponse> {
     this.log.debug({ filters }, 'querying LKI segment density')
 
     const rows = await this.kysely

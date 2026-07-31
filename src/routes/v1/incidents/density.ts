@@ -37,7 +37,13 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           }
         }
 
-        const result = await fastify.db.findLkiDensity(request.query)
+        const routeLine = await fastify.routePlanner.resolveRouteLine(
+          request.query,
+        )
+        const result = await fastify.db.findLkiDensity({
+          ...request.query,
+          routeLine,
+        })
 
         if (encoding) {
           const buffers = await fastify.responseCache.set(
