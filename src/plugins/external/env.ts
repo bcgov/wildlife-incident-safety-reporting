@@ -61,7 +61,7 @@ const schema = {
     },
     DB_IDLE_TIMEOUT: {
       type: 'number',
-      default: 30,
+      default: 0,
     },
     DB_MAX_LIFETIME: {
       type: 'number',
