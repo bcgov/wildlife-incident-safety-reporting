@@ -19,8 +19,8 @@ export function createDatabase(options?: CreateDatabaseOptions): Kysely<DB> {
   const url = options?.url ?? process.env.DATABASE_URL
   // Capped so total across replicas fits under PgBouncer's per-user pool.
   const max = options?.max ?? 10
-  // Recycle idle connections before the network or server drops them; Bun does not re-check liveness on reuse.
-  const idleTimeout = options?.idleTimeout ?? 30
+  // Recycle idle connections before the network or server drops them; must outlast the slowest statement because Bun's reaper also kills in-flight queries.
+  const idleTimeout = options?.idleTimeout ?? 300
   const maxLifetime = options?.maxLifetime ?? 1800
 
   const pool = {

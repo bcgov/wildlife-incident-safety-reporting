@@ -380,6 +380,8 @@ export class DatabaseService {
 
     this.log.debug({ count: rows.length }, 'upserting LKI segments')
 
+    const batchSize = 100
+
     return await withConnectionRetry(
       () =>
         this.kysely.transaction().execute(async (trx) => {
@@ -389,46 +391,52 @@ export class DatabaseService {
 
           const incomingIds = rows.map((r) => r.chris_lki_segment_id)
 
-          const result = await trx
-            .insertInto('lki_segments')
-            .values(
-              rows.map((r) => ({
-                chris_lki_segment_id: r.chris_lki_segment_id,
-                lki_segment_name: r.lki_segment_name,
-                lki_segment_description: r.lki_segment_description,
-                lki_segment_direction: r.lki_segment_direction,
-                lki_segment_length: r.lki_segment_length
-                  ? String(r.lki_segment_length)
-                  : null,
-                lki_route_id: r.lki_route_id,
-                highway_number: r.highway_number,
-                geom: sql`ST_GeomFromGeoJSON(${r.geom})`,
-                feature_length_m: r.feature_length_m
-                  ? String(r.feature_length_m)
-                  : null,
-                objectid: r.objectid,
-              })),
-            )
-            .onConflict((oc) =>
-              oc
-                .column('chris_lki_segment_id')
-                .doUpdateSet((eb) => ({
-                  lki_segment_name: eb.ref('excluded.lki_segment_name'),
-                  lki_segment_description: eb.ref(
-                    'excluded.lki_segment_description',
-                  ),
-                  lki_segment_direction: eb.ref(
-                    'excluded.lki_segment_direction',
-                  ),
-                  lki_segment_length: eb.ref('excluded.lki_segment_length'),
-                  lki_route_id: eb.ref('excluded.lki_route_id'),
-                  highway_number: eb.ref('excluded.highway_number'),
-                  geom: eb.ref('excluded.geom'),
-                  feature_length_m: eb.ref('excluded.feature_length_m'),
-                  objectid: eb.ref('excluded.objectid'),
-                }))
-                .where(
-                  sql<boolean>`
+          let inserted = 0
+          let updated = 0
+
+          for (let i = 0; i < rows.length; i += batchSize) {
+            const batch = rows.slice(i, i + batchSize)
+
+            const result = await trx
+              .insertInto('lki_segments')
+              .values(
+                batch.map((r) => ({
+                  chris_lki_segment_id: r.chris_lki_segment_id,
+                  lki_segment_name: r.lki_segment_name,
+                  lki_segment_description: r.lki_segment_description,
+                  lki_segment_direction: r.lki_segment_direction,
+                  lki_segment_length: r.lki_segment_length
+                    ? String(r.lki_segment_length)
+                    : null,
+                  lki_route_id: r.lki_route_id,
+                  highway_number: r.highway_number,
+                  geom: sql`ST_GeomFromGeoJSON(${r.geom})`,
+                  feature_length_m: r.feature_length_m
+                    ? String(r.feature_length_m)
+                    : null,
+                  objectid: r.objectid,
+                })),
+              )
+              .onConflict((oc) =>
+                oc
+                  .column('chris_lki_segment_id')
+                  .doUpdateSet((eb) => ({
+                    lki_segment_name: eb.ref('excluded.lki_segment_name'),
+                    lki_segment_description: eb.ref(
+                      'excluded.lki_segment_description',
+                    ),
+                    lki_segment_direction: eb.ref(
+                      'excluded.lki_segment_direction',
+                    ),
+                    lki_segment_length: eb.ref('excluded.lki_segment_length'),
+                    lki_route_id: eb.ref('excluded.lki_route_id'),
+                    highway_number: eb.ref('excluded.highway_number'),
+                    geom: eb.ref('excluded.geom'),
+                    feature_length_m: eb.ref('excluded.feature_length_m'),
+                    objectid: eb.ref('excluded.objectid'),
+                  }))
+                  .where(
+                    sql<boolean>`
                 lki_segments.lki_segment_name IS DISTINCT FROM excluded.lki_segment_name
                 OR lki_segments.lki_segment_description IS DISTINCT FROM excluded.lki_segment_description
                 OR lki_segments.lki_segment_direction IS DISTINCT FROM excluded.lki_segment_direction
@@ -439,13 +447,15 @@ export class DatabaseService {
                 OR lki_segments.feature_length_m IS DISTINCT FROM excluded.feature_length_m
                 OR lki_segments.objectid IS DISTINCT FROM excluded.objectid
               `,
-                ),
-            )
-            .returning(sql<boolean>`(xmax = 0)`.as('is_insert'))
-            .execute()
+                  ),
+              )
+              .returning(sql<boolean>`(xmax = 0)`.as('is_insert'))
+              .execute()
 
-          const inserted = result.filter((r) => r.is_insert).length
-          const updated = result.length - inserted
+            const batchInserted = result.filter((r) => r.is_insert).length
+            inserted += batchInserted
+            updated += result.length - batchInserted
+          }
 
           // Delete orphaned segments no longer in the WFS source
           const deleteResult = await trx
