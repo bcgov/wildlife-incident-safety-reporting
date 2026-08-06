@@ -17,6 +17,17 @@ interface RoutePlannerApiResponse {
 }
 
 const REQUEST_TIMEOUT_MS = 10_000
+const ROUTE_TTL_MS = 60 * 60 * 1000
+const NOT_FOUND_TTL_MS = 60 * 1000
+
+const RESOURCE_ROAD_PENALTY = 'resource:2.0,'
+
+export class RouteCorridorError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'RouteCorridorError'
+  }
+}
 
 export interface RouteFilterParams {
   routeStartLng?: number
@@ -32,7 +43,7 @@ export class RoutePlannerService {
   // filter tweak, so identical lookups must not re-hit the rate-limited API
   private readonly cache = new LRUCache<string, RouteResponse>({
     max: 50,
-    ttl: 60 * 60 * 1000,
+    ttl: ROUTE_TTL_MS,
   })
 
   constructor(baseLog: FastifyBaseLogger, fastify: FastifyInstance) {
@@ -42,7 +53,6 @@ export class RoutePlannerService {
 
   async getRoute(query: RouteQuery): Promise<RouteResponse> {
     const cacheKey = [
-      query.criteria,
       query.startLng,
       query.startLat,
       query.endLng,
@@ -52,7 +62,9 @@ export class RoutePlannerService {
     if (cached) return cached
 
     const result = await this.fetchRoute(query)
-    this.cache.set(cacheKey, result)
+    this.cache.set(cacheKey, result, {
+      ttl: result.routeFound ? ROUTE_TTL_MS : NOT_FOUND_TTL_MS,
+    })
     return result
   }
 
@@ -72,11 +84,12 @@ export class RoutePlannerService {
       startLat: routeStartLat,
       endLng: routeEndLng,
       endLat: routeEndLat,
-      criteria: 'fastest',
     })
 
     if (!route.line) {
-      throw new Error('No route found between the route filter points')
+      throw new RouteCorridorError(
+        'No route found between the route filter points',
+      )
     }
     return route.line
   }
@@ -88,7 +101,8 @@ export class RoutePlannerService {
       points: [query.startLng, query.startLat, query.endLng, query.endLat].join(
         ',',
       ),
-      criteria: query.criteria,
+      criteria: 'fastest',
+      gdf: RESOURCE_ROAD_PENALTY,
       outputSRS: '4326',
       distanceUnit: 'km',
     })
@@ -100,22 +114,36 @@ export class RoutePlannerService {
 
     if (!response.ok) {
       this.log.error(
-        { status: response.status, criteria: query.criteria },
+        { status: response.status },
         'Route Planner request failed',
       )
-      throw new Error(`Route Planner responded with ${response.status}`)
+      throw new RouteCorridorError(
+        `Route Planner responded with ${response.status}`,
+      )
     }
 
     const data = (await response.json()) as RoutePlannerApiResponse
 
+    // The API returns HTTP 200 with -1 distance and time when no route exists
+    if (!data.routeFound) {
+      return {
+        routeFound: false,
+        distance: 0,
+        distanceUnit: data.distanceUnit,
+        time: 0,
+        timeText: '',
+        line: null,
+      }
+    }
+
     return {
-      routeFound: data.routeFound,
+      routeFound: true,
       distance: data.distance,
       distanceUnit: data.distanceUnit,
       time: data.time,
       timeText: data.timeText,
       line:
-        data.routeFound && data.route.length > 1
+        data.route.length > 1
           ? { type: 'LineString', coordinates: data.route }
           : null,
     }

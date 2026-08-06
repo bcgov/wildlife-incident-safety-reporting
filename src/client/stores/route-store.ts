@@ -1,3 +1,4 @@
+import { DEFAULT_CORRIDOR_METERS } from '@schemas/route-planner/route.schema'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
@@ -6,8 +7,6 @@ export type RoutePoint = {
   latitude: number
   address: string
 }
-
-export const DEFAULT_CORRIDOR_METERS = 250
 
 type RouteState = {
   start: RoutePoint | null
@@ -31,7 +30,12 @@ export const useRouteStore = create<RouteState & RouteActions>()(
       setStart: (start) => set({ start }),
       setEnd: (end) => set({ end }),
       setCorridorMeters: (corridorMeters) => set({ corridorMeters }),
-      clearRoute: () => set({ start: null, end: null }),
+      clearRoute: () =>
+        set({
+          start: null,
+          end: null,
+          corridorMeters: DEFAULT_CORRIDOR_METERS,
+        }),
     }),
     { name: 'route-store' },
   ),

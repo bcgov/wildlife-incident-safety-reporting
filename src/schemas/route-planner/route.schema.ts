@@ -1,6 +1,9 @@
 import { LineStringSchema } from '@schemas/common/geojson.schema.js'
 import { z } from 'zod'
 
+export const DEFAULT_CORRIDOR_METERS = 250
+export const MAX_CORRIDOR_METERS = 20_000
+
 export const RouteQuerySchema = z.object({
   startLng: z.coerce.number().min(-180).max(180).meta({
     description: 'Longitude of the route start point',
@@ -13,9 +16,6 @@ export const RouteQuerySchema = z.object({
   }),
   endLat: z.coerce.number().min(-90).max(90).meta({
     description: 'Latitude of the route end point',
-  }),
-  criteria: z.enum(['fastest', 'shortest']).default('fastest').meta({
-    description: 'Routing optimization criteria',
   }),
 })
 

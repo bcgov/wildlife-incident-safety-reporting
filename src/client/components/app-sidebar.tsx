@@ -173,10 +173,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <Button
             variant="destructive"
             size="xs"
-            onClick={() => {
-              useRouteStore.getState().clearRoute()
-              store.clearAll()
-            }}
+            onClick={store.clearAll}
             aria-label="Clear all filters"
           >
             <RotateCcw className="size-3" />
@@ -357,14 +354,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 {store.routeFilter ? 'Route corridor' : 'Drawn area'}
                 <button
                   type="button"
-                  onClick={() => {
-                    if (store.routeFilter) {
-                      useRouteStore.getState().clearRoute()
-                      store.setRouteFilter(null)
-                    } else {
-                      store.setGeometry(null)
-                    }
-                  }}
+                  onClick={store.clearSpatialFilter}
                   className="rounded-full opacity-70 transition-opacity hover:opacity-100"
                   aria-label="Remove spatial filter"
                 >

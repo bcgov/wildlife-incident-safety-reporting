@@ -1,11 +1,13 @@
-import { Check, ChevronDown } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import {
+  LocationOption,
+  LocationSearchStatus,
+} from '@/components/location-search'
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from '@/components/ui/command'
 import {
@@ -13,8 +15,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useDebounce } from '@/hooks/use-debounce'
-import { useGeocoderSearch } from '@/hooks/use-geocoder-search'
+import {
+  MIN_QUERY_LENGTH,
+  useLocationSearch,
+} from '@/hooks/use-location-search'
 import {
   matchRoutableLocations,
   type RoutableLocation,
@@ -35,23 +39,14 @@ export function RouteLocationInput({
   onSelect,
 }: RouteLocationInputProps) {
   const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState('')
-
-  const debouncedSetQuery = useDebounce(
-    useCallback((next: string) => setDebouncedQuery(next), []),
-    300,
-  )
-
-  const { data, isFetching, isError } = useGeocoderSearch(
+  const {
+    query,
     debouncedQuery,
-    'routingPoint',
-  )
-
-  const handleInputChange = (next: string) => {
-    setQuery(next)
-    debouncedSetQuery(next)
-  }
+    handleInputChange,
+    data,
+    isFetching,
+    isError,
+  } = useLocationSearch('routingPoint')
 
   const handleSelect = (feature: GeocoderFeature) => {
     const [longitude, latitude] = feature.geometry.coordinates
@@ -86,63 +81,44 @@ export function RouteLocationInput({
             onValueChange={handleInputChange}
           />
           <CommandList>
-            {debouncedQuery.length >= 3 && (
+            {debouncedQuery.length >= MIN_QUERY_LENGTH && (
               <>
-                {isFetching && !data && (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
-                    Searching...
-                  </div>
-                )}
-                {isError && (
-                  <CommandEmpty>
-                    Failed to fetch addresses. Please try again.
-                  </CommandEmpty>
-                )}
-                {!isError &&
-                  !isFetching &&
-                  !data?.features.length &&
-                  routableMatches.length === 0 && (
-                    <CommandEmpty>No locations found.</CommandEmpty>
-                  )}
+                <LocationSearchStatus
+                  isFetching={isFetching}
+                  isError={isError}
+                  hasData={Boolean(data)}
+                  hasResults={
+                    Boolean(data?.features.length) || routableMatches.length > 0
+                  }
+                  emptyMessage="No locations found."
+                />
                 {routableMatches.length > 0 && (
                   <CommandGroup heading="Destinations & Crossings">
                     {routableMatches.map((location) => (
-                      <CommandItem
+                      <LocationOption
                         key={location.name}
                         value={location.name}
+                        selected={value?.address === location.name}
                         onSelect={() => handleSelectRoutable(location)}
                       >
-                        <Check
-                          className={cn(
-                            'mr-2 size-4',
-                            value?.address === location.name
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
-                        />
                         {location.name}
-                      </CommandItem>
+                      </LocationOption>
                     ))}
                   </CommandGroup>
                 )}
                 {data?.features.length ? (
                   <CommandGroup heading="Addresses">
                     {data.features.map((feature) => (
-                      <CommandItem
+                      <LocationOption
                         key={feature.properties.fullAddress}
                         value={feature.properties.fullAddress}
+                        selected={
+                          value?.address === feature.properties.fullAddress
+                        }
                         onSelect={() => handleSelect(feature)}
                       >
-                        <Check
-                          className={cn(
-                            'mr-2 size-4',
-                            value?.address === feature.properties.fullAddress
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
-                        />
                         {feature.properties.fullAddress}
-                      </CommandItem>
+                      </LocationOption>
                     ))}
                   </CommandGroup>
                 ) : null}

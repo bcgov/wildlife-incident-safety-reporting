@@ -8,6 +8,10 @@ import {
   commaStrings,
   geoJsonString,
 } from '@schemas/common/transforms.schema.js'
+import {
+  DEFAULT_CORRIDOR_METERS,
+  MAX_CORRIDOR_METERS,
+} from '@schemas/route-planner/route.schema.js'
 import { z } from 'zod'
 
 // an unbounded query across all years exceeds the pod's memory limit
@@ -102,9 +106,14 @@ export const IncidentFilterFields = z.object({
   routeEndLat: z.coerce.number().min(-90).max(90).optional().meta({
     description: 'Route corridor filter: end point latitude',
   }),
-  routeCorridorM: z.coerce.number().positive().max(20_000).default(250).meta({
-    description: 'Route corridor filter: corridor width in metres',
-  }),
+  routeCorridorM: z.coerce
+    .number()
+    .positive()
+    .max(MAX_CORRIDOR_METERS)
+    .default(DEFAULT_CORRIDOR_METERS)
+    .meta({
+      description: 'Route corridor filter: corridor width in metres',
+    }),
 })
 
 export const dateRangeRefinement = <

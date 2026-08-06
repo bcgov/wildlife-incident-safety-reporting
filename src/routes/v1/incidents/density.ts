@@ -3,6 +3,7 @@ import {
   DensityQuerySchema,
   DensityResponseSchema,
 } from '@schemas/incidents/density.schema.js'
+import { RouteCorridorError } from '@services/route-planner.js'
 import { logRouteError } from '@utils/route-errors.js'
 import { negotiateEncoding, sendCompressed } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
@@ -21,6 +22,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           200: DensityResponseSchema,
           400: ErrorSchema,
           500: ErrorSchema,
+          502: ErrorSchema,
         },
         tags: ['Incidents'],
       },
@@ -55,6 +57,12 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
 
         return result
       } catch (error) {
+        if (error instanceof RouteCorridorError) {
+          logRouteError(fastify.log, request, error, {
+            message: 'Failed to resolve route corridor',
+          })
+          return reply.badGateway(error.message)
+        }
         logRouteError(fastify.log, request, error, {
           message: 'Failed to query LKI density',
         })

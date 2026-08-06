@@ -3,6 +3,7 @@ import buffer from '@turf/buffer'
 import type * as MapLibreGL from 'maplibre-gl'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useRoute } from '@/hooks/use-route'
 import { useRouteStore } from '@/stores/route-store'
 import { ensureSlots, SLOTS } from '../lib/layer-slots'
@@ -73,17 +74,19 @@ export function RouteLayer() {
   const corridorMeters = useRouteStore((s) => s.corridorMeters)
   const [popup, setPopup] = useState<PopupState | null>(null)
 
+  const debouncedMeters = useDebouncedValue(corridorMeters, 400)
+
   // Display only - the server filters with ST_DWithin against the same route
   const corridor = useMemo(() => {
     const line = data?.line
-    if (!line || corridorMeters <= 0) return null
+    if (!line || debouncedMeters <= 0) return null
     const buffered = buffer(
       { type: 'Feature', geometry: line, properties: {} },
-      corridorMeters,
+      debouncedMeters,
       { units: 'meters' },
     )
     return buffered?.geometry ?? null
-  }, [data, corridorMeters])
+  }, [data, debouncedMeters])
 
   useEffect(() => {
     if (!data?.line) setPopup(null)

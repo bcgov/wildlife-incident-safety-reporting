@@ -1,3 +1,4 @@
+import { MAX_CORRIDOR_METERS } from '@schemas/route-planner/route.schema'
 import { Loader2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { RouteLocationInput } from '@/components/route-location-input'
@@ -26,9 +27,7 @@ export function RoutePlannerSection() {
   const setStart = useRouteStore((s) => s.setStart)
   const setEnd = useRouteStore((s) => s.setEnd)
   const setCorridorMeters = useRouteStore((s) => s.setCorridorMeters)
-  const clearRoute = useRouteStore((s) => s.clearRoute)
 
-  const geometry = useFilterStore((s) => s.geometry)
   const setRouteFilter = useFilterStore((s) => s.setRouteFilter)
 
   const { data, isFetching, isError } = useRoute()
@@ -47,17 +46,12 @@ export function RoutePlannerSection() {
         endLat: e.latitude,
         // The input clamps on blur, but the debounce can send mid-typing
         // values the query schema would reject
-        corridorMeters: Math.min(debouncedMeters, 20_000),
+        corridorMeters: Math.min(debouncedMeters, MAX_CORRIDOR_METERS),
       })
     } else if (useFilterStore.getState().routeFilter) {
       setRouteFilter(null)
     }
   }, [line, debouncedMeters, setRouteFilter])
-
-  // A drawn shape displaces the corridor, leaving the route inputs stale
-  useEffect(() => {
-    if (geometry) clearRoute()
-  }, [geometry, clearRoute])
 
   return (
     <SidebarGroup className="px-2 py-1">
@@ -79,7 +73,7 @@ export function RoutePlannerSection() {
             if (next !== null) setCorridorMeters(next)
           }}
           min={50}
-          max={20_000}
+          max={MAX_CORRIDOR_METERS}
           step={50}
           className="flex-row items-center justify-between gap-2"
         >

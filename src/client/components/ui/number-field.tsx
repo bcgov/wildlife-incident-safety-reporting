@@ -36,10 +36,9 @@ const numberFieldButtonVariants = cva(
   {
     variants: {
       size: {
-        sm: "px-1.5 ([class*='size-'])]:size-3.5 ([class*='size-'])]:size-3.5 [&_svg:not([class*='size-'])]:size-3.5 ([class*='size-'])]:size-3.5 ([class*='size-'])]:size-3 ([class*='size-'])]:size-3.5 ([class*='size-'])]:size-3.5",
-        default:
-          "px-2 ([class*='size-'])]:size-4 ([class*='size-'])]:size-4 [&_svg:not([class*='size-'])]:size-4 ([class*='size-'])]:size-4 ([class*='size-'])]:size-3.5 ([class*='size-'])]:size-4 ([class*='size-'])]:size-3.5",
-        lg: "px-2.5 ([class*='size-'])]:size-4 ([class*='size-'])]:size-4 [&_svg:not([class*='size-'])]:size-4 ([class*='size-'])]:size-4 ([class*='size-'])]:size-3.5 ([class*='size-'])]:size-4 ([class*='size-'])]:size-3.5",
+        sm: "px-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        default: "px-2 [&_svg:not([class*='size-'])]:size-4",
+        lg: "px-2.5 [&_svg:not([class*='size-'])]:size-4",
       },
     },
     defaultVariants: {
@@ -138,10 +137,7 @@ function NumberFieldDecrement({
       data-slot="number-field-decrement"
       {...props}
     >
-      {children ?? (
-        <MinusIcon
-        />
-      )}
+      {children ?? <MinusIcon />}
     </NumberFieldPrimitive.Decrement>
   )
 }
@@ -173,10 +169,7 @@ function NumberFieldIncrement({
       data-slot="number-field-increment"
       {...props}
     >
-      {children ?? (
-        <PlusIcon
-        />
-      )}
+      {children ?? <PlusIcon />}
     </NumberFieldPrimitive.Increment>
   )
 }

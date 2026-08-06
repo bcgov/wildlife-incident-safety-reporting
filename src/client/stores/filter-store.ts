@@ -1,6 +1,7 @@
 import type { Geometry } from 'geojson'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
+import { useRouteStore } from '@/stores/route-store'
 
 export type RouteFilter = {
   startLng: number
@@ -34,6 +35,7 @@ type FilterActions = {
   setEndDate: (date: string | null) => void
   setGeometry: (geometry: Geometry | null) => void
   setRouteFilter: (routeFilter: RouteFilter | null) => void
+  clearSpatialFilter: () => void
   clearAll: () => void
 }
 
@@ -63,17 +65,26 @@ export const useFilterStore = create<FilterState & FilterActions>()(
       setStartDate: (date) => set({ startDate: date }),
       setEndDate: (date) => set({ endDate: date }),
       // Drawn shapes and route corridors are both spatial filters, only one applies
-      setGeometry: (geometry) =>
+      setGeometry: (geometry) => {
+        if (geometry) useRouteStore.getState().clearRoute()
         set((state) => ({
           geometry,
           routeFilter: geometry ? null : state.routeFilter,
-        })),
+        }))
+      },
       setRouteFilter: (routeFilter) =>
         set((state) => ({
           routeFilter,
           geometry: routeFilter ? null : state.geometry,
         })),
-      clearAll: () => set(initialState),
+      clearSpatialFilter: () => {
+        useRouteStore.getState().clearRoute()
+        set({ geometry: null, routeFilter: null })
+      },
+      clearAll: () => {
+        useRouteStore.getState().clearRoute()
+        set(initialState)
+      },
     }),
     { name: 'filter-store' },
   ),

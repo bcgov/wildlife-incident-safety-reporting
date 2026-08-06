@@ -1,12 +1,14 @@
 import type { LookupResponse } from '@schemas/service-areas/lookup.schema'
-import { Check, ChevronsUpDown } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { ChevronsUpDown } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  LocationOption,
+  LocationSearchStatus,
+} from '@/components/location-search'
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from '@/components/ui/command'
 import {
@@ -14,31 +16,27 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useDebounce } from '@/hooks/use-debounce'
-import { useGeocoderSearch } from '@/hooks/use-geocoder-search'
+import {
+  MIN_QUERY_LENGTH,
+  useLocationSearch,
+} from '@/hooks/use-location-search'
 import { apiClient } from '@/lib/apiClient'
-import { cn } from '@/lib/utils'
 import { useLocationStore } from '@/stores/location-store'
 import type { GeocoderFeature } from '@/types/geocoder'
 
 export function SearchAddress() {
   const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState('')
   const location = useLocationStore((s) => s.location)
   const setLocation = useLocationStore((s) => s.setLocation)
 
-  const debouncedSetQuery = useDebounce(
-    useCallback((value: string) => setDebouncedQuery(value), []),
-    300,
-  )
-
-  const { data, isFetching, isError } = useGeocoderSearch(debouncedQuery)
-
-  const handleInputChange = (value: string) => {
-    setQuery(value)
-    debouncedSetQuery(value)
-  }
+  const {
+    query,
+    debouncedQuery,
+    handleInputChange,
+    data,
+    isFetching,
+    isError,
+  } = useLocationSearch()
 
   const handleSelect = (feature: GeocoderFeature) => {
     const [longitude, latitude] = feature.geometry.coordinates
@@ -102,41 +100,29 @@ export function SearchAddress() {
             onValueChange={handleInputChange}
           />
           <CommandList>
-            {debouncedQuery.length >= 3 && (
+            {debouncedQuery.length >= MIN_QUERY_LENGTH && (
               <>
-                {isFetching && !data && (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
-                    Searching...
-                  </div>
-                )}
-                {isError && (
-                  <CommandEmpty>
-                    Failed to fetch addresses. Please try again.
-                  </CommandEmpty>
-                )}
-                {!isError && !isFetching && !data?.features.length && (
-                  <CommandEmpty>No addresses found.</CommandEmpty>
-                )}
+                <LocationSearchStatus
+                  isFetching={isFetching}
+                  isError={isError}
+                  hasData={Boolean(data)}
+                  hasResults={Boolean(data?.features.length)}
+                  emptyMessage="No addresses found."
+                />
                 {grouped &&
                   Array.from(grouped.entries()).map(([type, features]) => (
                     <CommandGroup key={type} heading={type}>
                       {features.map((feature) => (
-                        <CommandItem
+                        <LocationOption
                           key={feature.properties.fullAddress}
                           value={feature.properties.fullAddress}
+                          selected={
+                            location?.address === feature.properties.fullAddress
+                          }
                           onSelect={() => handleSelect(feature)}
                         >
-                          <Check
-                            className={cn(
-                              'mr-2 size-4',
-                              location?.address ===
-                                feature.properties.fullAddress
-                                ? 'opacity-100'
-                                : 'opacity-0',
-                            )}
-                          />
                           {feature.properties.fullAddress}
-                        </CommandItem>
+                        </LocationOption>
                       ))}
                     </CommandGroup>
                   ))}
