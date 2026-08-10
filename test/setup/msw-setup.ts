@@ -1,15 +1,18 @@
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { jwksHandlers } from '../helpers/auth.js'
+import { routePlannerHandlers } from '../mocks/route-planner.js'
 
-export const server = setupServer(...jwksHandlers)
+const defaultHandlers = [...jwksHandlers, ...routePlannerHandlers]
+
+export const server = setupServer(...defaultHandlers)
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'warn' })
 })
 
 afterEach(() => {
-  server.resetHandlers(...jwksHandlers)
+  server.resetHandlers(...defaultHandlers)
 })
 
 afterAll(() => {

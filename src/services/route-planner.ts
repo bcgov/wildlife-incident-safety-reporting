@@ -68,6 +68,10 @@ export class RoutePlannerService {
     return result
   }
 
+  clearCache(): void {
+    this.cache.clear()
+  }
+
   async resolveRouteLine(params: RouteFilterParams): Promise<RouteLine | null> {
     const { routeStartLng, routeStartLat, routeEndLng, routeEndLat } = params
     if (
