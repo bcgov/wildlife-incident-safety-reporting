@@ -1,6 +1,10 @@
+import { isIdentityProviderError } from '@utils/auth-errors.js'
 import type { FastifyInstance } from 'fastify'
 
 export default async function (fastify: FastifyInstance) {
+  // A 401 here never reaches the preHandler limiter - count failed auth now
+  const globalLimiter = fastify.rateLimit()
+
   fastify.addHook('onRequest', async (request, reply) => {
     const path = request.url.split('?')[0]
 
@@ -21,7 +25,11 @@ export default async function (fastify: FastifyInstance) {
 
     try {
       await request.jwtVerify()
-    } catch {
+    } catch (error) {
+      if (isIdentityProviderError(error)) {
+        throw error
+      }
+      await globalLimiter.call(fastify, request, reply)
       return reply.unauthorized('Authentication required')
     }
   })
