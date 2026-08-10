@@ -7,6 +7,39 @@ import {
   fastifyZodOpenApiTransform,
   fastifyZodOpenApiTransformObject,
 } from 'fastify-zod-openapi'
+import type { OpenAPIV3 } from 'openapi-types'
+
+const HTTP_METHODS = [
+  'get',
+  'post',
+  'put',
+  'patch',
+  'delete',
+  'head',
+  'options',
+  'trace',
+] as const
+
+const RATE_LIMITED_RESPONSE: OpenAPIV3.ResponseObject = {
+  description: 'Rate limit exceeded',
+  content: {
+    'application/json': {
+      schema: { $ref: '#/components/schemas/Error' },
+    },
+  },
+}
+
+// The limiters sit outside route schemas, so no route declares its own 429
+function addRateLimitResponses(paths: OpenAPIV3.PathsObject): void {
+  for (const pathItem of Object.values(paths)) {
+    for (const method of HTTP_METHODS) {
+      const responses = pathItem?.[method]?.responses
+      if (responses) {
+        responses['429'] ??= structuredClone(RATE_LIMITED_RESPONSE)
+      }
+    }
+  }
+}
 
 const createOpenapiConfig = (fastify: FastifyInstance) => {
   return {
@@ -81,7 +114,15 @@ const createOpenapiConfig = (fastify: FastifyInstance) => {
     hideUntagged: true,
     exposeRoute: true,
     transform: fastifyZodOpenApiTransform,
-    transformObject: fastifyZodOpenApiTransformObject,
+    transformObject: (
+      args: Parameters<typeof fastifyZodOpenApiTransformObject>[0],
+    ) => {
+      const spec = fastifyZodOpenApiTransformObject(args)
+      if ('openapi' in spec && spec.paths) {
+        addRateLimitResponses(spec.paths)
+      }
+      return spec
+    },
   }
 }
 

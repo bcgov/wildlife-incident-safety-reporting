@@ -150,10 +150,9 @@ describe('Auth Security', () => {
     it('returns structured error with expected fields', async () => {
       const res = await app.inject({ method: 'GET', url: protectedUrl })
       const body = JSON.parse(res.payload)
-      expect(body).toMatchObject({
+      expect(body).toEqual({
         statusCode: 401,
-        code: expect.any(String),
-        error: expect.any(String),
+        error: 'Unauthorized',
         message: expect.any(String),
       })
     })
