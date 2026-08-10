@@ -1,4 +1,4 @@
-import { ServiceAreaSchema } from '@schemas/service-areas/service-area.schema.js'
+import { ServiceAreaSchema } from '@schemas/common/service-area.schema.js'
 import { z } from 'zod'
 
 export const LookupQuerySchema = z.object({

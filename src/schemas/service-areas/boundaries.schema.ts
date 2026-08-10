@@ -1,5 +1,5 @@
 import { PolygonGeometrySchema } from '@schemas/common/geojson.schema.js'
-import { ServiceAreaSchema } from '@schemas/service-areas/service-area.schema.js'
+import { ServiceAreaSchema } from '@schemas/common/service-area.schema.js'
 import { z } from 'zod'
 
 export const BoundaryPropertiesSchema = ServiceAreaSchema

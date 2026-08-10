@@ -3,8 +3,8 @@ import {
   SexEnum,
   TimeOfKillEnum,
 } from '@schemas/common/enums.schema.js'
+import { ServiceAreaSchema } from '@schemas/common/service-area.schema.js'
 import { SpeciesSchema } from '@schemas/common/species.schema.js'
-import { ServiceAreaSchema } from '@schemas/service-areas/service-area.schema.js'
 import { z } from 'zod'
 
 export const IncidentFiltersResponseSchema = z.object({
