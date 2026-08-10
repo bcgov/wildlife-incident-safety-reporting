@@ -34,11 +34,16 @@ async function errorHandler(fastify: FastifyInstance) {
       request.log.error(logData, 'Internal server error occurred')
     }
 
+    // A 5xx message can carry upstream URLs or driver internals
+    const safeMessage =
+      statusCode < 500 && typeof err.message === 'string' && err.message
+        ? err.message
+        : statusText
+
     const payload: ErrorResponse = {
       statusCode,
       error: statusText,
-      // A 5xx message can carry upstream URLs or driver internals
-      message: statusCode < 500 && err.message ? err.message : statusText,
+      message: safeMessage,
     }
 
     reply.code(statusCode)
