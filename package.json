@@ -80,7 +80,7 @@
     "@nazka/map-gl-js-spiderfy": "^2.0.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@tanstack/react-query": "^5.90.21",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.0.0",
     "@turf/area": "^7.3.4",
     "@turf/bbox": "^7.3.4",
     "@turf/convex": "^7.3.4",
