@@ -9,6 +9,12 @@ import { useRouteStore } from '@/stores/route-store'
 import { ensureSlots, SLOTS } from '../lib/layer-slots'
 import { hasOverlappingAppFeatures } from '../lib/map-interactions'
 import {
+  ROUTE_CASING_COLOR,
+  ROUTE_CASING_HOVER_COLOR,
+  ROUTE_LINE_COLOR,
+  ROUTE_LINE_HOVER_COLOR,
+} from '../lib/route-style'
+import {
   SPATIAL_FILTER_FILL_COLOR,
   SPATIAL_FILTER_FILL_OPACITY,
   SPATIAL_FILTER_OUTLINE_COLOR,
@@ -30,11 +36,6 @@ const LAYER_IDS = [
 ]
 const INTERACTIVE_LAYER_IDS = [CORRIDOR_LAYER_ID, LINE_LAYER_ID]
 
-// DriveBC's route palette, so routes read the same across BC gov map tools
-const LINE_COLOR = '#1E53A7'
-const LINE_HOVER_COLOR = '#5386ED'
-const CASING_COLOR = '#5595D9'
-const CASING_HOVER_COLOR = '#A8D0FB'
 const ROUTE_FEATURE_ID = 0
 
 const hoverCase = <T,>(hovered: T, base: T) =>
@@ -152,7 +153,7 @@ export function RouteLayer() {
         source: SOURCE_ID,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': hoverCase(CASING_HOVER_COLOR, CASING_COLOR),
+          'line-color': hoverCase(ROUTE_CASING_HOVER_COLOR, ROUTE_CASING_COLOR),
           'line-width': 8,
         },
       },
@@ -166,7 +167,7 @@ export function RouteLayer() {
         source: SOURCE_ID,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': hoverCase(LINE_HOVER_COLOR, LINE_COLOR),
+          'line-color': hoverCase(ROUTE_LINE_HOVER_COLOR, ROUTE_LINE_COLOR),
           'line-width': 5,
         },
       },
