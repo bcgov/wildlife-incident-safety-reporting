@@ -17,6 +17,7 @@ const schema = {
     'HMCR_SECRET',
     'HMCR_API_URL',
     'HMCR_TOKEN_URL',
+    'BC_ROUTE_PLANNER_API_KEY',
   ],
   properties: {
     BASE_URL: {
@@ -114,6 +115,13 @@ const schema = {
     HMCR_TOKEN_URL: {
       type: 'string',
     },
+    BC_ROUTE_PLANNER_URL: {
+      type: 'string',
+      default: 'https://router.api.gov.bc.ca',
+    },
+    BC_ROUTE_PLANNER_API_KEY: {
+      type: 'string',
+    },
   },
 }
 
@@ -145,6 +153,8 @@ interface RawEnv {
   HMCR_SECRET: string
   HMCR_API_URL: string
   HMCR_TOKEN_URL: string
+  BC_ROUTE_PLANNER_URL: string
+  BC_ROUTE_PLANNER_API_KEY: string
 }
 
 declare module 'fastify' {
@@ -193,6 +203,8 @@ export default fp(
       hmcrSecret: raw.HMCR_SECRET,
       hmcrApiUrl: raw.HMCR_API_URL,
       hmcrTokenUrl: raw.HMCR_TOKEN_URL,
+      bcRoutePlannerUrl: raw.BC_ROUTE_PLANNER_URL,
+      bcRoutePlannerApiKey: raw.BC_ROUTE_PLANNER_API_KEY,
     }
 
     const isUsingConnectionString =

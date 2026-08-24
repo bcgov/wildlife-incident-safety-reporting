@@ -22,6 +22,8 @@ import { IncidentHeatmapLayer } from './components/incident-heatmap-layer'
 import { IncidentPopup } from './components/incident-popup'
 import { IncidentTooltip } from './components/incident-tooltip'
 import { LayerControls } from './components/layer-controls'
+import { RouteLayer } from './components/route-layer'
+import { RouteMarkers } from './components/route-markers'
 import { ZoomToLocation } from './components/zoom-to-location'
 import { useBcBasemapStyle } from './hooks/use-basemap-style'
 import { buildBasemapStyle } from './lib/bc-basemap-styles'
@@ -87,8 +89,6 @@ function toGeoJSON(
 }
 
 const CLUSTER_MAX_ZOOM = 22
-
-const IS_TOUCH_DEVICE = window.matchMedia('(pointer: coarse)').matches
 
 const EMPTY_INCIDENT_FC: GeoJSON.FeatureCollection<
   GeoJSON.Point,
@@ -259,7 +259,6 @@ export function Component() {
       center={[-124.5, 54.5]}
       zoom={5}
       styles={styles}
-      cooperativeGestures={IS_TOUCH_DEVICE}
     >
       <MapControls
         position="top-left"
@@ -280,6 +279,8 @@ export function Component() {
       <LocateSegment />
       <DensityLayer />
       <BoundaryLayer />
+      <RouteLayer />
+      <RouteMarkers />
       {heatmapVisible && <IncidentHeatmapLayer data={geojson} />}
       <MapClusterLayer<IncidentProperties>
         data={clusterData}

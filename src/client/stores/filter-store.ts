@@ -1,6 +1,15 @@
 import type { Geometry } from 'geojson'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
+import { useRouteStore } from '@/stores/route-store'
+
+export type RouteFilter = {
+  startLng: number
+  startLat: number
+  endLng: number
+  endLat: number
+  corridorMeters: number
+}
 
 type FilterState = {
   years: number[]
@@ -12,6 +21,7 @@ type FilterState = {
   startDate: string | null
   endDate: string | null
   geometry: Geometry | null
+  routeFilter: RouteFilter | null
 }
 
 type FilterActions = {
@@ -24,6 +34,8 @@ type FilterActions = {
   setStartDate: (date: string | null) => void
   setEndDate: (date: string | null) => void
   setGeometry: (geometry: Geometry | null) => void
+  setRouteFilter: (routeFilter: RouteFilter | null) => void
+  clearRouteFilter: () => void
   clearAll: () => void
 }
 
@@ -37,6 +49,7 @@ const initialState: FilterState = {
   startDate: null,
   endDate: null,
   geometry: null,
+  routeFilter: null,
 }
 
 export const useFilterStore = create<FilterState & FilterActions>()(
@@ -52,7 +65,16 @@ export const useFilterStore = create<FilterState & FilterActions>()(
       setStartDate: (date) => set({ startDate: date }),
       setEndDate: (date) => set({ endDate: date }),
       setGeometry: (geometry) => set({ geometry }),
-      clearAll: () => set(initialState),
+      setRouteFilter: (routeFilter) => set({ routeFilter }),
+      // Nulling the flag alone is not enough - live route inputs would re-apply it
+      clearRouteFilter: () => {
+        useRouteStore.getState().clearRoute()
+        set({ routeFilter: null })
+      },
+      clearAll: () => {
+        useRouteStore.getState().clearRoute()
+        set(initialState)
+      },
     }),
     { name: 'filter-store' },
   ),

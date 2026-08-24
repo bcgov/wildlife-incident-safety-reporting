@@ -4,6 +4,10 @@ import {
   IncidentsQuerySchema,
   IncidentsResponseSchema,
 } from '@schemas/incidents/incidents.schema.js'
+import {
+  RouteCorridorError,
+  RouteNotFoundError,
+} from '@services/route-planner.js'
 import { logRouteError } from '@utils/route-errors.js'
 import { negotiateEncoding, sendCompressed } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
@@ -21,7 +25,9 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         response: {
           200: IncidentsResponseSchema,
           400: IncidentErrorSchema,
+          422: IncidentErrorSchema,
           500: IncidentErrorSchema,
+          502: IncidentErrorSchema,
         },
         tags: ['Incidents'],
       },
@@ -38,7 +44,13 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           }
         }
 
-        const result = await fastify.db.findIncidents(request.query)
+        const routeLine = await fastify.routePlanner.resolveRouteLine(
+          request.query,
+        )
+        const result = await fastify.db.findIncidents({
+          ...request.query,
+          routeLine,
+        })
         const body = {
           data: result.data,
           total: result.total,
@@ -56,6 +68,15 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
 
         return body
       } catch (error) {
+        if (error instanceof RouteNotFoundError) {
+          return reply.unprocessableEntity(error.message)
+        }
+        if (error instanceof RouteCorridorError) {
+          logRouteError(fastify.log, request, error, {
+            message: 'Failed to resolve route corridor',
+          })
+          return reply.badGateway(error.message)
+        }
         logRouteError(fastify.log, request, error, {
           message: 'Failed to query incidents',
         })

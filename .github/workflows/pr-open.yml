@@ -62,6 +62,7 @@ jobs:
       hmcr_token_url: ${{ secrets.HMCR_TOKEN_URL }}
       hmcr_id: ${{ secrets.HMCR_ID }}
       hmcr_secret: ${{ secrets.HMCR_SECRET }}
+      bc_route_planner_api_key: ${{ secrets.BC_ROUTE_PLANNER_API_KEY }}
       google_maps_client_api_key: ${{ secrets.GOOGLE_MAPS_CLIENT_API_KEY }}
       base_map_style_url: ${{ secrets.BASE_MAP_STYLE_URL }}
       seed_s3_endpoint_url: ${{ secrets.SEED_S3_ENDPOINT_URL }}

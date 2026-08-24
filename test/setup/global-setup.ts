@@ -26,6 +26,7 @@ export async function setup(): Promise<void> {
   process.env.HMCR_SECRET = 'test-hmcr-secret'
   process.env.HMCR_API_URL = 'http://localhost:9090/api'
   process.env.HMCR_TOKEN_URL = 'http://localhost:9090/token'
+  process.env.BC_ROUTE_PLANNER_API_KEY = 'test-route-planner-key'
 
   const { createDatabase } = await import(
     '../../src/services/database/create-database.js'

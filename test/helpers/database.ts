@@ -3,6 +3,11 @@ import type { DB } from '@services/database/types/database.js'
 import type { Kysely } from 'kysely'
 import { sql } from 'kysely'
 
+const TEST_DATABASE_NAME = 'wisr_test'
+
+// spatial_ref_sys is PostGIS reference data; truncating it breaks every geography cast
+const PRESERVED_TABLES = ['cache_generation', 'species', 'spatial_ref_sys']
+
 declare global {
   var __testDb: Kysely<DB> | null
 }
@@ -15,7 +20,7 @@ export async function initializeTestDatabase(): Promise<Kysely<DB>> {
 
   globalThis.__testDb = createDatabase({
     url: process.env.TEST_DATABASE_URL,
-    database: 'wisr_test',
+    database: TEST_DATABASE_NAME,
   })
 
   return globalThis.__testDb
@@ -31,12 +36,24 @@ export function getTestDatabase(): Kysely<DB> {
 export async function resetDatabase(): Promise<void> {
   const db = getTestDatabase()
 
-  // Preserve cache_generation: a migration-seeded singleton the cached routes read every request.
+  const guard = await sql<{ db: string }>`
+    SELECT current_database() AS db
+  `.execute(db)
+  const connected = guard.rows[0]?.db
+  if (connected !== TEST_DATABASE_NAME) {
+    throw new Error(
+      `resetDatabase refused: connected to "${connected}", expected "${TEST_DATABASE_NAME}"`,
+    )
+  }
+
   const result = await sql<{ tablename: string }>`
     SELECT tablename FROM pg_tables
     WHERE schemaname = 'public'
     AND tablename NOT LIKE 'kysely_%'
-    AND tablename <> 'cache_generation'
+    AND tablename NOT IN (${sql.join(
+      PRESERVED_TABLES.map((t) => sql.val(t)),
+      sql`, `,
+    )})
   `.execute(db)
 
   const tables = result.rows.map((r) => r.tablename)

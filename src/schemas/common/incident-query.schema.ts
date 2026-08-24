@@ -8,6 +8,10 @@ import {
   commaStrings,
   geoJsonString,
 } from '@schemas/common/transforms.schema.js'
+import {
+  DEFAULT_CORRIDOR_METERS,
+  MAX_CORRIDOR_METERS,
+} from '@schemas/route-planner/route.schema.js'
 import { z } from 'zod'
 
 // an unbounded query across all years exceeds the pod's memory limit
@@ -90,6 +94,26 @@ export const IncidentFilterFields = z.object({
         '{"type":"Polygon","coordinates":[[[-123.2,49.2],[-123.0,49.2],[-123.0,49.3],[-123.2,49.3],[-123.2,49.2]]]}',
     },
   }),
+  routeStartLng: z.coerce.number().min(-180).max(180).optional().meta({
+    description: 'Route corridor filter: start point longitude',
+  }),
+  routeStartLat: z.coerce.number().min(-90).max(90).optional().meta({
+    description: 'Route corridor filter: start point latitude',
+  }),
+  routeEndLng: z.coerce.number().min(-180).max(180).optional().meta({
+    description: 'Route corridor filter: end point longitude',
+  }),
+  routeEndLat: z.coerce.number().min(-90).max(90).optional().meta({
+    description: 'Route corridor filter: end point latitude',
+  }),
+  routeCorridorM: z.coerce
+    .number()
+    .positive()
+    .max(MAX_CORRIDOR_METERS)
+    .default(DEFAULT_CORRIDOR_METERS)
+    .meta({
+      description: 'Route corridor filter: corridor width in metres',
+    }),
 })
 
 export const dateRangeRefinement = <
@@ -102,9 +126,32 @@ export const dateRangeMessage = {
   message: 'startDate must be before or equal to endDate',
 }
 
+export const routeParamsRefinement = <
+  T extends {
+    routeStartLng?: number
+    routeStartLat?: number
+    routeEndLng?: number
+    routeEndLat?: number
+  },
+>(
+  data: T,
+) => {
+  const provided = [
+    data.routeStartLng,
+    data.routeStartLat,
+    data.routeEndLng,
+    data.routeEndLat,
+  ].filter((v) => v !== undefined).length
+  return provided === 0 || provided === 4
+}
+
+export const routeParamsMessage = {
+  message: 'Route filtering requires all four route coordinates',
+}
+
 export const IncidentFilterQuerySchema = IncidentFilterFields.refine(
   dateRangeRefinement,
   dateRangeMessage,
-)
+).refine(routeParamsRefinement, routeParamsMessage)
 
 export type IncidentFilterQuery = z.infer<typeof IncidentFilterQuerySchema>

@@ -48,6 +48,7 @@ backend:
     hmcrSecret: ~
     googleMapsClientApiKey: ~
     baseMapStyleUrl: ~
+    bcRoutePlannerApiKey: ~
     port: "3033"
   #-- the deployment strategy, can be "Recreate" or "RollingUpdate"
   deploymentStrategy: Recreate

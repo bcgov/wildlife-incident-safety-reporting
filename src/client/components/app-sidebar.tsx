@@ -6,6 +6,7 @@ import { format, parseISO } from 'date-fns'
 import { CalendarIcon, RotateCcw, X } from 'lucide-react'
 import { useMemo } from 'react'
 import { FieldError } from '@/components/field-error'
+import { RoutePlannerSection } from '@/components/route-planner-section'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -29,6 +30,7 @@ import { NavUser } from '@/components/user-menu'
 import { useFilters } from '@/hooks/use-filters'
 import { useIncidents } from '@/hooks/use-incidents'
 import { useFilterStore } from '@/stores/filter-store'
+import { useRouteStore } from '@/stores/route-store'
 
 function FilterSkeleton() {
   return <Skeleton className="h-10 rounded-md border border-input" />
@@ -90,6 +92,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { data: filters, isLoading } = useFilters()
   const { data: incidents } = useIncidents()
   const store = useFilterStore()
+  const hasRoutePoints = useRouteStore((s) => Boolean(s.start || s.end))
 
   const yearValidation = useMemo(
     () => YearSelectionSchema.safeParse(store.years),
@@ -153,7 +156,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     store.age.length > 0 ||
     store.startDate !== null ||
     store.endDate !== null ||
-    store.geometry !== null
+    store.geometry !== null ||
+    store.routeFilter !== null ||
+    hasRoutePoints
 
   return (
     <Sidebar
@@ -340,21 +345,37 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             )}
           </SidebarGroupContent>
         </SidebarGroup>
-        {store.geometry && (
+        <RoutePlannerSection />
+        {(store.geometry || store.routeFilter) && (
           <SidebarGroup className="px-2 py-1">
             <SidebarGroupLabel>Spatial Filter</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <Badge variant="secondary" className="gap-1.5">
-                Area filter
-                <button
-                  type="button"
-                  onClick={() => store.setGeometry(null)}
-                  className="rounded-full opacity-70 transition-opacity hover:opacity-100"
-                  aria-label="Remove spatial filter"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
+            <SidebarGroupContent className="flex flex-wrap gap-1.5">
+              {store.routeFilter && (
+                <Badge variant="secondary" className="gap-1.5">
+                  Route corridor
+                  <button
+                    type="button"
+                    onClick={store.clearRouteFilter}
+                    className="rounded-full opacity-70 transition-opacity hover:opacity-100"
+                    aria-label="Remove route corridor filter"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
+              {store.geometry && (
+                <Badge variant="secondary" className="gap-1.5">
+                  Drawn area
+                  <button
+                    type="button"
+                    onClick={() => store.setGeometry(null)}
+                    className="rounded-full opacity-70 transition-opacity hover:opacity-100"
+                    aria-label="Remove drawn area filter"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
             </SidebarGroupContent>
           </SidebarGroup>
         )}

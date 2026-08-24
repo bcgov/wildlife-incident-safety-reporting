@@ -6,6 +6,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     pool: 'forks',
+    // Files share one test database and resetDatabase truncates globally
+    fileParallelism: false,
     exclude: ['**/node_modules/**', '**/tmp/**'],
     env: {
       NODE_ENV: 'test',

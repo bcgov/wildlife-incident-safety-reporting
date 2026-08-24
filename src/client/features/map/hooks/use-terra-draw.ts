@@ -18,6 +18,12 @@ import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { useMap } from '@/components/ui/map'
 import { useFilterStore } from '@/stores/filter-store'
 import { ensureSlots, SLOTS } from '../lib/layer-slots'
+import {
+  SPATIAL_FILTER_FILL_COLOR,
+  SPATIAL_FILTER_FILL_OPACITY,
+  SPATIAL_FILTER_OUTLINE_COLOR,
+  SPATIAL_FILTER_OUTLINE_WIDTH,
+} from '../lib/spatial-filter-style'
 
 export type DrawMode = 'polygon' | 'rectangle' | 'circle' | 'measure' | 'select'
 
@@ -26,11 +32,11 @@ export type MeasurementPopup = {
   text: string
 }
 
-const FILL_COLOR = '#FCBA19' as const // BC Gov Gold-100
-const OUTLINE_COLOR = '#F8BA47' as const // BC Gov Gold-90
+const FILL_COLOR = SPATIAL_FILTER_FILL_COLOR
+const OUTLINE_COLOR = SPATIAL_FILTER_OUTLINE_COLOR
 const CLOSING_POINT_OUTLINE = '#ffffff' as const
-const FILL_OPACITY = 0.15
-const OUTLINE_WIDTH = 2
+const FILL_OPACITY = SPATIAL_FILTER_FILL_OPACITY
+const OUTLINE_WIDTH = SPATIAL_FILTER_OUTLINE_WIDTH
 
 // Terra-draw layer IDs (default "td" prefix)
 const TD_POLYGON_LAYER = 'td-polygon'

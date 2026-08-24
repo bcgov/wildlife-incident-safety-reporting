@@ -4,6 +4,7 @@ import {
 } from '@schemas/incidents/incidents.schema'
 import type { Geometry } from 'geojson'
 import { apiClient } from '@/lib/apiClient'
+import type { RouteFilter } from '@/stores/filter-store'
 
 export type IncidentFilters = {
   years: number[]
@@ -15,6 +16,7 @@ export type IncidentFilters = {
   startDate: string | null
   endDate: string | null
   geometry: Geometry | null
+  routeFilter: RouteFilter | null
 }
 
 export const incidentsQueryKey = (filters: IncidentFilters) =>
@@ -35,6 +37,13 @@ export function buildQueryString(filters: IncidentFilters): string {
   if (filters.startDate) params.set('startDate', filters.startDate)
   if (filters.endDate) params.set('endDate', filters.endDate)
   if (filters.geometry) params.set('geometry', JSON.stringify(filters.geometry))
+  if (filters.routeFilter) {
+    params.set('routeStartLng', String(filters.routeFilter.startLng))
+    params.set('routeStartLat', String(filters.routeFilter.startLat))
+    params.set('routeEndLng', String(filters.routeFilter.endLng))
+    params.set('routeEndLat', String(filters.routeFilter.endLat))
+    params.set('routeCorridorM', String(filters.routeFilter.corridorMeters))
+  }
 
   const qs = params.toString()
   return qs ? `?${qs}` : ''

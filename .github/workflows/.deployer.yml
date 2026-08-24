@@ -101,6 +101,8 @@ on:
         required: true
       hmcr_secret:
         required: true
+      bc_route_planner_api_key:
+        required: true
       google_maps_client_api_key:
         required: true
       base_map_style_url:
@@ -226,6 +228,7 @@ jobs:
               --set-string backend.config.hmcrSecret="${{ secrets.hmcr_secret }}" \
               --set-string backend.config.googleMapsClientApiKey="${{ secrets.google_maps_client_api_key }}" \
               --set-string backend.config.baseMapStyleUrl="${{ secrets.base_map_style_url }}" \
+              --set-string backend.config.bcRoutePlannerApiKey="${{ secrets.bc_route_planner_api_key }}" \
               --set-string backend.seed.s3.endpointUrl="${{ secrets.seed_s3_endpoint_url }}" \
               --set-string backend.seed.s3.bucket="${{ secrets.seed_s3_bucket }}" \
               --set-string backend.seed.s3.accessKey="${{ secrets.seed_s3_access_key }}" \
