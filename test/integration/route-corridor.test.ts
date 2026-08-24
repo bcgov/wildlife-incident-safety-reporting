@@ -93,6 +93,32 @@ describe('Route Corridor Filter', () => {
     expect(await query(`${ROUTE_PARAMS}&routeCorridorM=20000`)).toBe(2)
   })
 
+  it('intersects the corridor with a drawn geometry', async () => {
+    const polygon = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-123.356, 48.424],
+          [-123.344, 48.424],
+          [-123.344, 48.436],
+          [-123.356, 48.436],
+          [-123.356, 48.424],
+        ],
+      ],
+    }
+    const inBoth = ON_ROUTE
+    const corridorOnly = { latitude: 48.4205, longitude: -123.3595 }
+    const polygonOnly = { latitude: 48.426, longitude: -123.346 }
+    await seedIncident(inBoth)
+    await seedIncident(corridorOnly)
+    await seedIncident(polygonOnly)
+
+    const geometry = encodeURIComponent(JSON.stringify(polygon))
+    expect(
+      await query(`${ROUTE_PARAMS}&routeCorridorM=250&geometry=${geometry}`),
+    ).toBe(1)
+  })
+
   it('filters density counts by the corridor', async () => {
     const segmentId = 9001
     await getTestDatabase()

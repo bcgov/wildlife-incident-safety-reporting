@@ -349,18 +349,33 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         {(store.geometry || store.routeFilter) && (
           <SidebarGroup className="px-2 py-1">
             <SidebarGroupLabel>Spatial Filter</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <Badge variant="secondary" className="gap-1.5">
-                {store.routeFilter ? 'Route corridor' : 'Drawn area'}
-                <button
-                  type="button"
-                  onClick={store.clearSpatialFilter}
-                  className="rounded-full opacity-70 transition-opacity hover:opacity-100"
-                  aria-label="Remove spatial filter"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
+            <SidebarGroupContent className="flex flex-wrap gap-1.5">
+              {store.routeFilter && (
+                <Badge variant="secondary" className="gap-1.5">
+                  Route corridor
+                  <button
+                    type="button"
+                    onClick={store.clearRouteFilter}
+                    className="rounded-full opacity-70 transition-opacity hover:opacity-100"
+                    aria-label="Remove route corridor filter"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
+              {store.geometry && (
+                <Badge variant="secondary" className="gap-1.5">
+                  Drawn area
+                  <button
+                    type="button"
+                    onClick={() => store.setGeometry(null)}
+                    className="rounded-full opacity-70 transition-opacity hover:opacity-100"
+                    aria-label="Remove drawn area filter"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
             </SidebarGroupContent>
           </SidebarGroup>
         )}

@@ -35,7 +35,7 @@ type FilterActions = {
   setEndDate: (date: string | null) => void
   setGeometry: (geometry: Geometry | null) => void
   setRouteFilter: (routeFilter: RouteFilter | null) => void
-  clearSpatialFilter: () => void
+  clearRouteFilter: () => void
   clearAll: () => void
 }
 
@@ -64,22 +64,12 @@ export const useFilterStore = create<FilterState & FilterActions>()(
       setAge: (age) => set({ age }),
       setStartDate: (date) => set({ startDate: date }),
       setEndDate: (date) => set({ endDate: date }),
-      // Drawn shapes and route corridors are both spatial filters, only one applies
-      setGeometry: (geometry) => {
-        if (geometry) useRouteStore.getState().clearRoute()
-        set((state) => ({
-          geometry,
-          routeFilter: geometry ? null : state.routeFilter,
-        }))
-      },
-      setRouteFilter: (routeFilter) =>
-        set((state) => ({
-          routeFilter,
-          geometry: routeFilter ? null : state.geometry,
-        })),
-      clearSpatialFilter: () => {
+      setGeometry: (geometry) => set({ geometry }),
+      setRouteFilter: (routeFilter) => set({ routeFilter }),
+      // Nulling the flag alone is not enough - live route inputs would re-apply it
+      clearRouteFilter: () => {
         useRouteStore.getState().clearRoute()
-        set({ geometry: null, routeFilter: null })
+        set({ routeFilter: null })
       },
       clearAll: () => {
         useRouteStore.getState().clearRoute()
