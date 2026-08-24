@@ -3,6 +3,7 @@ import {
   RouteQuerySchema,
   RouteResponseSchema,
 } from '@schemas/route-planner/route.schema.js'
+import { RouteCorridorError } from '@services/route-planner.js'
 import { logRouteError } from '@utils/route-errors.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
@@ -19,6 +20,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         response: {
           200: RouteResponseSchema,
           400: ErrorSchema,
+          500: ErrorSchema,
           502: ErrorSchema,
         },
         tags: ['Route'],
@@ -31,7 +33,10 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         logRouteError(fastify.log, request, error, {
           message: 'Failed to fetch route from BC Route Planner',
         })
-        return reply.badGateway('Failed to fetch route from BC Route Planner')
+        if (error instanceof RouteCorridorError) {
+          return reply.badGateway('Failed to fetch route from BC Route Planner')
+        }
+        return reply.internalServerError('Failed to fetch route')
       }
     },
   )

@@ -108,7 +108,7 @@ describe('Route Planner', () => {
 
     await app.inject({ method: 'GET', url: ROUTE_URL, headers: auth() })
 
-    expect(gdf).toBe('resource:2.0,')
+    expect(gdf).toBe('resource:2.0')
   })
 
   it('serves a repeated lookup from cache instead of the upstream API', async () => {
@@ -122,6 +122,24 @@ describe('Route Planner', () => {
 
     await app.inject({ method: 'GET', url: ROUTE_URL, headers: auth() })
     await app.inject({ method: 'GET', url: ROUTE_URL, headers: auth() })
+
+    expect(calls).toBe(1)
+  })
+
+  it('collapses concurrent identical lookups into one upstream call', async () => {
+    let calls = 0
+    server.use(
+      http.get(ROUTE_PLANNER_URL, async () => {
+        calls += 1
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        return HttpResponse.json(routeFoundBody())
+      }),
+    )
+
+    await Promise.all([
+      app.inject({ method: 'GET', url: ROUTE_URL, headers: auth() }),
+      app.inject({ method: 'GET', url: ROUTE_URL, headers: auth() }),
+    ])
 
     expect(calls).toBe(1)
   })

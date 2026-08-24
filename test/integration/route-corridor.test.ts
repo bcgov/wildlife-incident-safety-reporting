@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { sql } from 'kysely'
 import { HttpResponse, http } from 'msw'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { build } from '../helpers/app.js'
@@ -45,7 +46,10 @@ describe('Route Corridor Filter', () => {
 
   const auth = () => ({ authorization: `Bearer ${idirToken()}` })
 
-  async function seedIncident(point: { latitude: number; longitude: number }) {
+  async function seedIncident(
+    point: { latitude: number; longitude: number },
+    lkiSegmentId?: number,
+  ) {
     await getTestDatabase()
       .insertInto('incidents')
       .values({
@@ -53,6 +57,7 @@ describe('Route Corridor Filter', () => {
         species_id: speciesId,
         latitude: String(point.latitude),
         longitude: String(point.longitude),
+        lki_segment_id: lkiSegmentId ?? null,
       })
       .execute()
   }
@@ -88,6 +93,48 @@ describe('Route Corridor Filter', () => {
     expect(await query(`${ROUTE_PARAMS}&routeCorridorM=20000`)).toBe(2)
   })
 
+  it('filters density counts by the corridor', async () => {
+    const segmentId = 9001
+    await getTestDatabase()
+      .insertInto('lki_segments')
+      .values({
+        chris_lki_segment_id: segmentId,
+        lki_segment_name: 'Test Segment',
+        geom: sql`ST_GeomFromGeoJSON(${JSON.stringify({
+          type: 'LineString',
+          coordinates: [
+            [-123.36, 48.42],
+            [-123.34, 48.44],
+          ],
+        })})`,
+      })
+      .execute()
+    await seedIncident(ON_ROUTE, segmentId)
+    await seedIncident(OFF_ROUTE, segmentId)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/v1/incidents/density?year=${YEAR}&${ROUTE_PARAMS}&routeCorridorM=250`,
+      headers: auth(),
+    })
+
+    expect(res.statusCode).toBe(200)
+    const segment = res
+      .json()
+      .find((s: { segmentId: number }) => s.segmentId === segmentId)
+    expect(segment.totalAnimals).toBe(1)
+  })
+
+  it('rejects a corridor width above the maximum', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/v1/incidents?year=${YEAR}&${ROUTE_PARAMS}&routeCorridorM=20001`,
+      headers: auth(),
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
   it('rejects a partial set of route coordinates', async () => {
     const res = await app.inject({
       method: 'GET',
@@ -98,9 +145,27 @@ describe('Route Corridor Filter', () => {
     expect(res.statusCode).toBe(400)
   })
 
-  it('returns 502 when the corridor route cannot be resolved', async () => {
+  it('returns 422 when no route exists between the filter points', async () => {
     server.use(
       http.get(ROUTE_PLANNER_URL, () => HttpResponse.json(noRouteBody())),
+    )
+    await seedIncident(ON_ROUTE)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/v1/incidents?year=${YEAR}&${ROUTE_PARAMS}`,
+      headers: auth(),
+    })
+
+    expect(res.statusCode).toBe(422)
+  })
+
+  it('returns 502 when the Route Planner errors during corridor resolution', async () => {
+    server.use(
+      http.get(
+        ROUTE_PLANNER_URL,
+        () => new HttpResponse(null, { status: 500 }),
+      ),
     )
     await seedIncident(ON_ROUTE)
 

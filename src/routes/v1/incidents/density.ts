@@ -3,7 +3,10 @@ import {
   DensityQuerySchema,
   DensityResponseSchema,
 } from '@schemas/incidents/density.schema.js'
-import { RouteCorridorError } from '@services/route-planner.js'
+import {
+  RouteCorridorError,
+  RouteNotFoundError,
+} from '@services/route-planner.js'
 import { logRouteError } from '@utils/route-errors.js'
 import { negotiateEncoding, sendCompressed } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
@@ -21,6 +24,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         response: {
           200: DensityResponseSchema,
           400: ErrorSchema,
+          422: ErrorSchema,
           500: ErrorSchema,
           502: ErrorSchema,
         },
@@ -57,6 +61,9 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
 
         return result
       } catch (error) {
+        if (error instanceof RouteNotFoundError) {
+          return reply.unprocessableEntity(error.message)
+        }
         if (error instanceof RouteCorridorError) {
           logRouteError(fastify.log, request, error, {
             message: 'Failed to resolve route corridor',

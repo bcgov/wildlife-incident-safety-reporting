@@ -10,7 +10,7 @@ declare module 'fastify' {
 
 export default fp(
   async (fastify: FastifyInstance) => {
-    const service = new RoutePlannerService(fastify.log, fastify)
+    const service = new RoutePlannerService(fastify)
     fastify.decorate('routePlanner', service)
   },
   {
