@@ -64,6 +64,7 @@
          <index name="idx_incidents_geom" unique="false">
             <column ascending="true" name="geom"/>
          </index>
+         <index name="idx_incidents_geom_geog" unique="false"/>
          <index name="idx_incidents_lki_segment_id" unique="false">
             <column ascending="true" name="lki_segment_id"/>
          </index>
