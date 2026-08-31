@@ -1,4 +1,4 @@
-import { MAX_CORRIDOR_METERS } from '@schemas/route-planner/route.schema'
+import { MAX_CORRIDOR_METERS } from '@schemas/common/incident-query.schema'
 import { Loader2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { RouteLocationInput } from '@/components/route-location-input'

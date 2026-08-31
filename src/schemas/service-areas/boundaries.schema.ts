@@ -6,11 +6,16 @@ export const BoundaryPropertiesSchema = ServiceAreaSchema
 
 export type BoundaryProperties = z.infer<typeof BoundaryPropertiesSchema>
 
-export const BoundaryFeatureSchema = z.object({
-  type: z.literal('Feature'),
-  geometry: PolygonGeometrySchema,
-  properties: BoundaryPropertiesSchema,
-})
+export const BoundaryFeatureSchema = z
+  .object({
+    type: z.literal('Feature'),
+    geometry: PolygonGeometrySchema,
+    properties: BoundaryPropertiesSchema,
+  })
+  .meta({
+    id: 'BoundaryFeature',
+    description: 'GeoJSON Feature for one service area boundary',
+  })
 
 export type BoundaryFeature = z.infer<typeof BoundaryFeatureSchema>
 
