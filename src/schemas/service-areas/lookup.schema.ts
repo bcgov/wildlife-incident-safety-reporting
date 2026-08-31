@@ -1,12 +1,16 @@
+import {
+  LatitudeSchema,
+  LongitudeSchema,
+} from '@schemas/common/geojson.schema.js'
 import { ServiceAreaSchema } from '@schemas/common/service-area.schema.js'
 import { z } from 'zod'
 
 export const LookupQuerySchema = z.object({
-  lng: z.coerce.number().min(-180).max(180).meta({
+  lng: LongitudeSchema.meta({
     description: 'Longitude (WGS 84)',
     example: -123.37,
   }),
-  lat: z.coerce.number().min(-90).max(90).meta({
+  lat: LatitudeSchema.meta({
     description: 'Latitude (WGS 84)',
     example: 48.42,
   }),

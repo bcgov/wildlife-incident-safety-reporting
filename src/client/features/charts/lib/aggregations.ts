@@ -1,6 +1,5 @@
-import type { Incident } from '@schemas/incidents/incidents.schema'
 import type { ChartConfig } from '@/components/ui/chart'
-import type { DensitySegment } from '@/lib/density-api'
+import type { components } from '@/types/api'
 import type {
   DensityKpiSummary,
   KpiSummary,
@@ -9,6 +8,9 @@ import type {
   TimeBucket,
   TimeBucketRow,
 } from '../types/chart-types'
+
+type Incident = components['schemas']['Incident']
+type DensitySegment = components['schemas']['DensitySegment']
 
 export const REMAINING_KEY = 'Remaining'
 export const MAX_YEARS_FOR_MONTHLY = 3

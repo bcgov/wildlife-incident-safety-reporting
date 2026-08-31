@@ -1,4 +1,3 @@
-import type { Incident } from '@schemas/incidents/incidents.schema'
 import type {
   ColumnDef,
   SortingState,
@@ -37,6 +36,9 @@ import {
 } from '@/components/ui/tooltip'
 import { useIncidentLocateStore } from '@/stores/incident-locate-store'
 import { useTabStore } from '@/stores/tab-store'
+import type { components } from '@/types/api'
+
+type Incident = components['schemas']['Incident']
 
 const nullCell = <span className="text-muted-foreground">-</span>
 

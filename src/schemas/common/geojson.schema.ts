@@ -57,3 +57,7 @@ export const LineGeometrySchema = z
 
 export type PolygonGeometry = z.infer<typeof PolygonGeometrySchema>
 export type LineGeometry = z.infer<typeof LineGeometrySchema>
+
+export const LongitudeSchema = z.coerce.number().min(-180).max(180)
+
+export const LatitudeSchema = z.coerce.number().min(-90).max(90)

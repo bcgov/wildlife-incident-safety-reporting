@@ -35,9 +35,11 @@ import {
 } from '@/components/ui/tooltip'
 import type { DensityMode } from '@/features/map/store/layer-store'
 import { useLayerStore } from '@/features/map/store/layer-store'
-import type { DensitySegment } from '@/lib/density-api'
 import { useSegmentLocateStore } from '@/stores/segment-locate-store'
 import { useTabStore } from '@/stores/tab-store'
+import type { components } from '@/types/api'
+
+type DensitySegment = components['schemas']['DensitySegment']
 
 type DensityRow = DensitySegment & {
   rawDensityPerKm: number | null

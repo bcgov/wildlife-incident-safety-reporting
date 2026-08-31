@@ -1,5 +1,6 @@
 import { ErrorSchema } from '@schemas/common/error.schema.js'
 import { LkiSyncResponseSchema } from '@schemas/incidents/lki-sync.schema.js'
+import { CLUSTER_INTERNAL_NOTE } from '@utils/route-docs.js'
 import { logRouteError } from '@utils/route-errors.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
@@ -11,8 +12,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         security: [],
         summary: 'Sync LKI highway segments from BC WFS',
         operationId: 'syncLkiSegments',
-        description:
-          'Fetches all LKI highway segments from the BC DataCatalogue WFS and upserts them into the local database using chris_lki_segment_id for deduplication. Internal: not exposed via ingress.',
+        description: `Fetches all LKI highway segments from the BC DataCatalogue WFS and upserts them into the local database using chris_lki_segment_id for deduplication. ${CLUSTER_INTERNAL_NOTE}`,
         response: {
           200: LkiSyncResponseSchema,
           500: ErrorSchema,

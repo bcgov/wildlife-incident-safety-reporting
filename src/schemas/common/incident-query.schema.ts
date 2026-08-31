@@ -4,15 +4,18 @@ import {
   TimeOfKillEnum,
 } from '@schemas/common/enums.schema.js'
 import {
+  LatitudeSchema,
+  LongitudeSchema,
+} from '@schemas/common/geojson.schema.js'
+import {
   commaNumbers,
   commaStrings,
   geoJsonString,
 } from '@schemas/common/transforms.schema.js'
-import {
-  DEFAULT_CORRIDOR_METERS,
-  MAX_CORRIDOR_METERS,
-} from '@schemas/route-planner/route.schema.js'
 import { z } from 'zod'
+
+export const DEFAULT_CORRIDOR_METERS = 250
+export const MAX_CORRIDOR_METERS = 20_000
 
 // an unbounded query across all years exceeds the pod's memory limit
 export const MAX_SELECTED_YEARS = 10
@@ -94,16 +97,16 @@ export const IncidentFilterFields = z.object({
         '{"type":"Polygon","coordinates":[[[-123.2,49.2],[-123.0,49.2],[-123.0,49.3],[-123.2,49.3],[-123.2,49.2]]]}',
     },
   }),
-  routeStartLng: z.coerce.number().min(-180).max(180).optional().meta({
+  routeStartLng: LongitudeSchema.optional().meta({
     description: 'Route corridor filter: start point longitude',
   }),
-  routeStartLat: z.coerce.number().min(-90).max(90).optional().meta({
+  routeStartLat: LatitudeSchema.optional().meta({
     description: 'Route corridor filter: start point latitude',
   }),
-  routeEndLng: z.coerce.number().min(-180).max(180).optional().meta({
+  routeEndLng: LongitudeSchema.optional().meta({
     description: 'Route corridor filter: end point longitude',
   }),
-  routeEndLat: z.coerce.number().min(-90).max(90).optional().meta({
+  routeEndLat: LatitudeSchema.optional().meta({
     description: 'Route corridor filter: end point latitude',
   }),
   routeCorridorM: z.coerce

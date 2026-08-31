@@ -131,6 +131,16 @@
       "matchPackageNames": ["vitest", "/^@vitest//", "msw"]
     },
     {
+      "description": "Group OpenAPI contract tooling",
+      "groupName": "OpenAPI",
+      "matchPackageNames": [
+        "openapi-fetch",
+        "openapi-react-query",
+        "openapi-typescript",
+        "openapi-types"
+      ]
+    },
+    {
       "description": "Group map dependencies",
       "groupName": "Map",
       "matchPackageNames": [
@@ -156,6 +166,17 @@
       "description": "Pin react-day-picker to v9.x - shadcn calendar not compatible with v10",
       "matchPackageNames": ["react-day-picker"],
       "allowedVersions": "< 10.0.0"
+    },
+    {
+      "description": "codegen typescript must satisfy openapi-typescript's ^5.x peer (TS5 JS compiler API; native TS has none) - root typescript is unaffected",
+      "matchFileNames": ["scripts/openapi-codegen/package.json"],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "< 6.0.0"
+    },
+    {
+      "description": "openapi-react-query 1.0.0 is a deprecated bad publish with a stale openapi-fetch peer range - npm latest is 0.5.x",
+      "matchPackageNames": ["openapi-react-query"],
+      "allowedVersions": "< 1.0.0"
     },
     {
       "description": "Auto-merge patch updates after 2 day stability period",

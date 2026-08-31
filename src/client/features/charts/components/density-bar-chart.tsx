@@ -16,8 +16,10 @@ import {
 } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { DensityMode } from '@/features/map/store/layer-store'
-import type { DensitySegment } from '@/lib/density-api'
 import { DENSITY_COLORS } from '@/lib/density-colors'
+import type { components } from '@/types/api'
+
+type DensitySegment = components['schemas']['DensitySegment']
 
 const TOP_N = 15
 

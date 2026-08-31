@@ -1,4 +1,5 @@
 import { MetricsResponseSchema } from '@schemas/metrics/metrics.schema.js'
+import { CLUSTER_INTERNAL_NOTE } from '@utils/route-docs.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
 const PROMETHEUS_CONTENT_TYPE = 'text/plain; version=0.0.4; charset=utf-8'
@@ -11,8 +12,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         security: [],
         summary: 'Prometheus metrics exposition',
         operationId: 'getMetrics',
-        description:
-          'Returns Prometheus metrics in exposition format. Internal: not exposed via ingress.',
+        description: `Returns Prometheus metrics in exposition format. ${CLUSTER_INTERNAL_NOTE}`,
         tags: ['System'],
         response: {
           200: {

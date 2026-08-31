@@ -52,7 +52,10 @@ export const IncidentSchema = z
 
 export type Incident = z.infer<typeof IncidentSchema>
 
-export const IncidentsResponseSchema = paginatedResponse(IncidentSchema)
+export const IncidentsResponseSchema = paginatedResponse(IncidentSchema).meta({
+  id: 'Incidents',
+  description: 'Paginated incident records',
+})
 
 export type IncidentsResponse = z.infer<typeof IncidentsResponseSchema>
 

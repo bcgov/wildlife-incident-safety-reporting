@@ -1,12 +1,11 @@
-import type { Incident } from '@schemas/incidents/incidents.schema'
 import { useMemo, useState } from 'react'
 import type { DensityMode } from '@/features/map/store/layer-store'
 import { useLayerStore } from '@/features/map/store/layer-store'
 import { useDensityData } from '@/hooks/use-density-data'
 import { useIncidents } from '@/hooks/use-incidents'
-import type { DensitySegment } from '@/lib/density-api'
 import type { DataViewOption } from '@/stores/data-view-store'
 import { useDataViewStore } from '@/stores/data-view-store'
+import type { components } from '@/types/api'
 import { ChartToolbar } from './components/chart-toolbar'
 import { DensityBarChart } from './components/density-bar-chart'
 import { DensityKpiCards } from './components/density-kpi-cards'
@@ -25,6 +24,9 @@ import {
   summarizeDensity,
 } from './lib/aggregations'
 import type { TimeBucket } from './types/chart-types'
+
+type Incident = components['schemas']['Incident']
+type DensitySegment = components['schemas']['DensitySegment']
 
 const EMPTY_BUCKET = { rows: [], speciesKeys: [] }
 const EMPTY_INCIDENTS: Incident[] = []

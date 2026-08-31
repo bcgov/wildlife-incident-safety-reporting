@@ -1,4 +1,3 @@
-import type { LookupResponse } from '@schemas/service-areas/lookup.schema'
 import { ChevronsUpDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import {
@@ -20,7 +19,7 @@ import {
   MIN_QUERY_LENGTH,
   useLocationSearch,
 } from '@/hooks/use-location-search'
-import { apiClient } from '@/lib/apiClient'
+import { apiFetch } from '@/lib/api'
 import { useLocationStore } from '@/stores/location-store'
 import type { GeocoderFeature } from '@/types/geocoder'
 
@@ -47,11 +46,12 @@ export function SearchAddress() {
     } else {
       setLocation({ longitude, latitude, address })
       // Fire-and-forget: enrich with service area data after map flies
-      apiClient
-        .get<LookupResponse>(
-          `/v1/service-areas/lookup?lng=${longitude}&lat=${latitude}`,
-        )
-        .then((data) => {
+      apiFetch
+        .GET('/v1/service-areas/lookup', {
+          params: { query: { lng: longitude, lat: latitude } },
+        })
+        .then(({ data }) => {
+          if (data === undefined) return
           // Re-read current state to avoid overwriting a cleared location
           const current = useLocationStore.getState().location
           if (

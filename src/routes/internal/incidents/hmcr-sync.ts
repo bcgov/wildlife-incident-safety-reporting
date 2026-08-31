@@ -1,5 +1,6 @@
 import { ErrorSchema } from '@schemas/common/error.schema.js'
 import { HmcrSyncResponseSchema } from '@schemas/incidents/hmcr-sync.schema.js'
+import { CLUSTER_INTERNAL_NOTE } from '@utils/route-docs.js'
 import { logRouteError } from '@utils/route-errors.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
@@ -11,8 +12,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         security: [],
         summary: 'Sync wildlife incidents from HMCR',
         operationId: 'syncHmcrIncidents',
-        description:
-          'Fetches all wildlife records from the HMCR API and upserts them into the local database using hmcr_record_id for deduplication. Internal: not exposed via ingress.',
+        description: `Fetches all wildlife records from the HMCR API and upserts them into the local database using hmcr_record_id for deduplication. ${CLUSTER_INTERNAL_NOTE}`,
         response: {
           200: HmcrSyncResponseSchema,
           500: ErrorSchema,

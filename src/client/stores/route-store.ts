@@ -1,4 +1,4 @@
-import { DEFAULT_CORRIDOR_METERS } from '@schemas/route-planner/route.schema'
+import { DEFAULT_CORRIDOR_METERS } from '@schemas/common/incident-query.schema'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
