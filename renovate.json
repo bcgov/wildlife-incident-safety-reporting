@@ -131,6 +131,16 @@
       "matchPackageNames": ["vitest", "/^@vitest//", "msw"]
     },
     {
+      "description": "Group OpenAPI contract tooling",
+      "groupName": "OpenAPI",
+      "matchPackageNames": [
+        "openapi-fetch",
+        "openapi-react-query",
+        "openapi-typescript",
+        "openapi-types"
+      ]
+    },
+    {
       "description": "Group map dependencies",
       "groupName": "Map",
       "matchPackageNames": [
