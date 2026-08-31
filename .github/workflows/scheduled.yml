@@ -76,7 +76,7 @@ jobs:
       - name: Run SchemaSpy
         run: docker run --network host -v "$PWD/output:/output" schemaspy/schemaspy:7.0.2@sha256:c8f98116a5cfe4b00b379eeb23b2022cdea4c9192cbccb843a75049e752479b7 -t pgsql11 -db wisr -host 127.0.0.1 -port 5432 -u postgres -p postgres -schemas public
       - name: Deploy to Pages
-        uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4
         with:
           folder: output
 
