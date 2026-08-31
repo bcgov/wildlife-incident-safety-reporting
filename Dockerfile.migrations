@@ -5,7 +5,8 @@ WORKDIR /app
 
 COPY package.json bun.lock ./
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --production --ignore-scripts
+    bun install --frozen-lockfile --production --ignore-scripts --omit=peer && \
+    rm -rf node_modules/@types
 
 COPY migrations/ ./migrations/
 COPY src/services/database/ ./src/services/database/

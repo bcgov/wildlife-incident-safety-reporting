@@ -7,7 +7,8 @@ FROM base AS install
 WORKDIR /temp/prod
 COPY package.json bun.lock ./
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --production --ignore-scripts
+    bun install --frozen-lockfile --production --ignore-scripts --omit=peer && \
+    rm -rf node_modules/@types
 
 # Stage 3 - Full install + build
 FROM base AS builder

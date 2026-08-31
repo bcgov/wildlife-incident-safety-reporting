@@ -2,7 +2,7 @@
   "compilerOptions": {
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
-    "composite": true,
+    "incremental": true,
     "lib": ["es2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
