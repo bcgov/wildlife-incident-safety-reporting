@@ -168,6 +168,11 @@
       "allowedVersions": "< 10.0.0"
     },
     {
+      "description": "Pin @tanstack/react-table to v8.x - the shadcn data-table components are built on the v8 API",
+      "matchPackageNames": ["@tanstack/react-table"],
+      "allowedVersions": "< 9.0.0"
+    },
+    {
       "description": "codegen typescript must satisfy openapi-typescript's ^5.x peer (TS5 JS compiler API; native TS has none) - root typescript is unaffected",
       "matchFileNames": ["scripts/openapi-codegen/package.json"],
       "matchPackageNames": ["typescript"],
