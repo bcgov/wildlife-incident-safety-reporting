@@ -23,7 +23,8 @@ async function init() {
     logController: new LogController({
       disableRequestLogging: !enableRequestLogging,
     }),
-    trustProxy: 1,
+    // The OpenShift router is the only public path and always peers from private space
+    trustProxy: 'loopback,uniquelocal',
   })
 
   await app.register(fp(serviceApp))
