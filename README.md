@@ -53,6 +53,7 @@ Interactive API docs (Scalar) are available at [localhost:3033/api/docs](http://
 | `bun run test` | Run tests in watch mode |
 | `bun run test:run` | Run tests once (CI) |
 | `bun run typecheck` | Type check server and client |
+| `bun run openapi:types` | Regenerate the OpenAPI spec and client contract types |
 | `bun run fix` | Format and lint (Biome) |
 
 ## Contributing
