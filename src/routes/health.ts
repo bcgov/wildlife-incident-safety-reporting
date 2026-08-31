@@ -1,4 +1,5 @@
 import { HealthCheckResponseSchema } from '@schemas/health/health.schema.js'
+import { CLUSTER_INTERNAL_NOTE } from '@utils/route-docs.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
 const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
@@ -9,8 +10,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         security: [],
         summary: 'Health check endpoint',
         operationId: 'getHealth',
-        description:
-          'Returns the health status of the application. Used by Docker HEALTHCHECK and kubelet probes. Internal: not exposed via ingress.',
+        description: `Returns the health status of the application. Used by Docker HEALTHCHECK and kubelet probes. ${CLUSTER_INTERNAL_NOTE}`,
         response: {
           200: HealthCheckResponseSchema,
           503: HealthCheckResponseSchema,

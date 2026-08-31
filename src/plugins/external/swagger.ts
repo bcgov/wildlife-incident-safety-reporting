@@ -1,5 +1,6 @@
 import fastifySwagger from '@fastify/swagger'
 import apiReference from '@scalar/fastify-api-reference'
+import { CLUSTER_INTERNAL_NOTE } from '@utils/route-docs.js'
 import type { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 import {
@@ -93,8 +94,7 @@ const createOpenapiConfig = (fastify: FastifyInstance) => {
         },
         {
           name: 'Internal',
-          description:
-            'Cluster-internal endpoints not exposed via ingress. No authentication.',
+          description: `No token authentication. ${CLUSTER_INTERNAL_NOTE}`,
         },
       ],
       components: {
