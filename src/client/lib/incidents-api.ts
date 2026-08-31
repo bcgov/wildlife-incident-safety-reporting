@@ -1,10 +1,6 @@
-import {
-  type IncidentsResponse,
-  IncidentsResponseSchema,
-} from '@schemas/incidents/incidents.schema'
 import type { Geometry } from 'geojson'
-import { apiClient } from '@/lib/apiClient'
 import type { RouteFilter } from '@/stores/filter-store'
+import type { paths } from '@/types/api'
 
 export type IncidentFilters = {
   years: number[]
@@ -19,41 +15,30 @@ export type IncidentFilters = {
   routeFilter: RouteFilter | null
 }
 
-export const incidentsQueryKey = (filters: IncidentFilters) =>
-  ['incidents', filters] as const
+type IncidentQuery = paths['/v1/incidents/']['get']['parameters']['query']
 
-export function buildQueryString(filters: IncidentFilters): string {
-  const params = new URLSearchParams()
+export function incidentQueryParams(filters: IncidentFilters): IncidentQuery {
+  const query: IncidentQuery = { year: filters.years.join(',') }
 
-  if (filters.years.length > 0) params.set('year', filters.years.join(','))
-  if (filters.species.length > 0)
-    params.set('species', filters.species.join(','))
+  if (filters.species.length > 0) query.species = filters.species.join(',')
   if (filters.serviceAreas.length > 0)
-    params.set('serviceArea', filters.serviceAreas.join(','))
-  if (filters.sex.length > 0) params.set('sex', filters.sex.join(','))
+    query.serviceArea = filters.serviceAreas.join(',')
+  if (filters.sex.length > 0) query.sex = filters.sex.join(',')
   if (filters.timeOfKill.length > 0)
-    params.set('timeOfKill', filters.timeOfKill.join(','))
-  if (filters.age.length > 0) params.set('age', filters.age.join(','))
-  if (filters.startDate) params.set('startDate', filters.startDate)
-  if (filters.endDate) params.set('endDate', filters.endDate)
-  if (filters.geometry) params.set('geometry', JSON.stringify(filters.geometry))
-  if (filters.routeFilter) {
-    params.set('routeStartLng', String(filters.routeFilter.startLng))
-    params.set('routeStartLat', String(filters.routeFilter.startLat))
-    params.set('routeEndLng', String(filters.routeFilter.endLng))
-    params.set('routeEndLat', String(filters.routeFilter.endLat))
-    params.set('routeCorridorM', String(filters.routeFilter.corridorMeters))
+    query.timeOfKill = filters.timeOfKill.join(',')
+  if (filters.age.length > 0) query.age = filters.age.join(',')
+  if (filters.startDate) query.startDate = filters.startDate
+  if (filters.endDate) query.endDate = filters.endDate
+  if (filters.geometry) query.geometry = JSON.stringify(filters.geometry)
+
+  const { routeFilter } = filters
+  if (routeFilter) {
+    query.routeStartLng = routeFilter.startLng
+    query.routeStartLat = routeFilter.startLat
+    query.routeEndLng = routeFilter.endLng
+    query.routeEndLat = routeFilter.endLat
+    query.routeCorridorM = routeFilter.corridorMeters
   }
 
-  const qs = params.toString()
-  return qs ? `?${qs}` : ''
-}
-
-export function fetchIncidents(
-  filters: IncidentFilters,
-): Promise<IncidentsResponse> {
-  return apiClient.get(
-    `/v1/incidents${buildQueryString(filters)}`,
-    IncidentsResponseSchema,
-  )
+  return query
 }

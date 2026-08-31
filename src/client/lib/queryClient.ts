@@ -1,11 +1,9 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-
-import { ApiError } from './apiClient'
+import { apiErrorMessage } from '@/lib/api'
 
 function getErrorMessage(error: Error): string {
-  if (error instanceof ApiError) return error.message
-  return 'An unexpected error occurred'
+  return apiErrorMessage(error) ?? 'An unexpected error occurred'
 }
 
 export const queryClient = new QueryClient({

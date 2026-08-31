@@ -1,11 +1,13 @@
-import type { BoundaryProperties } from '@schemas/service-areas/boundaries.schema'
 import type * as MapLibreGL from 'maplibre-gl'
 import { useEffect, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
+import type { components } from '@/types/api'
 import { useBoundaries } from '../hooks/use-boundaries'
 import { ensureSlots, SLOTS } from '../lib/layer-slots'
 import { hasOverlappingAppFeatures } from '../lib/map-interactions'
 import { useLayerStore } from '../store/layer-store'
+
+type BoundaryProperties = components['schemas']['BoundaryFeature']['properties']
 
 const SOURCE_ID = 'boundaries-source'
 const FILL_LAYER_ID = 'boundaries-fill'

@@ -2,11 +2,13 @@ import type * as MapLibreGL from 'maplibre-gl'
 import { useEffect, useMemo, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
 import { useDensityData } from '@/hooks/use-density-data'
-import type { DensitySegment } from '@/lib/density-api'
 import { DENSITY_COLORS } from '@/lib/density-colors'
+import type { components } from '@/types/api'
 import { ensureSlots, SLOTS } from '../lib/layer-slots'
 import type { DensityMode } from '../store/layer-store'
 import { useLayerStore } from '../store/layer-store'
+
+type DensitySegment = components['schemas']['DensitySegment']
 
 const SOURCE_ID = 'density-source'
 const LINE_LAYER_ID = 'density-line'

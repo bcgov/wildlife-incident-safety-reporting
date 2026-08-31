@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-import { fetchRoute, routeQueryKey } from '@/lib/route-api'
+import { $api } from '@/lib/api'
 import { useRouteStore } from '@/stores/route-store'
 
 // The road network updates roughly monthly, so cached routes stay valid all session
@@ -10,15 +9,19 @@ export function useRoute() {
   const end = useRouteStore((s) => s.end)
   const points = start && end ? { start, end } : null
 
-  return useQuery({
-    queryKey: points
-      ? routeQueryKey(points.start, points.end)
-      : (['route', 'idle'] as const),
-    queryFn: () => {
-      if (!points) throw new Error('Route points not set')
-      return fetchRoute(points.start, points.end)
+  return $api.useQuery(
+    'get',
+    '/v1/route/',
+    {
+      params: {
+        query: {
+          startLng: points?.start.longitude ?? 0,
+          startLat: points?.start.latitude ?? 0,
+          endLng: points?.end.longitude ?? 0,
+          endLat: points?.end.latitude ?? 0,
+        },
+      },
     },
-    enabled: points !== null,
-    staleTime: ROUTE_STALE_TIME,
-  })
+    { enabled: points !== null, staleTime: ROUTE_STALE_TIME },
+  )
 }

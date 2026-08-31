@@ -1,4 +1,3 @@
-import type { Incident } from '@schemas/incidents/incidents.schema'
 import bbox from '@turf/bbox'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -15,6 +14,7 @@ import { useIncidents } from '@/hooks/use-incidents'
 import { speciesIcons } from '@/lib/species-icons'
 import { useIncidentLocateStore } from '@/stores/incident-locate-store'
 import { useSegmentLocateStore } from '@/stores/segment-locate-store'
+import type { components } from '@/types/api'
 import { BoundaryLayer } from './components/boundary-layer'
 import { DensityLayer } from './components/density-layer'
 import { DrawControls } from './components/draw-controls'
@@ -29,6 +29,8 @@ import { useBcBasemapStyle } from './hooks/use-basemap-style'
 import { buildBasemapStyle } from './lib/bc-basemap-styles'
 import { SLOTS } from './lib/layer-slots'
 import { useLayerStore } from './store/layer-store'
+
+type Incident = components['schemas']['Incident']
 
 export type IncidentProperties = {
   id: number
