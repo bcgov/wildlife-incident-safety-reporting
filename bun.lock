@@ -26,7 +26,7 @@
         "get-jwks": "^11.0.3",
         "kysely": "^0.29.0",
         "kysely-postgis": "^0.5.2",
-        "kysely-postgres-js": "^3.0.0",
+        "kysely-postgres-js": "^4.0.0",
         "lru-cache": "^11.3.5",
         "papaparse": "^5.5.3",
         "pino": "^10.3.1",
@@ -1234,7 +1234,7 @@
 
     "kysely-postgis": ["kysely-postgis@0.5.3", "", { "dependencies": { "geojson-validation": "^1.0.2", "wkx": "^0.5.0" }, "peerDependencies": { "kysely": "^0.28.14", "pg": "^8.12.0" } }, "sha512-XVI+Mo5AGcLqPuKv4rN9G36/1GO3P+ZbSQx47PlylOQs2texkOiL/pIaXszV3NXxtWFwHh4cxmEAcgAxJZn4YA=="],
 
-    "kysely-postgres-js": ["kysely-postgres-js@3.0.0", "", { "peerDependencies": { "kysely": ">= 0.24.0 < 1", "postgres": "^3.4.0" }, "optionalPeers": ["postgres"] }, "sha512-o2t/xNSYJQDW6rVGGFPXKmZ0BEz2dGn66c2B+cO/k9ZNcU2qPWPycQPQ+B+P2MBXbKYq0xV9BZmFIvkUrmFWAQ=="],
+    "kysely-postgres-js": ["kysely-postgres-js@4.0.0", "", { "peerDependencies": { "kysely": ">= 0.29.0 < 1", "postgres": "^3.4.0" }, "optionalPeers": ["postgres"] }, "sha512-zIGYZ1TMduPZJAyeRMo9OodZYPxK4RI8OIKO8XShHiv5gzaY+KxmZnKcnYRvbfdmUH0kv+ZTlYrBZ5Uk+lI1QA=="],
 
     "leven": ["leven@4.1.0", "", {}, "sha512-KZ9W9nWDT7rF7Dazg8xyLHGLrmpgq2nVNFUckhqdW3szVP6YhCpp/RAnpmVExA9JvrMynjwSLVrEj3AepHR6ew=="],
 

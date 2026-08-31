@@ -67,7 +67,7 @@
     "get-jwks": "^11.0.3",
     "kysely": "^0.29.0",
     "kysely-postgis": "^0.5.2",
-    "kysely-postgres-js": "^3.0.0",
+    "kysely-postgres-js": "^4.0.0",
     "lru-cache": "^11.3.5",
     "papaparse": "^5.5.3",
     "pino": "^10.3.1",
