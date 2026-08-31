@@ -9,6 +9,7 @@
       "!**/docs",
       "!**/src/client/dist",
       "!**/tmp",
+      "!**/fixes",
       "!**/coverage"
     ]
   },
