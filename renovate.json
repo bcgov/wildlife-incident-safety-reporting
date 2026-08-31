@@ -40,7 +40,7 @@
     {
       "description": "Group Bun runtime and Docker image updates together",
       "groupName": "Bun runtime",
-      "matchPackageNames": ["bun", "oven/bun"]
+      "matchPackageNames": ["bun", "oven/bun", "bun-types", "@types/node"]
     },
     {
       "description": "Group build tools (Vite, TypeScript, Biome)",
@@ -155,7 +155,12 @@
     {
       "description": "Group TypeScript types",
       "groupName": "TypeScript types",
-      "matchPackageNames": ["/^@types//", "!@types/react", "!@types/react-dom"]
+      "matchPackageNames": [
+        "/^@types//",
+        "!@types/react",
+        "!@types/react-dom",
+        "!@types/node"
+      ]
     },
     {
       "description": "Pin recharts to v2.x - shadcn chart component not compatible with v3",
