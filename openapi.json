@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
     "title": "WISR API",
     "description": "API documentation for the WISR application",
@@ -25,7 +25,7 @@
           "timestamp": {
             "type": "string",
             "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
           },
           "checks": {
             "type": "object",
@@ -62,8 +62,7 @@
           "limit": {
             "description": "Requested page size (omitted when unbounded)",
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "offset": {
@@ -82,24 +81,20 @@
         "properties": {
           "id": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "year": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "accidentDate": {
-            "nullable": true,
-            "type": "string"
+            "type": ["string", "null"]
           },
           "speciesId": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "speciesName": {
@@ -112,76 +107,99 @@
             "type": "string"
           },
           "serviceAreaId": {
-            "nullable": true,
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
-            "maximum": 9007199254740991
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "serviceAreaName": {
-            "nullable": true,
-            "type": "string"
+            "type": ["string", "null"]
           },
           "contractAreaNumber": {
-            "nullable": true,
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
-            "maximum": 9007199254740991
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "district": {
-            "nullable": true,
-            "type": "string"
+            "type": ["string", "null"]
           },
           "region": {
-            "nullable": true,
-            "type": "string"
+            "type": ["string", "null"]
           },
           "sex": {
-            "nullable": true,
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/Sex"
+              },
+              {
+                "type": "null"
               }
             ]
           },
           "timeOfKill": {
-            "nullable": true,
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/TimeOfKill"
+              },
+              {
+                "type": "null"
               }
             ]
           },
           "age": {
-            "nullable": true,
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/Age"
+              },
+              {
+                "type": "null"
               }
             ]
           },
           "quantity": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "latitude": {
-            "nullable": true,
-            "type": "number",
-            "minimum": -90,
-            "maximum": 90
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "longitude": {
-            "nullable": true,
-            "type": "number",
-            "minimum": -180,
-            "maximum": 180
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "nearestTown": {
-            "nullable": true,
-            "type": "string"
+            "type": ["string", "null"]
           },
           "comments": {
             "type": "string"
@@ -260,8 +278,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "minimum": 0,
-              "exclusiveMinimum": true,
+              "exclusiveMinimum": 0,
               "maximum": 9007199254740991
             }
           },
@@ -299,16 +316,28 @@
             "type": "object",
             "properties": {
               "min": {
-                "nullable": true,
-                "type": "string",
-                "format": "date",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "max": {
-                "nullable": true,
-                "type": "string",
-                "format": "date",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": ["min", "max"],
@@ -332,8 +361,7 @@
         "properties": {
           "id": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "name": {
@@ -355,8 +383,7 @@
         "properties": {
           "id": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "name": {
@@ -364,8 +391,7 @@
           },
           "contractAreaNumber": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "district": {
@@ -391,26 +417,28 @@
         "properties": {
           "segmentId": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
           "segmentName": {
             "type": "string"
           },
           "segmentDescription": {
-            "nullable": true,
-            "type": "string"
+            "type": ["string", "null"]
           },
           "highwayNumber": {
-            "nullable": true,
-            "type": "string"
+            "type": ["string", "null"]
           },
           "segmentLengthKm": {
-            "nullable": true,
-            "type": "number",
-            "minimum": 0,
-            "exclusiveMinimum": true
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "geometry": {
             "$ref": "#/components/schemas/LineGeometry"
@@ -440,9 +468,15 @@
             "minimum": 0
           },
           "densityPerKm": {
-            "nullable": true,
-            "type": "number",
-            "minimum": 0
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -486,7 +520,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["LineString"]
+            "const": "LineString"
           },
           "coordinates": {
             "type": "array",
@@ -507,7 +541,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["MultiLineString"]
+            "const": "MultiLineString"
           },
           "coordinates": {
             "type": "array",
@@ -531,7 +565,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["FeatureCollection"]
+            "const": "FeatureCollection"
           },
           "features": {
             "type": "array",
@@ -549,7 +583,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["Feature"]
+            "const": "Feature"
           },
           "geometry": {
             "$ref": "#/components/schemas/PolygonGeometry"
@@ -586,7 +620,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["Polygon"]
+            "const": "Polygon"
           },
           "coordinates": {
             "type": "array",
@@ -610,7 +644,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["MultiPolygon"]
+            "const": "MultiPolygon"
           },
           "coordinates": {
             "type": "array",
@@ -633,13 +667,15 @@
         "description": "GeoJSON MultiPolygon, an array of Polygon coordinate sets"
       },
       "ServiceAreaLookup": {
-        "nullable": true,
-        "description": "Service area matching the given coordinates, or null if outside all boundaries",
-        "allOf": [
+        "anyOf": [
           {
             "$ref": "#/components/schemas/ServiceArea"
+          },
+          {
+            "type": "null"
           }
-        ]
+        ],
+        "description": "Service area matching the given coordinates, or null if outside all boundaries"
       },
       "Route": {
         "type": "object",
@@ -662,10 +698,12 @@
             "type": "string"
           },
           "line": {
-            "nullable": true,
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/LineString"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -972,8 +1010,7 @@
               "default": 250,
               "description": "Route corridor filter: corridor width in metres",
               "type": "number",
-              "minimum": 0,
-              "exclusiveMinimum": true,
+              "exclusiveMinimum": 0,
               "maximum": 20000
             },
             "in": "query",
@@ -984,8 +1021,7 @@
             "schema": {
               "description": "Max results to return (1-1000). Omit to fetch all.",
               "type": "integer",
-              "minimum": 0,
-              "exclusiveMinimum": true,
+              "exclusiveMinimum": 0,
               "maximum": 1000
             },
             "in": "query",
@@ -1253,8 +1289,7 @@
               "default": 250,
               "description": "Route corridor filter: corridor width in metres",
               "type": "number",
-              "minimum": 0,
-              "exclusiveMinimum": true,
+              "exclusiveMinimum": 0,
               "maximum": 20000
             },
             "in": "query",

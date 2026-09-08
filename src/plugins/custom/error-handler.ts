@@ -23,6 +23,7 @@ async function errorHandler(fastify: FastifyInstance) {
         method: request.method,
         path: request.url.split('?')[0],
         route: request.routeOptions?.url,
+        ip: request.ip,
       },
     }
 
