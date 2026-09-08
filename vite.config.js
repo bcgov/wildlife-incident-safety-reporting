@@ -68,10 +68,7 @@ export default {
     },
   },
   resolve: {
-    alias: {
-      '@': resolve(import.meta.dirname, 'src/client'),
-      '@schemas': resolve(import.meta.dirname, 'src/schemas'),
-    },
+    tsconfigPaths: true,
   },
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
