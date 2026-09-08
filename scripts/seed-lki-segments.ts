@@ -42,7 +42,7 @@ export async function seedLkiSegments(db: Kysely<DB>): Promise<number> {
     )
   }
 
-  const geojson: GeoJsonCollection = await response.json()
+  const geojson = (await response.json()) as GeoJsonCollection
   console.log(`Fetched ${geojson.features.length} LKI segment features`)
 
   return await db.transaction().execute(async (trx) => {

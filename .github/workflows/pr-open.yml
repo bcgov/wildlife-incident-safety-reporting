@@ -27,7 +27,7 @@ jobs:
           - package: backend
             build_context: .
             build_file: Dockerfile
-            triggers: "('src/' 'package.json' 'bun.lock' 'vite.config.js' 'tsconfig.json' 'Dockerfile')"
+            triggers: "('src/' 'package.json' 'bun.lock' 'vite.config.js' 'tsconfig.json' 'tsconfig.base.json' 'Dockerfile')"
           - package: migrations
             build_context: .
             build_file: Dockerfile.migrations

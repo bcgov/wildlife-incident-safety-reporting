@@ -1,12 +1,11 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "skipLibCheck": true,
+    "composite": false,
     "noEmit": true,
-    "types": ["bun-types"]
+    "rootDir": "..",
+    "sourceMap": false
   },
-  "include": ["./**/*"]
+  "include": ["**/*"],
+  "exclude": ["openapi-codegen/**/*"]
 }

@@ -1,8 +1,6 @@
-# Stage 1 - Base
 FROM oven/bun:1.4.2-alpine@sha256:d888c0ae6c86d7866ff10c5aafdd9077b36aee6455b33dd270fb93c0dd5cef6f AS base
 WORKDIR /app
 
-# Stage 2 - Production dependencies (cached independently)
 FROM base AS install
 WORKDIR /temp/prod
 COPY package.json bun.lock ./
@@ -10,7 +8,6 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile --production --ignore-scripts --omit=peer && \
     rm -rf node_modules/@types
 
-# Stage 3 - Full install + build
 FROM base AS builder
 
 COPY package.json bun.lock ./
@@ -18,13 +15,12 @@ COPY package.json bun.lock ./
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
 
-COPY vite.config.js tsconfig.json postcss.config.mjs ./
+COPY vite.config.js tsconfig.json tsconfig.base.json postcss.config.mjs ./
 COPY src ./src
 
 RUN --mount=type=cache,target=/app/node_modules/.vite \
     bun run build
 
-# Stage 4 - Runtime
 FROM base
 
 ENV NODE_ENV=production

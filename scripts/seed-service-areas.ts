@@ -67,7 +67,7 @@ export async function seedServiceAreas(db: Kysely<DB>): Promise<number> {
     )
   }
 
-  const geojson: GeoJsonCollection = await response.json()
+  const geojson = (await response.json()) as GeoJsonCollection
   console.log(`Fetched ${geojson.features.length} service area features`)
 
   return await db.transaction().execute(async (trx) => {
