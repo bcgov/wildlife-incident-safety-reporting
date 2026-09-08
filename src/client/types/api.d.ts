@@ -289,9 +289,7 @@ export interface components {
       timeOfKill: components['schemas']['TimeOfKill'][]
       age: components['schemas']['Age'][]
       dateRange: {
-        /** Format: date */
         min: string | null
-        /** Format: date */
         max: string | null
       }
     }
@@ -351,13 +349,13 @@ export interface components {
     }
     /** @description GeoJSON FeatureCollection of service area boundary polygons */
     ServiceAreaBoundaries: {
-      /** @enum {string} */
+      /** @constant */
       type: 'FeatureCollection'
       features: components['schemas']['BoundaryFeature'][]
     }
     /** @description GeoJSON Feature for one service area boundary */
     BoundaryFeature: {
-      /** @enum {string} */
+      /** @constant */
       type: 'Feature'
       geometry: components['schemas']['PolygonGeometry']
       properties: components['schemas']['ServiceArea']

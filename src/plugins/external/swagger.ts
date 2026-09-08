@@ -45,6 +45,7 @@ function addRateLimitResponses(paths: OpenAPIV3.PathsObject): void {
 const createOpenapiConfig = (fastify: FastifyInstance) => {
   return {
     openapi: {
+      openapi: '3.1.0',
       info: {
         title: 'WISR API',
         description: 'API documentation for the WISR application',
