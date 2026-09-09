@@ -1,4 +1,5 @@
 import { ErrorSchema } from '@schemas/common/error.schema.js'
+import { NotModifiedResponse } from '@schemas/common/not-modified.schema.js'
 import {
   DensityQuerySchema,
   DensityResponseSchema,
@@ -23,6 +24,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         querystring: DensityQuerySchema,
         response: {
           200: DensityResponseSchema,
+          304: NotModifiedResponse,
           400: ErrorSchema,
           422: ErrorSchema,
           500: ErrorSchema,

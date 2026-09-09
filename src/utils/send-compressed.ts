@@ -17,7 +17,6 @@ export function sendCompressed(
 ): FastifyReply {
   return reply
     .header('content-encoding', encoding)
-    .header('vary', 'Accept-Encoding')
     .type('application/json')
     .send(buffer)
 }
@@ -30,7 +29,20 @@ export async function sendCached<T>(
   produce: () => Promise<T>,
 ): Promise<T | FastifyReply> {
   const encoding = negotiateEncoding(request.headers['accept-encoding'])
-  const cacheKey = await fastify.responseCache.versionedKey(baseKey)
+  const generation = await fastify.responseCache.readGeneration()
+  const etag = `"g${generation}-${encoding ?? 'identity'}"`
+
+  // private keeps bearer-token responses out of shared caches
+  reply
+    .header('etag', etag)
+    .header('cache-control', 'private, no-cache')
+    .header('vary', 'Accept-Encoding')
+
+  if (request.headers['if-none-match'] === etag) {
+    return reply.code(304).send()
+  }
+
+  const cacheKey = fastify.responseCache.keyFor(generation, baseKey)
 
   if (encoding) {
     const cached = fastify.responseCache.get(cacheKey, encoding)
