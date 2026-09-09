@@ -17,9 +17,9 @@ import { sql } from 'kysely'
 import { asGeoJSON, contains, makePoint, setSRID } from 'kysely-postgis'
 import { applyFilters, type ResolvedRouteLine } from './filters.js'
 import { toIncident } from './mappers/incidents.js'
-import type { Age, DB, Sex, TimeOfKill } from './types/database.js'
-import type { HmcrUpsertRow } from './types/hmcr.js'
-import type { LkiUpsertRow } from './types/lki.js'
+import type { DB } from './types/database.js'
+import type { HmcrIncomingRow, HmcrUpsertRow } from './types/hmcr.js'
+import type { LkiBeforeRow, LkiChangedRow, LkiUpsertRow } from './types/lki.js'
 
 export class DatabaseService {
   private readonly log: FastifyBaseLogger
@@ -32,7 +32,7 @@ export class DatabaseService {
   }
 
   async healthCheck(): Promise<void> {
-    await sql`SELECT 1`.execute(this.kysely)
+    await this.kysely.selectNoFrom(sql.lit(1).as('ok')).execute()
     this.log.debug('health check passed')
   }
 
@@ -280,7 +280,7 @@ export class DatabaseService {
 
     this.log.debug({ count: rows.length }, 'upserting HMCR incidents')
 
-    const batchSize = 1000
+    const batchSize = 5000
     const totalBatches = Math.ceil(rows.length / batchSize)
 
     return await withConnectionRetry(
@@ -293,61 +293,111 @@ export class DatabaseService {
             const batch = rows.slice(i, i + batchSize)
             const batchNum = Math.floor(i / batchSize) + 1
 
-            // Use xmax to distinguish inserts (xmax = 0) from updates (xmax > 0).
-            // IS DISTINCT FROM and xmax aren't expressible via the query builder.
+            const incoming =
+              sql<HmcrIncomingRow>`jsonb_to_recordset(${JSON.stringify(batch)}::jsonb)`.as<'i'>(
+                sql`i(
+                  hmcr_record_id int,
+                  accident_date date,
+                  time_of_kill time_of_kill,
+                  nearest_town text,
+                  sex sex,
+                  age age,
+                  comments text,
+                  quantity smallint,
+                  latitude numeric(9,6),
+                  longitude numeric(10,6),
+                  species_id smallint,
+                  year smallint
+                )`,
+              )
+
+            // Dropping unchanged rows before the insert keeps the BEFORE INSERT geometry and KNN triggers off them.
+            const proposed = trx
+              .selectFrom(incoming)
+              .leftJoin(
+                'incidents as w',
+                'w.hmcr_record_id',
+                'i.hmcr_record_id',
+              )
+              .select([
+                'i.hmcr_record_id',
+                'i.accident_date',
+                'i.time_of_kill',
+                'i.nearest_town',
+                'i.sex',
+                'i.age',
+                'i.comments',
+                'i.quantity',
+                'i.latitude',
+                'i.longitude',
+                'i.species_id',
+                'i.year',
+              ])
+              .where((eb) =>
+                eb.or([
+                  eb('w.id', 'is', null),
+                  eb(
+                    'w.accident_date',
+                    'is distinct from',
+                    eb.ref('i.accident_date'),
+                  ),
+                  eb(
+                    'w.time_of_kill',
+                    'is distinct from',
+                    eb.ref('i.time_of_kill'),
+                  ),
+                  eb(
+                    'w.nearest_town',
+                    'is distinct from',
+                    eb.ref('i.nearest_town'),
+                  ),
+                  eb('w.sex', 'is distinct from', eb.ref('i.sex')),
+                  eb('w.age', 'is distinct from', eb.ref('i.age')),
+                  eb('w.comments', 'is distinct from', eb.ref('i.comments')),
+                  eb('w.quantity', 'is distinct from', eb.ref('i.quantity')),
+                  eb('w.latitude', 'is distinct from', eb.ref('i.latitude')),
+                  eb('w.longitude', 'is distinct from', eb.ref('i.longitude')),
+                  eb(
+                    'w.species_id',
+                    'is distinct from',
+                    eb.ref('i.species_id'),
+                  ),
+                  eb('w.year', 'is distinct from', eb.ref('i.year')),
+                ]),
+              )
+
+            // ON CONFLICT still guards duplicates within a batch and concurrent syncs; xmax = 0 marks a true insert.
             const result = await trx
               .insertInto('incidents')
-              .values(
-                batch.map((r) => ({
-                  hmcr_record_id: r.hmcr_record_id,
-                  accident_date: r.accident_date
-                    ? sql<Date>`${r.accident_date}::date`
-                    : null,
-                  time_of_kill: r.time_of_kill
-                    ? sql<TimeOfKill>`${r.time_of_kill}::time_of_kill`
-                    : null,
-                  nearest_town: r.nearest_town,
-                  sex: r.sex ? sql<Sex>`${r.sex}::sex` : null,
-                  age: r.age ? sql<Age>`${r.age}::age` : null,
-                  comments: r.comments,
-                  quantity: r.quantity,
-                  latitude: r.latitude,
-                  longitude: r.longitude,
-                  species_id: r.species_id,
-                  year: r.year,
-                })),
-              )
+              .columns([
+                'hmcr_record_id',
+                'accident_date',
+                'time_of_kill',
+                'nearest_town',
+                'sex',
+                'age',
+                'comments',
+                'quantity',
+                'latitude',
+                'longitude',
+                'species_id',
+                'year',
+              ])
+              .expression(proposed)
               .onConflict((oc) =>
-                oc
-                  .column('hmcr_record_id')
-                  .doUpdateSet((eb) => ({
-                    accident_date: eb.ref('excluded.accident_date'),
-                    time_of_kill: eb.ref('excluded.time_of_kill'),
-                    nearest_town: eb.ref('excluded.nearest_town'),
-                    sex: eb.ref('excluded.sex'),
-                    age: eb.ref('excluded.age'),
-                    comments: eb.ref('excluded.comments'),
-                    quantity: eb.ref('excluded.quantity'),
-                    latitude: eb.ref('excluded.latitude'),
-                    longitude: eb.ref('excluded.longitude'),
-                    species_id: eb.ref('excluded.species_id'),
-                    year: eb.ref('excluded.year'),
-                  }))
-                  .where(
-                    sql<boolean>`
-                  incidents.accident_date IS DISTINCT FROM excluded.accident_date
-                  OR incidents.time_of_kill IS DISTINCT FROM excluded.time_of_kill
-                  OR incidents.nearest_town IS DISTINCT FROM excluded.nearest_town
-                  OR incidents.sex IS DISTINCT FROM excluded.sex
-                  OR incidents.age IS DISTINCT FROM excluded.age
-                  OR incidents.comments IS DISTINCT FROM excluded.comments
-                  OR incidents.quantity IS DISTINCT FROM excluded.quantity
-                  OR incidents.latitude IS DISTINCT FROM excluded.latitude
-                  OR incidents.longitude IS DISTINCT FROM excluded.longitude
-                  OR incidents.species_id IS DISTINCT FROM excluded.species_id
-                  OR incidents.year IS DISTINCT FROM excluded.year
-                `,
-                  ),
+                oc.column('hmcr_record_id').doUpdateSet((eb) => ({
+                  accident_date: eb.ref('excluded.accident_date'),
+                  time_of_kill: eb.ref('excluded.time_of_kill'),
+                  nearest_town: eb.ref('excluded.nearest_town'),
+                  sex: eb.ref('excluded.sex'),
+                  age: eb.ref('excluded.age'),
+                  comments: eb.ref('excluded.comments'),
+                  quantity: eb.ref('excluded.quantity'),
+                  latitude: eb.ref('excluded.latitude'),
+                  longitude: eb.ref('excluded.longitude'),
+                  species_id: eb.ref('excluded.species_id'),
+                  year: eb.ref('excluded.year'),
+                })),
               )
               .returning(sql<boolean>`(xmax = 0)`.as('is_new'))
               .execute()
@@ -383,12 +433,26 @@ export class DatabaseService {
 
     return await withConnectionRetry(
       () =>
-        this.kysely.transaction().execute(async (trx) => {
-          // SET LOCAL (not DISABLE TRIGGER, which needs ownership) skips the per-statement
-          // reassignment; it runs once explicitly below and the GUC resets at commit.
+        this.kysely.transaction().execute(async (transaction) => {
+          const trx = transaction.withTables<{
+            lki_before: LkiBeforeRow
+            lki_changed: LkiChangedRow
+          }>()
+
+          // SET LOCAL skips the reassign trigger; DISABLE TRIGGER needs table ownership the app role lacks
           await sql`SET LOCAL wisr.skip_lki_reassign = 'on'`.execute(trx)
 
-          const incomingIds = rows.map((r) => r.chris_lki_segment_id)
+          // The changed set is diffed against this snapshot, so it has to be taken before the upsert.
+          await trx.schema
+            .createTable('lki_before')
+            .temporary()
+            .onCommit('drop')
+            .as(
+              trx
+                .selectFrom('lki_segments')
+                .select(['chris_lki_segment_id', 'geom']),
+            )
+            .execute()
 
           let inserted = 0
           let updated = 0
@@ -434,18 +498,54 @@ export class DatabaseService {
                     feature_length_m: eb.ref('excluded.feature_length_m'),
                     objectid: eb.ref('excluded.objectid'),
                   }))
-                  .where(
-                    sql<boolean>`
-                lki_segments.lki_segment_name IS DISTINCT FROM excluded.lki_segment_name
-                OR lki_segments.lki_segment_description IS DISTINCT FROM excluded.lki_segment_description
-                OR lki_segments.lki_segment_direction IS DISTINCT FROM excluded.lki_segment_direction
-                OR lki_segments.lki_segment_length IS DISTINCT FROM excluded.lki_segment_length
-                OR lki_segments.lki_route_id IS DISTINCT FROM excluded.lki_route_id
-                OR lki_segments.highway_number IS DISTINCT FROM excluded.highway_number
-                OR lki_segments.geom IS DISTINCT FROM excluded.geom
-                OR lki_segments.feature_length_m IS DISTINCT FROM excluded.feature_length_m
-                OR lki_segments.objectid IS DISTINCT FROM excluded.objectid
-              `,
+                  .where((eb) =>
+                    eb.or([
+                      eb(
+                        'lki_segments.lki_segment_name',
+                        'is distinct from',
+                        eb.ref('excluded.lki_segment_name'),
+                      ),
+                      eb(
+                        'lki_segments.lki_segment_description',
+                        'is distinct from',
+                        eb.ref('excluded.lki_segment_description'),
+                      ),
+                      eb(
+                        'lki_segments.lki_segment_direction',
+                        'is distinct from',
+                        eb.ref('excluded.lki_segment_direction'),
+                      ),
+                      eb(
+                        'lki_segments.lki_segment_length',
+                        'is distinct from',
+                        eb.ref('excluded.lki_segment_length'),
+                      ),
+                      eb(
+                        'lki_segments.lki_route_id',
+                        'is distinct from',
+                        eb.ref('excluded.lki_route_id'),
+                      ),
+                      eb(
+                        'lki_segments.highway_number',
+                        'is distinct from',
+                        eb.ref('excluded.highway_number'),
+                      ),
+                      eb(
+                        'lki_segments.geom',
+                        'is distinct from',
+                        eb.ref('excluded.geom'),
+                      ),
+                      eb(
+                        'lki_segments.feature_length_m',
+                        'is distinct from',
+                        eb.ref('excluded.feature_length_m'),
+                      ),
+                      eb(
+                        'lki_segments.objectid',
+                        'is distinct from',
+                        eb.ref('excluded.objectid'),
+                      ),
+                    ]),
                   ),
               )
               .returning(sql<boolean>`(xmax = 0)`.as('is_insert'))
@@ -456,47 +556,153 @@ export class DatabaseService {
             updated += result.length - batchInserted
           }
 
-          // Delete orphaned segments no longer in the WFS source
+          const incomingIds = JSON.stringify(
+            rows.map((r) => r.chris_lki_segment_id),
+          )
           const deleteResult = await trx
             .deleteFrom('lki_segments')
-            .where('chris_lki_segment_id', 'not in', incomingIds)
+            .where('chris_lki_segment_id', 'not in', (eb) =>
+              eb
+                .selectFrom(
+                  sql`jsonb_array_elements_text(${incomingIds}::jsonb)`.as('e'),
+                )
+                .select(sql<number>`value::int`.as('id')),
+            )
             .execute()
 
           const deleted = Number(deleteResult[0].numDeletedRows)
           const upserted = inserted + updated
 
-          // Only reassign if segments were added, removed, or had data changes
-          if (inserted > 0 || updated > 0 || deleted > 0) {
-            this.log.debug('reassigning incidents to LKI segments')
-            await sql`
-          UPDATE incidents wi
-          SET lki_segment_id = sub.nearest_id
-          FROM (
-            SELECT wi2.id, nearest.chris_lki_segment_id AS nearest_id
-            FROM incidents wi2
-            CROSS JOIN LATERAL (
-              SELECT chris_lki_segment_id, geom
-              FROM lki_segments
-              ORDER BY geom <-> wi2.geom
-              LIMIT 1
-            ) nearest
-            WHERE wi2.geom IS NOT NULL
-              AND ST_DWithin(geography(nearest.geom), geography(wi2.geom), 200)
-          ) sub
-          WHERE wi.id = sub.id
-            AND wi.lki_segment_id IS DISTINCT FROM sub.nearest_id
-        `.execute(trx)
-
-            await sql`
-          UPDATE incidents
-          SET lki_segment_id = NULL
-          WHERE geom IS NOT NULL
-            AND lki_segment_id IS NOT NULL
-            AND NOT EXISTS (
-              SELECT 1 FROM lki_segments s
-              WHERE ST_DWithin(geography(s.geom), geography(incidents.geom), 200)
+          await trx.schema
+            .createTable('lki_changed')
+            .temporary()
+            .onCommit('drop')
+            .as(
+              trx
+                .selectFrom('lki_before as b')
+                .leftJoin(
+                  'lki_segments as s',
+                  's.chris_lki_segment_id',
+                  'b.chris_lki_segment_id',
+                )
+                .select('b.geom')
+                .where((eb) =>
+                  eb.or([
+                    eb('s.chris_lki_segment_id', 'is', null),
+                    eb('s.geom', 'is distinct from', eb.ref('b.geom')),
+                  ]),
+                )
+                .unionAll(
+                  trx
+                    .selectFrom('lki_segments as s')
+                    .leftJoin(
+                      'lki_before as b',
+                      'b.chris_lki_segment_id',
+                      's.chris_lki_segment_id',
+                    )
+                    .select('s.geom')
+                    .where((eb) =>
+                      eb.or([
+                        eb('b.chris_lki_segment_id', 'is', null),
+                        eb('b.geom', 'is distinct from', eb.ref('s.geom')),
+                      ]),
+                    ),
+                ),
             )
-        `.execute(trx)
+            .execute()
+
+          const changedResult = await trx
+            .selectFrom('lki_changed')
+            .select((eb) =>
+              eb.cast<number>(eb.fn.countAll(), 'integer').as('count'),
+            )
+            .executeTakeFirstOrThrow()
+          const changedSegments = changedResult.count
+
+          // An assignment can only move if a segment inside the incident's 200 m radius appeared, moved, or vanished.
+          if (changedSegments > 0) {
+            this.log.debug(
+              { changedSegments },
+              'reassigning incidents to LKI segments',
+            )
+            // MATERIALIZED fences the candidate set below the LATERAL, otherwise the planner runs the KNN for every incident.
+            await trx
+              .with(
+                (cte) => cte('candidates').materialized(),
+                (db) =>
+                  db
+                    .selectFrom('incidents as wi2')
+                    .select(['wi2.id', 'wi2.geom'])
+                    .where('wi2.geom', 'is not', null)
+                    .where((eb) =>
+                      eb.exists(
+                        eb
+                          .selectFrom('lki_changed as c')
+                          .select(sql.lit(1).as('one'))
+                          .where(
+                            sql<boolean>`ST_DWithin(geography(wi2.geom), geography(c.geom), 200)`,
+                          ),
+                      ),
+                    ),
+              )
+              .updateTable('incidents as wi')
+              .from((eb) =>
+                eb
+                  .selectFrom('candidates as cd')
+                  .crossJoinLateral((lateral) =>
+                    lateral
+                      .selectFrom('lki_segments')
+                      .select(['chris_lki_segment_id', 'geom'])
+                      .orderBy(sql`geom <-> cd.geom`)
+                      .limit(1)
+                      .as('nearest'),
+                  )
+                  .select([
+                    'cd.id',
+                    'nearest.chris_lki_segment_id as nearest_id',
+                  ])
+                  .where(
+                    sql<boolean>`ST_DWithin(geography(nearest.geom), geography(cd.geom), 200)`,
+                  )
+                  .as('sub'),
+              )
+              .set((eb) => ({ lki_segment_id: eb.ref('sub.nearest_id') }))
+              .whereRef('wi.id', '=', 'sub.id')
+              .whereRef(
+                'wi.lki_segment_id',
+                'is distinct from',
+                'sub.nearest_id',
+              )
+              .execute()
+
+            await trx
+              .updateTable('incidents')
+              .set({ lki_segment_id: null })
+              .where('geom', 'is not', null)
+              .where('lki_segment_id', 'is not', null)
+              .where((eb) =>
+                eb.exists(
+                  eb
+                    .selectFrom('lki_changed as c')
+                    .select(sql.lit(1).as('one'))
+                    .where(
+                      sql<boolean>`ST_DWithin(geography(incidents.geom), geography(c.geom), 200)`,
+                    ),
+                ),
+              )
+              .where((eb) =>
+                eb.not(
+                  eb.exists(
+                    eb
+                      .selectFrom('lki_segments as s')
+                      .select(sql.lit(1).as('one'))
+                      .where(
+                        sql<boolean>`ST_DWithin(geography(s.geom), geography(incidents.geom), 200)`,
+                      ),
+                  ),
+                ),
+              )
+              .execute()
           }
 
           this.log.debug({ upserted, deleted }, 'LKI upsert complete')

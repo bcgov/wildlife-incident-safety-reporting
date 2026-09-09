@@ -10,3 +10,13 @@ export interface LkiUpsertRow {
   feature_length_m: number | null
   objectid: number | null
 }
+
+// Mirrors the temp tables upsertLkiSegments creates.
+export interface LkiBeforeRow {
+  chris_lki_segment_id: number
+  geom: string
+}
+
+export interface LkiChangedRow {
+  geom: string
+}
