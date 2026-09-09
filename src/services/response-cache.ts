@@ -80,8 +80,12 @@ export class ResponseCacheService {
     return buffers
   }
 
-  async versionedKey(baseKey: string): Promise<string> {
-    return `g${await this.generation.read()}:${baseKey}`
+  readGeneration(): Promise<number> {
+    return this.generation.read()
+  }
+
+  keyFor(generation: number, baseKey: string): string {
+    return `g${generation}:${baseKey}`
   }
 
   // Bumping the shared generation re-keys every replica at once; no local clear needed.

@@ -241,7 +241,7 @@ jobs:
               ./${{ github.event.repository.name }}-${{ steps.pr.outputs.pr || steps.vars.outputs.version }}.tgz
 
             # Helm release history
-            helm history ${{ steps.vars.outputs.release }}
+            helm history ${{ steps.vars.outputs.release }} || true
 
             # Completed pod cleanup
             oc delete po --field-selector=status.phase==Succeeded || true

@@ -1,3 +1,4 @@
+import { NotModifiedResponse } from '@schemas/common/not-modified.schema.js'
 import { IncidentFiltersResponseSchema } from '@schemas/incidents/filters.schema.js'
 import {
   IncidentErrorSchema,
@@ -24,6 +25,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
         querystring: IncidentsQuerySchema,
         response: {
           200: IncidentsResponseSchema,
+          304: NotModifiedResponse,
           400: IncidentErrorSchema,
           422: IncidentErrorSchema,
           500: IncidentErrorSchema,
@@ -83,6 +85,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           'Returns all available filter values for populating frontend dropdowns.',
         response: {
           200: IncidentFiltersResponseSchema,
+          304: NotModifiedResponse,
           500: IncidentErrorSchema,
         },
         tags: ['Incidents'],

@@ -529,6 +529,13 @@ export interface operations {
           'application/json': components['schemas']['Incidents']
         }
       }
+      /** @description Not modified; the ETag the client sent still matches */
+      304: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
       /** @description Default Response */
       400: {
         headers: {
@@ -594,6 +601,13 @@ export interface operations {
           'application/json': components['schemas']['IncidentFilters']
         }
       }
+      /** @description Not modified; the ETag the client sent still matches */
+      304: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
       /** @description Rate limit exceeded */
       429: {
         headers: {
@@ -653,6 +667,13 @@ export interface operations {
         content: {
           'application/json': components['schemas']['LkiDensity']
         }
+      }
+      /** @description Not modified; the ETag the client sent still matches */
+      304: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
       }
       /** @description Default Response */
       400: {
@@ -718,6 +739,13 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ServiceAreaBoundaries']
         }
+      }
+      /** @description Not modified; the ETag the client sent still matches */
+      304: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
       }
       /** @description Rate limit exceeded */
       429: {

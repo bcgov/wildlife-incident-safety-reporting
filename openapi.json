@@ -1052,6 +1052,9 @@
               }
             }
           },
+          "304": {
+            "description": "Not modified; the ETag the client sent still matches"
+          },
           "400": {
             "description": "Default Response",
             "content": {
@@ -1121,6 +1124,9 @@
                 }
               }
             }
+          },
+          "304": {
+            "description": "Not modified; the ETag the client sent still matches"
           },
           "429": {
             "description": "Rate limit exceeded",
@@ -1308,6 +1314,9 @@
               }
             }
           },
+          "304": {
+            "description": "Not modified; the ETag the client sent still matches"
+          },
           "400": {
             "description": "Default Response",
             "content": {
@@ -1377,6 +1386,9 @@
                 }
               }
             }
+          },
+          "304": {
+            "description": "Not modified; the ETag the client sent still matches"
           },
           "429": {
             "description": "Rate limit exceeded",

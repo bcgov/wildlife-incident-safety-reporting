@@ -1,4 +1,5 @@
 import { ErrorSchema } from '@schemas/common/error.schema.js'
+import { NotModifiedResponse } from '@schemas/common/not-modified.schema.js'
 import { BoundariesResponseSchema } from '@schemas/service-areas/boundaries.schema.js'
 import { logRouteError } from '@utils/route-errors.js'
 import { sendCached } from '@utils/send-compressed.js'
@@ -17,6 +18,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           'Returns simplified boundary geometries for all service areas as a GeoJSON FeatureCollection.',
         response: {
           200: BoundariesResponseSchema,
+          304: NotModifiedResponse,
           500: ErrorSchema,
         },
         tags: ['Service Areas'],
