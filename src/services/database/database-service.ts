@@ -52,33 +52,32 @@ export class DatabaseService {
       .leftJoin('service_areas as sa', 'sa.id', 'wi.service_area_id')
       .where((eb) => applyFilters(eb, filters))
 
-    const dataQuery = baseQuery
-      .select([
-        'wi.id',
-        'wi.year',
-        'wi.accident_date',
-        'wi.species_id',
-        'sp.name as species_name',
-        'sp.color as species_color',
-        'sp.group_name as species_group_name',
-        'wi.service_area_id',
-        'sa.name as service_area_name',
-        'sa.contract_area_number',
-        'sa.district',
-        'sa.region',
-        'wi.sex',
-        'wi.time_of_kill',
-        'wi.age',
-        'wi.quantity',
-        'wi.latitude',
-        'wi.longitude',
-        'wi.nearest_town',
-        'wi.comments',
-      ])
-      .orderBy('wi.accident_date', 'desc')
+    const dataQuery = baseQuery.select([
+      'wi.id',
+      'wi.year',
+      'wi.accident_date',
+      'wi.species_id',
+      'sp.name as species_name',
+      'sp.color as species_color',
+      'sp.group_name as species_group_name',
+      'wi.service_area_id',
+      'sa.name as service_area_name',
+      'sa.contract_area_number',
+      'sa.district',
+      'sa.region',
+      'wi.sex',
+      'wi.time_of_kill',
+      'wi.age',
+      'wi.quantity',
+      'wi.latitude',
+      'wi.longitude',
+      'wi.nearest_town',
+      'wi.comments',
+    ])
 
     if (filters.limit) {
       const paginatedQuery = dataQuery
+        .orderBy('wi.accident_date', 'desc')
         .limit(filters.limit)
         .offset(filters.offset)
 
@@ -561,7 +560,6 @@ export class DatabaseService {
         'ls.lki_segment_length',
         'ls.geom',
       ])
-      .orderBy(sql`weighted`, 'desc')
       .execute()
 
     this.log.debug({ count: rows.length }, 'LKI density query complete')

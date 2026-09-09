@@ -8,7 +8,7 @@ import {
   RouteNotFoundError,
 } from '@services/route-planner.js'
 import { logRouteError } from '@utils/route-errors.js'
-import { negotiateEncoding, sendCompressed } from '@utils/send-compressed.js'
+import { sendCached } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
 const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
@@ -33,33 +33,21 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
     },
     async (request, reply) => {
       try {
-        const encoding = negotiateEncoding(request.headers['accept-encoding'])
-        const cacheKey = await fastify.responseCache.versionedKey(request.url)
-
-        if (encoding) {
-          const cached = fastify.responseCache.get(cacheKey, encoding)
-          if (cached) {
-            return sendCompressed(reply, cached, encoding)
-          }
-        }
-
-        const routeLine = await fastify.routePlanner.resolveRouteLine(
-          request.query,
+        return await sendCached(
+          fastify,
+          request,
+          reply,
+          request.url,
+          async () => {
+            const routeLine = await fastify.routePlanner.resolveRouteLine(
+              request.query,
+            )
+            return await fastify.db.findLkiDensity({
+              ...request.query,
+              routeLine,
+            })
+          },
         )
-        const result = await fastify.db.findLkiDensity({
-          ...request.query,
-          routeLine,
-        })
-
-        if (encoding) {
-          const buffers = await fastify.responseCache.set(
-            cacheKey,
-            JSON.stringify(result),
-          )
-          return sendCompressed(reply, buffers[encoding], encoding)
-        }
-
-        return result
       } catch (error) {
         if (error instanceof RouteNotFoundError) {
           return reply.unprocessableEntity(error.message)

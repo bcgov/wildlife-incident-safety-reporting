@@ -1,7 +1,7 @@
 import { ErrorSchema } from '@schemas/common/error.schema.js'
 import { BoundariesResponseSchema } from '@schemas/service-areas/boundaries.schema.js'
 import { logRouteError } from '@utils/route-errors.js'
-import { negotiateEncoding, sendCompressed } from '@utils/send-compressed.js'
+import { sendCached } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
 const CACHE_KEY = '/v1/service-areas/boundaries'
@@ -24,27 +24,9 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
     },
     async (request, reply) => {
       try {
-        const encoding = negotiateEncoding(request.headers['accept-encoding'])
-        const cacheKey = await fastify.responseCache.versionedKey(CACHE_KEY)
-
-        if (encoding) {
-          const cached = fastify.responseCache.get(cacheKey, encoding)
-          if (cached) {
-            return sendCompressed(reply, cached, encoding)
-          }
-        }
-
-        const body = await fastify.db.findServiceAreaBoundaries()
-
-        if (encoding) {
-          const buffers = await fastify.responseCache.set(
-            cacheKey,
-            JSON.stringify(body),
-          )
-          return sendCompressed(reply, buffers[encoding], encoding)
-        }
-
-        return body
+        return await sendCached(fastify, request, reply, CACHE_KEY, () =>
+          fastify.db.findServiceAreaBoundaries(),
+        )
       } catch (error) {
         logRouteError(fastify.log, request, error, {
           message: 'Failed to fetch service area boundaries',

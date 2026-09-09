@@ -9,7 +9,7 @@ import {
   RouteNotFoundError,
 } from '@services/route-planner.js'
 import { logRouteError } from '@utils/route-errors.js'
-import { negotiateEncoding, sendCompressed } from '@utils/send-compressed.js'
+import { sendCached } from '@utils/send-compressed.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
 const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
@@ -34,39 +34,27 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
     },
     async (request, reply) => {
       try {
-        const encoding = negotiateEncoding(request.headers['accept-encoding'])
-        const cacheKey = await fastify.responseCache.versionedKey(request.url)
-
-        if (encoding) {
-          const cached = fastify.responseCache.get(cacheKey, encoding)
-          if (cached) {
-            return sendCompressed(reply, cached, encoding)
-          }
-        }
-
-        const routeLine = await fastify.routePlanner.resolveRouteLine(
-          request.query,
+        return await sendCached(
+          fastify,
+          request,
+          reply,
+          request.url,
+          async () => {
+            const routeLine = await fastify.routePlanner.resolveRouteLine(
+              request.query,
+            )
+            const result = await fastify.db.findIncidents({
+              ...request.query,
+              routeLine,
+            })
+            return {
+              data: result.data,
+              total: result.total,
+              limit: request.query.limit,
+              offset: request.query.offset,
+            }
+          },
         )
-        const result = await fastify.db.findIncidents({
-          ...request.query,
-          routeLine,
-        })
-        const body = {
-          data: result.data,
-          total: result.total,
-          limit: request.query.limit,
-          offset: request.query.offset,
-        }
-
-        if (encoding) {
-          const buffers = await fastify.responseCache.set(
-            cacheKey,
-            JSON.stringify(body),
-          )
-          return sendCompressed(reply, buffers[encoding], encoding)
-        }
-
-        return body
       } catch (error) {
         if (error instanceof RouteNotFoundError) {
           return reply.unprocessableEntity(error.message)
@@ -102,7 +90,9 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
     },
     async (request, reply) => {
       try {
-        return await fastify.db.findIncidentFilters()
+        return await sendCached(fastify, request, reply, request.url, () =>
+          fastify.db.findIncidentFilters(),
+        )
       } catch (error) {
         logRouteError(fastify.log, request, error, {
           message: 'Failed to fetch incident filters',

@@ -25,29 +25,6 @@ const COPY_COLUMNS = [
   'hmcr_record_id',
 ] as const
 
-const INCIDENT_INDEXES = [
-  {
-    name: 'idx_incidents_geom',
-    ddl: 'CREATE INDEX idx_incidents_geom ON incidents USING gist (geom)',
-  },
-  {
-    name: 'idx_incidents_species_id',
-    ddl: 'CREATE INDEX idx_incidents_species_id ON incidents (species_id)',
-  },
-  {
-    name: 'idx_incidents_service_area_id',
-    ddl: 'CREATE INDEX idx_incidents_service_area_id ON incidents (service_area_id)',
-  },
-  {
-    name: 'idx_incidents_year_species',
-    ddl: 'CREATE INDEX idx_incidents_year_species ON incidents (year, species_id)',
-  },
-  {
-    name: 'idx_incidents_lki_segment_id',
-    ddl: 'CREATE INDEX idx_incidents_lki_segment_id ON incidents (lki_segment_id)',
-  },
-] as const
-
 const DRY_RUN = process.argv.includes('--dry-run')
 const db = createDatabase({ max: 1 })
 
@@ -366,8 +343,20 @@ async function copyIncidents(rows: InsertRow[]): Promise<void> {
 async function bulkLoadIncidents(rows: InsertRow[]): Promise<void> {
   await sql`ALTER TABLE incidents SET UNLOGGED`.execute(db)
 
-  for (const idx of INCIDENT_INDEXES) {
-    await sql.raw(`DROP INDEX IF EXISTS ${idx.name}`).execute(db)
+  // Indexes backing the primary key and unique constraints cannot be dropped with DROP INDEX
+  const droppable = await sql<{ name: string; ddl: string }>`
+    SELECT indexname AS name, indexdef AS ddl
+    FROM pg_indexes
+    WHERE schemaname = 'public' AND tablename = 'incidents'
+      AND NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conindid = format('%I.%I', schemaname, indexname)::regclass
+      )
+    ORDER BY indexname
+  `.execute(db)
+
+  for (const idx of droppable.rows) {
+    await sql.raw(`DROP INDEX IF EXISTS ${qIdent(idx.name)}`).execute(db)
   }
 
   await sql`ALTER TABLE incidents DISABLE TRIGGER trg_incidents_geom`.execute(
@@ -405,9 +394,11 @@ async function bulkLoadIncidents(rows: InsertRow[]): Promise<void> {
     )
 
     console.log('\nRecreating indexes...')
-    for (const idx of INCIDENT_INDEXES) {
+    for (const idx of droppable.rows) {
       await sql.raw(idx.ddl).execute(trx)
     }
+
+    await sql`ANALYZE incidents`.execute(trx)
 
     console.log('Restoring LOGGED state...')
     await sql`ALTER TABLE incidents SET LOGGED`.execute(trx)
