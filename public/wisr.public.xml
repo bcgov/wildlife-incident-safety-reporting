@@ -71,9 +71,6 @@
          <index name="idx_incidents_service_area_id" unique="false">
             <column ascending="true" name="service_area_id"/>
          </index>
-         <index name="idx_incidents_species_id" unique="false">
-            <column ascending="true" name="species_id"/>
-         </index>
          <index name="idx_incidents_year_species" unique="false">
             <column ascending="true" name="year"/>
             <column ascending="true" name="species_id"/>
@@ -121,9 +118,6 @@
             <column ascending="true" name="geom"/>
          </index>
          <index name="idx_lki_segments_geom_geog" unique="false"/>
-         <index name="idx_lki_segments_route_id" unique="false">
-            <column ascending="true" name="lki_route_id"/>
-         </index>
       </table>
       <table name="service_areas" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="5" type="int2" typeCode="5">
@@ -174,9 +168,6 @@
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="species_pkey" unique="true">
             <column ascending="true" name="id"/>
-         </index>
-         <index name="idx_species_group_name" unique="false">
-            <column ascending="true" name="group_name"/>
          </index>
          <index name="species_name_key" unique="true">
             <column ascending="true" name="name"/>
