@@ -1,7 +1,7 @@
 import area from '@turf/area'
 import length from '@turf/length'
 import type { Feature, Geometry, LineString, Polygon, Position } from 'geojson'
-import type { MapMouseEvent } from 'maplibre-gl'
+import type { MapMouseEvent, PointLike } from 'maplibre-gl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   type GeoJSONStoreFeatures,
@@ -41,6 +41,27 @@ const OUTLINE_WIDTH = SPATIAL_FILTER_OUTLINE_WIDTH
 // Terra-draw layer IDs (default "td" prefix)
 const TD_POLYGON_LAYER = 'td-polygon'
 const TD_LINESTRING_LAYER = 'td-linestring'
+
+const HIT_TOLERANCE_PX = 6
+
+const hitBox = (point: MapMouseEvent['point']): [PointLike, PointLike] => [
+  [point.x - HIT_TOLERANCE_PX, point.y - HIT_TOLERANCE_PX],
+  [point.x + HIT_TOLERANCE_PX, point.y + HIT_TOLERANCE_PX],
+]
+
+// A polygon ring repeats its first vertex to close, so the last placed one sits before it
+function lastPlacedVertex(geom: Geometry): [number, number] | null {
+  if (geom.type === 'LineString') {
+    const last = geom.coordinates[geom.coordinates.length - 1]
+    return last ? [last[0], last[1]] : null
+  }
+  if (geom.type === 'Polygon') {
+    const ring = geom.coordinates[0]
+    const last = ring?.[ring.length - 2]
+    return last ? [last[0], last[1]] : null
+  }
+  return null
+}
 
 function formatArea(squareMeters: number): string {
   if (squareMeters >= 1_000_000) {
@@ -263,6 +284,11 @@ export function useTerraDraw() {
         setHasMeasurement(true)
       }
 
+      const anchor = lastPlacedVertex(geom)
+      if (anchor && measurementRef.current) {
+        setMeasurementPopup({ lngLat: anchor, text: measurementRef.current })
+      }
+
       draw.setMode('idle')
       setActiveMode(null)
 
@@ -318,7 +344,7 @@ export function useTerraDraw() {
       const layers = getTdLayers()
       if (layers.length === 0) return
 
-      const features = map.queryRenderedFeatures(e.point, { layers })
+      const features = map.queryRenderedFeatures(hitBox(e.point), { layers })
       if (features.length > 0 && !hasClusterFeatures(e.point)) {
         setMeasurementPopup({
           lngLat: [e.lngLat.lng, e.lngLat.lat],
@@ -335,7 +361,7 @@ export function useTerraDraw() {
       const layers = getTdLayers()
       if (layers.length === 0) return
 
-      const features = map.queryRenderedFeatures(e.point, { layers })
+      const features = map.queryRenderedFeatures(hitBox(e.point), { layers })
       map.getCanvas().style.cursor = features.length > 0 ? 'pointer' : ''
     }
 
@@ -350,13 +376,10 @@ export function useTerraDraw() {
       // Snapshot features before teardown so they survive style changes
       const snapshot = draw.getSnapshot()
       snapshotRef.current = snapshot.length > 0 ? snapshot : null
-      // Style changes (e.g. Google basemap theme swap) can remove td-* sources
-      // before terra-draw's adapter tries to clear them, so guard the teardown
+      // A theme style swap can drop the td-* sources before the adapter clears them
       try {
         draw.stop()
-      } catch {
-        // Sources already removed by style change - safe to ignore
-      }
+      } catch {}
       drawRef.current = null
     }
   }, [map, isLoaded, setGeometry])
