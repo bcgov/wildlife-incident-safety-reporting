@@ -15,6 +15,137 @@
       }
     },
     "schemas": {
+      "Age": {
+        "type": "string",
+        "enum": ["ADULT", "YOUNG", "UNKNOWN"],
+        "description": "Age classification of the animal",
+        "example": "ADULT"
+      },
+      "BoundaryFeature": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Feature"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PolygonGeometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/ServiceArea"
+          }
+        },
+        "required": ["type", "geometry", "properties"],
+        "additionalProperties": false,
+        "description": "GeoJSON Feature for one service area boundary"
+      },
+      "DensitySegment": {
+        "type": "object",
+        "properties": {
+          "segmentId": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "segmentName": {
+            "type": "string"
+          },
+          "segmentDescription": {
+            "type": ["string", "null"]
+          },
+          "highwayNumber": {
+            "type": ["string", "null"]
+          },
+          "segmentLengthKm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/LineGeometry"
+          },
+          "small": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "medium": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "large": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "totalAnimals": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "weighted": {
+            "type": "number",
+            "minimum": 0
+          },
+          "densityPerKm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "segmentId",
+          "segmentName",
+          "segmentDescription",
+          "highwayNumber",
+          "segmentLengthKm",
+          "geometry",
+          "small",
+          "medium",
+          "large",
+          "totalAnimals",
+          "weighted",
+          "densityPerKm"
+        ],
+        "additionalProperties": false,
+        "description": "LKI highway segment with incident density counts"
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "HTTP status code"
+          },
+          "error": {
+            "type": "string",
+            "description": "HTTP status text"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Error detail, replaced with a generic string for 5xx"
+          }
+        },
+        "required": ["statusCode", "error", "message"],
+        "additionalProperties": false,
+        "description": "Standard error response"
+      },
       "HealthCheck": {
         "type": "object",
         "properties": {
@@ -43,38 +174,49 @@
         "additionalProperties": false,
         "description": "Application health status"
       },
-      "Incidents": {
+      "HmcrSyncResult": {
         "type": "object",
         "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Incident"
-            },
-            "description": "Result items"
-          },
-          "total": {
+          "created": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "Total matching records (before pagination)"
-          },
-          "limit": {
-            "description": "Requested page size (omitted when unbounded)",
-            "type": "integer",
-            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
-          "offset": {
+          "updated": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "Number of records skipped"
+            "maximum": 9007199254740991
+          },
+          "unchanged": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "totalFetched": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "errors": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
           }
         },
-        "required": ["data", "total", "offset"],
+        "required": [
+          "created",
+          "updated",
+          "unchanged",
+          "totalFetched",
+          "errors",
+          "durationMs"
+        ],
         "additionalProperties": false,
-        "description": "Paginated incident records"
+        "description": "Counts from an HMCR sync run"
       },
       "Incident": {
         "type": "object",
@@ -230,47 +372,6 @@
         "additionalProperties": false,
         "description": "A wildlife-vehicle collision record"
       },
-      "Sex": {
-        "type": "string",
-        "enum": ["MALE", "FEMALE", "UNKNOWN"],
-        "description": "Biological sex of the animal",
-        "example": "MALE"
-      },
-      "TimeOfKill": {
-        "type": "string",
-        "enum": ["DAY", "DAWN", "DUSK", "DARK", "UNKNOWN"],
-        "description": "Approximate time of day the incident occurred",
-        "example": "DAY"
-      },
-      "Age": {
-        "type": "string",
-        "enum": ["ADULT", "YOUNG", "UNKNOWN"],
-        "description": "Age classification of the animal",
-        "example": "ADULT"
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "HTTP status code"
-          },
-          "error": {
-            "type": "string",
-            "description": "HTTP status text"
-          },
-          "message": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Error detail, replaced with a generic string for 5xx"
-          }
-        },
-        "required": ["statusCode", "error", "message"],
-        "additionalProperties": false,
-        "description": "Standard error response"
-      },
       "IncidentFilters": {
         "type": "object",
         "properties": {
@@ -356,145 +457,38 @@
         "additionalProperties": false,
         "description": "Available filter values across the incident dataset"
       },
-      "Species": {
+      "Incidents": {
         "type": "object",
         "properties": {
-          "id": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Incident"
+            },
+            "description": "Result items"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Total matching records (before pagination)"
+          },
+          "limit": {
+            "description": "Requested page size (omitted when unbounded)",
             "type": "integer",
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
-          "name": {
-            "type": "string"
-          },
-          "color": {
-            "type": "string"
-          },
-          "groupName": {
-            "type": "string"
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Number of records skipped"
           }
         },
-        "required": ["id", "name", "color", "groupName"],
+        "required": ["data", "total", "offset"],
         "additionalProperties": false,
-        "description": "Wildlife species with display color and species group"
-      },
-      "ServiceArea": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
-          },
-          "name": {
-            "type": "string"
-          },
-          "contractAreaNumber": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
-          },
-          "district": {
-            "type": "string"
-          },
-          "region": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "name", "contractAreaNumber", "district", "region"],
-        "additionalProperties": false,
-        "description": "Highway maintenance service area"
-      },
-      "LkiDensity": {
-        "type": "array",
-        "items": {
-          "$ref": "#/components/schemas/DensitySegment"
-        },
-        "description": "Per-segment incident density for the current filters"
-      },
-      "DensitySegment": {
-        "type": "object",
-        "properties": {
-          "segmentId": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
-          },
-          "segmentName": {
-            "type": "string"
-          },
-          "segmentDescription": {
-            "type": ["string", "null"]
-          },
-          "highwayNumber": {
-            "type": ["string", "null"]
-          },
-          "segmentLengthKm": {
-            "anyOf": [
-              {
-                "type": "number",
-                "exclusiveMinimum": 0
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "geometry": {
-            "$ref": "#/components/schemas/LineGeometry"
-          },
-          "small": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "medium": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "large": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "totalAnimals": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "weighted": {
-            "type": "number",
-            "minimum": 0
-          },
-          "densityPerKm": {
-            "anyOf": [
-              {
-                "type": "number",
-                "minimum": 0
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "segmentId",
-          "segmentName",
-          "segmentDescription",
-          "highwayNumber",
-          "segmentLengthKm",
-          "geometry",
-          "small",
-          "medium",
-          "large",
-          "totalAnimals",
-          "weighted",
-          "densityPerKm"
-        ],
-        "additionalProperties": false,
-        "description": "LKI highway segment with incident density counts"
+        "description": "Paginated incident records"
       },
       "LineGeometry": {
         "oneOf": [
@@ -536,6 +530,40 @@
         "additionalProperties": false,
         "description": "GeoJSON LineString, an ordered array of positions"
       },
+      "LkiDensity": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/DensitySegment"
+        },
+        "description": "Per-segment incident density for the current filters"
+      },
+      "LkiSyncResult": {
+        "type": "object",
+        "properties": {
+          "totalFetched": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "upserted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "deleted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": ["totalFetched", "upserted", "deleted", "durationMs"],
+        "additionalProperties": false,
+        "description": "Counts from an LKI segment sync run"
+      },
       "MultiLineString": {
         "type": "object",
         "properties": {
@@ -559,85 +587,6 @@
         "required": ["type", "coordinates"],
         "additionalProperties": false,
         "description": "GeoJSON MultiLineString, an array of LineString coordinate sets"
-      },
-      "ServiceAreaBoundaries": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "FeatureCollection"
-          },
-          "features": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BoundaryFeature"
-            }
-          }
-        },
-        "required": ["type", "features"],
-        "additionalProperties": false,
-        "description": "GeoJSON FeatureCollection of service area boundary polygons"
-      },
-      "BoundaryFeature": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "Feature"
-          },
-          "geometry": {
-            "$ref": "#/components/schemas/PolygonGeometry"
-          },
-          "properties": {
-            "$ref": "#/components/schemas/ServiceArea"
-          }
-        },
-        "required": ["type", "geometry", "properties"],
-        "additionalProperties": false,
-        "description": "GeoJSON Feature for one service area boundary"
-      },
-      "PolygonGeometry": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/Polygon"
-          },
-          {
-            "$ref": "#/components/schemas/MultiPolygon"
-          }
-        ],
-        "description": "Polygon or MultiPolygon, discriminated on type",
-        "type": "object",
-        "discriminator": {
-          "propertyName": "type",
-          "mapping": {
-            "Polygon": "#/components/schemas/Polygon",
-            "MultiPolygon": "#/components/schemas/MultiPolygon"
-          }
-        }
-      },
-      "Polygon": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "Polygon"
-          },
-          "coordinates": {
-            "type": "array",
-            "items": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
-              }
-            }
-          }
-        },
-        "required": ["type", "coordinates"],
-        "additionalProperties": false,
-        "description": "GeoJSON Polygon, outer ring first followed by any holes"
       },
       "MultiPolygon": {
         "type": "object",
@@ -666,16 +615,48 @@
         "additionalProperties": false,
         "description": "GeoJSON MultiPolygon, an array of Polygon coordinate sets"
       },
-      "ServiceAreaLookup": {
-        "anyOf": [
+      "Polygon": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Polygon"
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "required": ["type", "coordinates"],
+        "additionalProperties": false,
+        "description": "GeoJSON Polygon, outer ring first followed by any holes"
+      },
+      "PolygonGeometry": {
+        "oneOf": [
           {
-            "$ref": "#/components/schemas/ServiceArea"
+            "$ref": "#/components/schemas/Polygon"
           },
           {
-            "type": "null"
+            "$ref": "#/components/schemas/MultiPolygon"
           }
         ],
-        "description": "Service area matching the given coordinates, or null if outside all boundaries"
+        "description": "Polygon or MultiPolygon, discriminated on type",
+        "type": "object",
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "Polygon": "#/components/schemas/Polygon",
+            "MultiPolygon": "#/components/schemas/MultiPolygon"
+          }
+        }
       },
       "Route": {
         "type": "object",
@@ -719,76 +700,95 @@
         "additionalProperties": false,
         "description": "Road route between two points from the BC Route Planner"
       },
-      "LkiSyncResult": {
+      "ServiceArea": {
         "type": "object",
         "properties": {
-          "totalFetched": {
+          "id": {
             "type": "integer",
-            "minimum": 0,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
-          "upserted": {
+          "name": {
+            "type": "string"
+          },
+          "contractAreaNumber": {
             "type": "integer",
-            "minimum": 0,
+            "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
-          "deleted": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
+          "district": {
+            "type": "string"
           },
-          "durationMs": {
-            "type": "number",
-            "minimum": 0
+          "region": {
+            "type": "string"
           }
         },
-        "required": ["totalFetched", "upserted", "deleted", "durationMs"],
+        "required": ["id", "name", "contractAreaNumber", "district", "region"],
         "additionalProperties": false,
-        "description": "Counts from an LKI segment sync run"
+        "description": "Highway maintenance service area"
       },
-      "HmcrSyncResult": {
+      "ServiceAreaBoundaries": {
         "type": "object",
         "properties": {
-          "created": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
+          "type": {
+            "type": "string",
+            "const": "FeatureCollection"
           },
-          "updated": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "unchanged": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "totalFetched": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "errors": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "durationMs": {
-            "type": "number",
-            "minimum": 0
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoundaryFeature"
+            }
           }
         },
-        "required": [
-          "created",
-          "updated",
-          "unchanged",
-          "totalFetched",
-          "errors",
-          "durationMs"
-        ],
+        "required": ["type", "features"],
         "additionalProperties": false,
-        "description": "Counts from an HMCR sync run"
+        "description": "GeoJSON FeatureCollection of service area boundary polygons"
+      },
+      "ServiceAreaLookup": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/ServiceArea"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Service area matching the given coordinates, or null if outside all boundaries"
+      },
+      "Sex": {
+        "type": "string",
+        "enum": ["MALE", "FEMALE", "UNKNOWN"],
+        "description": "Biological sex of the animal",
+        "example": "MALE"
+      },
+      "Species": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "groupName": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "color", "groupName"],
+        "additionalProperties": false,
+        "description": "Wildlife species with display color and species group"
+      },
+      "TimeOfKill": {
+        "type": "string",
+        "enum": ["DAY", "DAWN", "DUSK", "DARK", "UNKNOWN"],
+        "description": "Approximate time of day the incident occurred",
+        "example": "DAY"
       }
     }
   },
@@ -827,6 +827,88 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthCheck"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/incidents/hmcr-sync": {
+      "post": {
+        "operationId": "syncHmcrIncidents",
+        "summary": "Sync wildlife incidents from HMCR",
+        "tags": ["Internal"],
+        "description": "Fetches all wildlife records from the HMCR API and upserts them into the local database using hmcr_record_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HmcrSyncResult"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/incidents/lki-sync": {
+      "post": {
+        "operationId": "syncLkiSegments",
+        "summary": "Sync LKI highway segments from BC WFS",
+        "tags": ["Internal"],
+        "description": "Fetches all LKI highway segments from the BC DataCatalogue WFS and upserts them into the local database using chris_lki_segment_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LkiSyncResult"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -1108,49 +1190,6 @@
         }
       }
     },
-    "/v1/incidents/filters": {
-      "get": {
-        "operationId": "getIncidentFilters",
-        "summary": "Get available incident filter options",
-        "tags": ["Incidents"],
-        "description": "Returns all available filter values for populating frontend dropdowns.",
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IncidentFilters"
-                }
-              }
-            }
-          },
-          "304": {
-            "description": "Not modified; the ETag the client sent still matches"
-          },
-          "429": {
-            "description": "Rate limit exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/incidents/density": {
       "get": {
         "operationId": "getLkiDensity",
@@ -1370,103 +1409,25 @@
         }
       }
     },
-    "/v1/service-areas/boundaries": {
+    "/v1/incidents/filters": {
       "get": {
-        "operationId": "getServiceAreaBoundaries",
-        "summary": "Get service area boundary polygons",
-        "tags": ["Service Areas"],
-        "description": "Returns simplified boundary geometries for all service areas as a GeoJSON FeatureCollection.",
+        "operationId": "getIncidentFilters",
+        "summary": "Get available incident filter options",
+        "tags": ["Incidents"],
+        "description": "Returns all available filter values for populating frontend dropdowns.",
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServiceAreaBoundaries"
+                  "$ref": "#/components/schemas/IncidentFilters"
                 }
               }
             }
           },
           "304": {
             "description": "Not modified; the ETag the client sent still matches"
-          },
-          "429": {
-            "description": "Rate limit exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/service-areas/lookup": {
-      "get": {
-        "operationId": "lookupServiceArea",
-        "summary": "Look up service area by coordinates",
-        "tags": ["Service Areas"],
-        "description": "Returns the service area containing the given point, or null if outside all boundaries.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "number",
-              "minimum": -180,
-              "maximum": 180,
-              "description": "Longitude (WGS 84)",
-              "example": -123.37
-            },
-            "in": "query",
-            "name": "lng",
-            "required": true,
-            "description": "Longitude (WGS 84)"
-          },
-          {
-            "schema": {
-              "type": "number",
-              "minimum": -90,
-              "maximum": 90,
-              "description": "Latitude (WGS 84)",
-              "example": 48.42
-            },
-            "in": "query",
-            "name": "lat",
-            "required": true,
-            "description": "Latitude (WGS 84)"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAreaLookup"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           },
           "429": {
             "description": "Rate limit exceeded",
@@ -1601,23 +1562,25 @@
         }
       }
     },
-    "/internal/incidents/lki-sync": {
-      "post": {
-        "operationId": "syncLkiSegments",
-        "summary": "Sync LKI highway segments from BC WFS",
-        "tags": ["Internal"],
-        "description": "Fetches all LKI highway segments from the BC DataCatalogue WFS and upserts them into the local database using chris_lki_segment_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.",
-        "security": [],
+    "/v1/service-areas/boundaries": {
+      "get": {
+        "operationId": "getServiceAreaBoundaries",
+        "summary": "Get service area boundary polygons",
+        "tags": ["Service Areas"],
+        "description": "Returns simplified boundary geometries for all service areas as a GeoJSON FeatureCollection.",
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LkiSyncResult"
+                  "$ref": "#/components/schemas/ServiceAreaBoundaries"
                 }
               }
             }
+          },
+          "304": {
+            "description": "Not modified; the ETag the client sent still matches"
           },
           "429": {
             "description": "Rate limit exceeded",
@@ -1642,20 +1605,57 @@
         }
       }
     },
-    "/internal/incidents/hmcr-sync": {
-      "post": {
-        "operationId": "syncHmcrIncidents",
-        "summary": "Sync wildlife incidents from HMCR",
-        "tags": ["Internal"],
-        "description": "Fetches all wildlife records from the HMCR API and upserts them into the local database using hmcr_record_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.",
-        "security": [],
+    "/v1/service-areas/lookup": {
+      "get": {
+        "operationId": "lookupServiceArea",
+        "summary": "Look up service area by coordinates",
+        "tags": ["Service Areas"],
+        "description": "Returns the service area containing the given point, or null if outside all boundaries.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180,
+              "description": "Longitude (WGS 84)",
+              "example": -123.37
+            },
+            "in": "query",
+            "name": "lng",
+            "required": true,
+            "description": "Longitude (WGS 84)"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90,
+              "description": "Latitude (WGS 84)",
+              "example": 48.42
+            },
+            "in": "query",
+            "name": "lat",
+            "required": true,
+            "description": "Latitude (WGS 84)"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HmcrSyncResult"
+                  "$ref": "#/components/schemas/ServiceAreaLookup"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }

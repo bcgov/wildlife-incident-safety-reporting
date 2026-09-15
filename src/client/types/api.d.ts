@@ -24,6 +24,46 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/internal/incidents/hmcr-sync': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Sync wildlife incidents from HMCR
+     * @description Fetches all wildlife records from the HMCR API and upserts them into the local database using hmcr_record_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.
+     */
+    post: operations['syncHmcrIncidents']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/internal/incidents/lki-sync': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Sync LKI highway segments from BC WFS
+     * @description Fetches all LKI highway segments from the BC DataCatalogue WFS and upserts them into the local database using chris_lki_segment_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.
+     */
+    post: operations['syncLkiSegments']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/metrics': {
     parameters: {
       query?: never
@@ -64,6 +104,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/incidents/density': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get LKI segment density analysis
+     * @description Returns incident counts per LKI segment with body-size weighting for linear heatmap visualization.
+     */
+    get: operations['getLkiDensity']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/incidents/filters': {
     parameters: {
       query?: never
@@ -84,7 +144,7 @@ export interface paths {
     patch?: never
     trace?: never
   }
-  '/v1/incidents/density': {
+  '/v1/route/': {
     parameters: {
       query?: never
       header?: never
@@ -92,10 +152,10 @@ export interface paths {
       cookie?: never
     }
     /**
-     * Get LKI segment density analysis
-     * @description Returns incident counts per LKI segment with body-size weighting for linear heatmap visualization.
+     * Get a route between two points
+     * @description Returns the road route between two points from the BC Route Planner as a GeoJSON LineString with distance and travel time.
      */
-    get: operations['getLkiDensity']
+    get: operations['getRoute']
     put?: never
     post?: never
     delete?: never
@@ -144,70 +204,47 @@ export interface paths {
     patch?: never
     trace?: never
   }
-  '/v1/route/': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /**
-     * Get a route between two points
-     * @description Returns the road route between two points from the BC Route Planner as a GeoJSON LineString with distance and travel time.
-     */
-    get: operations['getRoute']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/internal/incidents/lki-sync': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    put?: never
-    /**
-     * Sync LKI highway segments from BC WFS
-     * @description Fetches all LKI highway segments from the BC DataCatalogue WFS and upserts them into the local database using chris_lki_segment_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.
-     */
-    post: operations['syncLkiSegments']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/internal/incidents/hmcr-sync': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    put?: never
-    /**
-     * Sync wildlife incidents from HMCR
-     * @description Fetches all wildlife records from the HMCR API and upserts them into the local database using hmcr_record_id for deduplication. Cluster-internal. Requests carrying x-forwarded-host, which the OpenShift router sets on all public traffic, receive 404.
-     */
-    post: operations['syncHmcrIncidents']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
 }
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /**
+     * @description Age classification of the animal
+     * @example ADULT
+     * @enum {string}
+     */
+    Age: 'ADULT' | 'YOUNG' | 'UNKNOWN'
+    /** @description GeoJSON Feature for one service area boundary */
+    BoundaryFeature: {
+      /** @constant */
+      type: 'Feature'
+      geometry: components['schemas']['PolygonGeometry']
+      properties: components['schemas']['ServiceArea']
+    }
+    /** @description LKI highway segment with incident density counts */
+    DensitySegment: {
+      segmentId: number
+      segmentName: string
+      segmentDescription: string | null
+      highwayNumber: string | null
+      segmentLengthKm: number | null
+      geometry: components['schemas']['LineGeometry']
+      small: number
+      medium: number
+      large: number
+      totalAnimals: number
+      weighted: number
+      densityPerKm: number | null
+    }
+    /** @description Standard error response */
+    Error: {
+      /** @description HTTP status code */
+      statusCode: number
+      /** @description HTTP status text */
+      error: string
+      /** @description Error detail, replaced with a generic string for 5xx */
+      message: string
+    }
     /** @description Application health status */
     HealthCheck: {
       /** @enum {string} */
@@ -219,16 +256,14 @@ export interface components {
         database: 'ok' | 'failed'
       }
     }
-    /** @description Paginated incident records */
-    Incidents: {
-      /** @description Result items */
-      data: components['schemas']['Incident'][]
-      /** @description Total matching records (before pagination) */
-      total: number
-      /** @description Requested page size (omitted when unbounded) */
-      limit?: number
-      /** @description Number of records skipped */
-      offset: number
+    /** @description Counts from an HMCR sync run */
+    HmcrSyncResult: {
+      created: number
+      updated: number
+      unchanged: number
+      totalFetched: number
+      errors: number
+      durationMs: number
     }
     /** @description A wildlife-vehicle collision record */
     Incident: {
@@ -253,33 +288,6 @@ export interface components {
       nearestTown: string | null
       comments: string
     }
-    /**
-     * @description Biological sex of the animal
-     * @example MALE
-     * @enum {string}
-     */
-    Sex: 'MALE' | 'FEMALE' | 'UNKNOWN'
-    /**
-     * @description Approximate time of day the incident occurred
-     * @example DAY
-     * @enum {string}
-     */
-    TimeOfKill: 'DAY' | 'DAWN' | 'DUSK' | 'DARK' | 'UNKNOWN'
-    /**
-     * @description Age classification of the animal
-     * @example ADULT
-     * @enum {string}
-     */
-    Age: 'ADULT' | 'YOUNG' | 'UNKNOWN'
-    /** @description Standard error response */
-    Error: {
-      /** @description HTTP status code */
-      statusCode: number
-      /** @description HTTP status text */
-      error: string
-      /** @description Error detail, replaced with a generic string for 5xx */
-      message: string
-    }
     /** @description Available filter values across the incident dataset */
     IncidentFilters: {
       years: number[]
@@ -293,37 +301,16 @@ export interface components {
         max: string | null
       }
     }
-    /** @description Wildlife species with display color and species group */
-    Species: {
-      id: number
-      name: string
-      color: string
-      groupName: string
-    }
-    /** @description Highway maintenance service area */
-    ServiceArea: {
-      id: number
-      name: string
-      contractAreaNumber: number
-      district: string
-      region: string
-    }
-    /** @description Per-segment incident density for the current filters */
-    LkiDensity: components['schemas']['DensitySegment'][]
-    /** @description LKI highway segment with incident density counts */
-    DensitySegment: {
-      segmentId: number
-      segmentName: string
-      segmentDescription: string | null
-      highwayNumber: string | null
-      segmentLengthKm: number | null
-      geometry: components['schemas']['LineGeometry']
-      small: number
-      medium: number
-      large: number
-      totalAnimals: number
-      weighted: number
-      densityPerKm: number | null
+    /** @description Paginated incident records */
+    Incidents: {
+      /** @description Result items */
+      data: components['schemas']['Incident'][]
+      /** @description Total matching records (before pagination) */
+      total: number
+      /** @description Requested page size (omitted when unbounded) */
+      limit?: number
+      /** @description Number of records skipped */
+      offset: number
     }
     /** @description LineString or MultiLineString, discriminated on type */
     LineGeometry:
@@ -338,6 +325,15 @@ export interface components {
       type: 'LineString'
       coordinates: number[][]
     }
+    /** @description Per-segment incident density for the current filters */
+    LkiDensity: components['schemas']['DensitySegment'][]
+    /** @description Counts from an LKI segment sync run */
+    LkiSyncResult: {
+      totalFetched: number
+      upserted: number
+      deleted: number
+      durationMs: number
+    }
     /** @description GeoJSON MultiLineString, an array of LineString coordinate sets */
     MultiLineString: {
       /**
@@ -345,32 +341,6 @@ export interface components {
        * @enum {string}
        */
       type: 'MultiLineString'
-      coordinates: number[][][]
-    }
-    /** @description GeoJSON FeatureCollection of service area boundary polygons */
-    ServiceAreaBoundaries: {
-      /** @constant */
-      type: 'FeatureCollection'
-      features: components['schemas']['BoundaryFeature'][]
-    }
-    /** @description GeoJSON Feature for one service area boundary */
-    BoundaryFeature: {
-      /** @constant */
-      type: 'Feature'
-      geometry: components['schemas']['PolygonGeometry']
-      properties: components['schemas']['ServiceArea']
-    }
-    /** @description Polygon or MultiPolygon, discriminated on type */
-    PolygonGeometry:
-      | components['schemas']['Polygon']
-      | components['schemas']['MultiPolygon']
-    /** @description GeoJSON Polygon, outer ring first followed by any holes */
-    Polygon: {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      type: 'Polygon'
       coordinates: number[][][]
     }
     /** @description GeoJSON MultiPolygon, an array of Polygon coordinate sets */
@@ -382,8 +352,19 @@ export interface components {
       type: 'MultiPolygon'
       coordinates: number[][][][]
     }
-    /** @description Service area matching the given coordinates, or null if outside all boundaries */
-    ServiceAreaLookup: components['schemas']['ServiceArea'] | null
+    /** @description GeoJSON Polygon, outer ring first followed by any holes */
+    Polygon: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: 'Polygon'
+      coordinates: number[][][]
+    }
+    /** @description Polygon or MultiPolygon, discriminated on type */
+    PolygonGeometry:
+      | components['schemas']['Polygon']
+      | components['schemas']['MultiPolygon']
     /** @description Road route between two points from the BC Route Planner */
     Route: {
       routeFound: boolean
@@ -393,22 +374,41 @@ export interface components {
       timeText: string
       line: components['schemas']['LineString'] | null
     }
-    /** @description Counts from an LKI segment sync run */
-    LkiSyncResult: {
-      totalFetched: number
-      upserted: number
-      deleted: number
-      durationMs: number
+    /** @description Highway maintenance service area */
+    ServiceArea: {
+      id: number
+      name: string
+      contractAreaNumber: number
+      district: string
+      region: string
     }
-    /** @description Counts from an HMCR sync run */
-    HmcrSyncResult: {
-      created: number
-      updated: number
-      unchanged: number
-      totalFetched: number
-      errors: number
-      durationMs: number
+    /** @description GeoJSON FeatureCollection of service area boundary polygons */
+    ServiceAreaBoundaries: {
+      /** @constant */
+      type: 'FeatureCollection'
+      features: components['schemas']['BoundaryFeature'][]
     }
+    /** @description Service area matching the given coordinates, or null if outside all boundaries */
+    ServiceAreaLookup: components['schemas']['ServiceArea'] | null
+    /**
+     * @description Biological sex of the animal
+     * @example MALE
+     * @enum {string}
+     */
+    Sex: 'MALE' | 'FEMALE' | 'UNKNOWN'
+    /** @description Wildlife species with display color and species group */
+    Species: {
+      id: number
+      name: string
+      color: string
+      groupName: string
+    }
+    /**
+     * @description Approximate time of day the incident occurred
+     * @example DAY
+     * @enum {string}
+     */
+    TimeOfKill: 'DAY' | 'DAWN' | 'DUSK' | 'DARK' | 'UNKNOWN'
   }
   responses: never
   parameters: never
@@ -452,6 +452,82 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['HealthCheck']
+        }
+      }
+    }
+  }
+  syncHmcrIncidents: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HmcrSyncResult']
+        }
+      }
+      /** @description Rate limit exceeded */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  syncLkiSegments: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LkiSyncResult']
+        }
+      }
+      /** @description Rate limit exceeded */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
     }
@@ -583,51 +659,6 @@ export interface operations {
       }
     }
   }
-  getIncidentFilters: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Default Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['IncidentFilters']
-        }
-      }
-      /** @description Not modified; the ETag the client sent still matches */
-      304: {
-        headers: {
-          [name: string]: unknown
-        }
-        content?: never
-      }
-      /** @description Rate limit exceeded */
-      429: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-      /** @description Default Response */
-      500: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-    }
-  }
   getLkiDensity: {
     parameters: {
       query: {
@@ -686,6 +717,116 @@ export interface operations {
       }
       /** @description Default Response */
       422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Rate limit exceeded */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      502: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  getIncidentFilters: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['IncidentFilters']
+        }
+      }
+      /** @description Not modified; the ETag the client sent still matches */
+      304: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Rate limit exceeded */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  getRoute: {
+    parameters: {
+      query: {
+        /** @description Longitude of the route start point */
+        startLng: number
+        /** @description Latitude of the route start point */
+        startLat: number
+        /** @description Longitude of the route end point */
+        endLng: number
+        /** @description Latitude of the route end point */
+        endLat: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Route']
+        }
+      }
+      /** @description Default Response */
+      400: {
         headers: {
           [name: string]: unknown
         }
@@ -797,147 +938,6 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Error']
-        }
-      }
-      /** @description Rate limit exceeded */
-      429: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-      /** @description Default Response */
-      500: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-    }
-  }
-  getRoute: {
-    parameters: {
-      query: {
-        /** @description Longitude of the route start point */
-        startLng: number
-        /** @description Latitude of the route start point */
-        startLat: number
-        /** @description Longitude of the route end point */
-        endLng: number
-        /** @description Latitude of the route end point */
-        endLat: number
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Default Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Route']
-        }
-      }
-      /** @description Default Response */
-      400: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-      /** @description Rate limit exceeded */
-      429: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-      /** @description Default Response */
-      500: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-      /** @description Default Response */
-      502: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-    }
-  }
-  syncLkiSegments: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Default Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['LkiSyncResult']
-        }
-      }
-      /** @description Rate limit exceeded */
-      429: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-      /** @description Default Response */
-      500: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Error']
-        }
-      }
-    }
-  }
-  syncHmcrIncidents: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Default Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HmcrSyncResult']
         }
       }
       /** @description Rate limit exceeded */
