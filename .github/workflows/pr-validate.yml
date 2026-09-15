@@ -17,10 +17,6 @@ jobs:
     permissions:
       pull-requests: write
     uses: bcgov/quickstart-openshift-helpers/.github/workflows/.pr-validate.yml@a11ad3d1b9288fb40757c4314a62eb86ff227931 # v1.2.1
-    with:
-      markdown_links: |
-        - [App](https://${{ github.event.repository.name }}-${{ github.event.number }}.apps.gold.devops.gov.bc.ca)
-        - [API Docs](https://${{ github.event.repository.name }}-${{ github.event.number }}.apps.gold.devops.gov.bc.ca/api/docs)
 
   results:
     name: Validate Results

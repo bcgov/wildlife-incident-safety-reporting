@@ -32,6 +32,13 @@ jobs:
         run: biome ci .
       - name: TypeScript Check
         run: bun run typecheck
+      - name: OpenAPI Contract Drift Check
+        run: |
+          bun run openapi:types
+          git diff --exit-code openapi.json src/client/types/api.d.ts || {
+            echo "OpenAPI spec or generated client types are stale. Run 'bun run openapi:types' and commit the results."
+            exit 1
+          }
       - name: Build
         run: bun run build
 
