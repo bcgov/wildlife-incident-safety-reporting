@@ -8,7 +8,13 @@ import {
   fastifyZodOpenApiTransform,
   fastifyZodOpenApiTransformObject,
 } from 'fastify-zod-openapi'
-import type { OpenAPIV3 } from 'openapi-types'
+import type { OpenAPIV3_1 } from 'openapi-types'
+
+// autoload registers routes in readdir order, which differs per filesystem
+const sortKeys = <T>(obj: Record<string, T>): Record<string, T> =>
+  Object.fromEntries(
+    Object.entries(obj).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+  )
 
 const HTTP_METHODS = [
   'get',
@@ -21,17 +27,17 @@ const HTTP_METHODS = [
   'trace',
 ] as const
 
-const RATE_LIMITED_RESPONSE: OpenAPIV3.ResponseObject = {
+const RATE_LIMITED_RESPONSE = {
   description: 'Rate limit exceeded',
   content: {
     'application/json': {
       schema: { $ref: '#/components/schemas/Error' },
     },
   },
-}
+} satisfies OpenAPIV3_1.ResponseObject
 
 // The limiters sit outside route schemas, so no route declares its own 429
-function addRateLimitResponses(paths: OpenAPIV3.PathsObject): void {
+function addRateLimitResponses(paths: OpenAPIV3_1.PathsObject): void {
   for (const pathItem of Object.values(paths)) {
     for (const method of HTTP_METHODS) {
       const responses = pathItem?.[method]?.responses
@@ -40,6 +46,12 @@ function addRateLimitResponses(paths: OpenAPIV3.PathsObject): void {
       }
     }
   }
+}
+
+function isOpenApi31Document(
+  doc: ReturnType<typeof fastifyZodOpenApiTransformObject>,
+): doc is Partial<OpenAPIV3_1.Document> {
+  return 'openapi' in doc && doc.openapi?.startsWith('3.1') === true
 }
 
 const createOpenapiConfig = (fastify: FastifyInstance) => {
@@ -119,8 +131,15 @@ const createOpenapiConfig = (fastify: FastifyInstance) => {
       args: Parameters<typeof fastifyZodOpenApiTransformObject>[0],
     ) => {
       const spec = fastifyZodOpenApiTransformObject(args)
-      if ('openapi' in spec && spec.paths) {
+      if (!isOpenApi31Document(spec)) {
+        return spec
+      }
+      if (spec.paths) {
         addRateLimitResponses(spec.paths)
+        spec.paths = sortKeys(spec.paths)
+      }
+      if (spec.components?.schemas) {
+        spec.components.schemas = sortKeys(spec.components.schemas)
       }
       return spec
     },
