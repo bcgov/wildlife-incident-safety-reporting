@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify'
 import type { LevelWithSilent, LoggerOptions } from 'pino'
+import { stdSerializers } from 'pino'
 
 const validLogLevels: LevelWithSilent[] = [
   'fatal',
@@ -25,12 +26,27 @@ export function createServiceLogger(
   )
 }
 
+// Zod validation errors attach a multi-KB issue array
+function serializeError(error: Error) {
+  const { validation, ...serialized } = stdSerializers.err(error)
+  return serialized
+}
+
 // Prod emits raw JSON for container log aggregators (OpenShift/Docker)
 export function createLoggerConfig(): LoggerOptions {
   const isDev = process.env.NODE_ENV !== 'production'
 
   return {
     level: 'info',
+    ...(!isDev && {
+      base: null,
+      formatters: {
+        level: (label: string) => ({ level: label }),
+      },
+      serializers: {
+        err: serializeError,
+      },
+    }),
     ...(isDev && {
       transport: {
         target: 'pino-pretty',

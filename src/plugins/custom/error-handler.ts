@@ -16,8 +16,7 @@ async function errorHandler(fastify: FastifyInstance) {
     const statusText = STATUS_CODES[statusCode] ?? 'Error'
 
     // Avoid logging query/params to prevent leaking tokens/PII
-    const logData = {
-      err,
+    const context = {
       request: {
         id: request.id,
         method: request.method,
@@ -27,12 +26,15 @@ async function errorHandler(fastify: FastifyInstance) {
       },
     }
 
-    if (statusCode === 401) {
-      request.log.warn(logData, 'Authentication required')
-    } else if (statusCode < 500) {
-      request.log.warn(logData, 'Client error occurred')
+    if (statusCode >= 500) {
+      request.log.error({ ...context, err }, 'Internal server error occurred')
     } else {
-      request.log.error(logData, 'Internal server error occurred')
+      request.log.warn(
+        { ...context, type: err.name, reason: err.message },
+        statusCode === 401
+          ? 'Authentication required'
+          : 'Client error occurred',
+      )
     }
 
     // A 5xx message can carry upstream URLs or driver internals
