@@ -181,7 +181,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </Button>
         )}
       </SidebarHeader>
-      <SidebarContent className="gap-0">
+      <SidebarContent className="gap-0 pb-3">
         <SidebarGroup className="px-2 py-1">
           <SidebarGroupLabel>Year</SidebarGroupLabel>
           <SidebarGroupContent>
