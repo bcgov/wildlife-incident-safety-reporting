@@ -32,7 +32,11 @@ export class DatabaseService {
   }
 
   async healthCheck(): Promise<void> {
-    await this.kysely.selectNoFrom(sql.lit(1).as('ok')).execute()
+    await withConnectionRetry(
+      () => this.kysely.selectNoFrom(sql.lit(1).as('ok')).execute(),
+      this.log,
+      { attempts: 2, delayMs: 100 },
+    )
     this.log.debug('health check passed')
   }
 
