@@ -66,6 +66,7 @@ export default fp(
     // helmet's enableCSPNonces would nonce style-src too, disabling its unsafe-inline
     fastify.addHook('onRequest', async (_request, reply) => {
       reply.raw.cspNonce = randomBytes(16).toString('hex')
+      reply.header('x-robots-tag', 'noindex')
     })
     await fastify.register(helmet, createHelmetConfig(fastify))
   },

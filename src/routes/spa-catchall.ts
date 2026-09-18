@@ -18,9 +18,13 @@ export default async function spaRoute(fastify: FastifyInstance) {
           return reply.callNotFound()
         }
 
-        // Only serve SPA for HTML navigations; return 404 for non-HTML (e.g., XHR/fetch)
+        // Link preview bots send */* or no Accept, so only an explicit non-HTML type 404s
         const accept = request.headers.accept ?? ''
-        if (typeof accept === 'string' && !accept.includes('text/html')) {
+        if (
+          accept !== '' &&
+          !accept.includes('text/html') &&
+          !accept.includes('*/*')
+        ) {
           return reply.callNotFound()
         }
       },
