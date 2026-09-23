@@ -26,7 +26,7 @@
         "get-jwks": "^11.0.3",
         "kysely": "^0.29.0",
         "kysely-postgis": "^0.5.2",
-        "kysely-postgres-js": "^4.0.0",
+        "kysely-postgres-js": "^5.0.0",
         "lru-cache": "^11.3.5",
         "papaparse": "^5.5.3",
         "pino": "^10.3.1",
@@ -1235,7 +1235,7 @@
 
     "kysely-postgis": ["kysely-postgis@0.5.4", "", { "dependencies": { "geojson-validation": "^1.0.2", "wkx": "^0.5.0" }, "peerDependencies": { "kysely": "^0.28.14", "pg": "^8.12.0" } }, "sha512-GoAHLDtp1StV2z4dWF3aCmdtkRt6oCv6LZXRKWJEKoayKESv5DbO5XPNshzl6OQWtjwWafoW6izze1qOF+pPOQ=="],
 
-    "kysely-postgres-js": ["kysely-postgres-js@4.0.0", "", { "peerDependencies": { "kysely": ">= 0.29.0 < 1", "postgres": "^3.4.0" }, "optionalPeers": ["postgres"] }, "sha512-zIGYZ1TMduPZJAyeRMo9OodZYPxK4RI8OIKO8XShHiv5gzaY+KxmZnKcnYRvbfdmUH0kv+ZTlYrBZ5Uk+lI1QA=="],
+    "kysely-postgres-js": ["kysely-postgres-js@5.0.0", "", { "peerDependencies": { "kysely": ">= 0.29.0 < 1", "postgres": "^3.4.0" }, "optionalPeers": ["postgres"] }, "sha512-KD3Lzhzua5KlHFrtQdkxYH5tOpiJTz0e1OhJjEcJAmce7lfpXzZA07ZJYj1QQV1gKBoYnBBqM/621St6/X0YUA=="],
 
     "light-my-request": ["light-my-request@6.6.0", "", { "dependencies": { "cookie": "^1.0.1", "process-warning": "^4.0.0", "set-cookie-parser": "^2.6.0" } }, "sha512-CHYbu8RtboSIoVsHZ6Ye4cj4Aw/yg2oAFimlF7mNvfDV192LR7nDiKtSIfCuLT7KokPSTn/9kfVLm5OGN0A28A=="],
 
