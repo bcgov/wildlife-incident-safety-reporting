@@ -80,18 +80,18 @@ jobs:
         with:
           folder: output
 
-  zap:
-    name: ZAP Scan
-    permissions:
-      issues: write
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
-        with:
-          allow_issue_writing: true
-          artifact_name: app
-          issue_title: "ZAP Security Report"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # prod is the only environment reachable from GitHub runners; dev/test routes are IP-restricted to the gov network
-          target: https://wisr.apps.gold.devops.gov.bc.ca/
-          fail_action: false
+  # ZAP disabled: every route is IP-restricted to the gov network, so GitHub runners cannot reach a target
+  # zap:
+  #   name: ZAP Scan
+  #   permissions:
+  #     issues: write
+  #   runs-on: ubuntu-24.04
+  #   steps:
+  #     - uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
+  #       with:
+  #         allow_issue_writing: true
+  #         artifact_name: app
+  #         issue_title: "ZAP Security Report"
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         target: https://wisr.apps.gold.devops.gov.bc.ca/
+  #         fail_action: false

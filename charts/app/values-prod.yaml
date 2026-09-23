@@ -12,5 +12,3 @@ backend:
     maxReplicas: 2
   ingress:
     host: wisr.apps.gold.devops.gov.bc.ca
-    restrictMain: false
-    restrictDocs: true
