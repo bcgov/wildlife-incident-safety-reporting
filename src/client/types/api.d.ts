@@ -104,6 +104,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/incidents/count': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Count wildlife-vehicle incidents
+     * @description Returns the number of wildlife-vehicle collision incidents matching the same filters as GET /v1/incidents/, without the records.
+     */
+    get: operations['getIncidentCount']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/incidents/density': {
     parameters: {
       query?: never
@@ -287,6 +307,11 @@ export interface components {
       longitude: number | null
       nearestTown: string | null
       comments: string
+    }
+    /** @description Count of matching incidents */
+    IncidentCount: {
+      /** @description Incident records matching the filters */
+      total: number
     }
     /** @description Available filter values across the incident dataset */
     IncidentFilters: {
@@ -603,6 +628,100 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Incidents']
+        }
+      }
+      /** @description Not modified; the ETag the client sent still matches */
+      304: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Default Response */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Rate limit exceeded */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      502: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  getIncidentCount: {
+    parameters: {
+      query: {
+        year: string
+        species?: string
+        serviceArea?: string
+        sex?: string
+        timeOfKill?: string
+        age?: string
+        /** @description Start date filter (inclusive, YYYY-MM-DD) */
+        startDate?: string
+        /** @description End date filter (inclusive, YYYY-MM-DD) */
+        endDate?: string
+        geometry?: string
+        /** @description Route corridor filter: start point longitude */
+        routeStartLng?: number
+        /** @description Route corridor filter: start point latitude */
+        routeStartLat?: number
+        /** @description Route corridor filter: end point longitude */
+        routeEndLng?: number
+        /** @description Route corridor filter: end point latitude */
+        routeEndLat?: number
+        /** @description Route corridor filter: corridor width in metres */
+        routeCorridorM?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['IncidentCount']
         }
       }
       /** @description Not modified; the ETag the client sent still matches */

@@ -372,6 +372,20 @@
         "additionalProperties": false,
         "description": "A wildlife-vehicle collision record"
       },
+      "IncidentCount": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Incident records matching the filters"
+          }
+        },
+        "required": ["total"],
+        "additionalProperties": false,
+        "description": "Count of matching incidents"
+      },
       "IncidentFilters": {
         "type": "object",
         "properties": {
@@ -1130,6 +1144,225 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Incidents"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified; the ETag the client sent still matches"
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/incidents/count": {
+      "get": {
+        "operationId": "getIncidentCount",
+        "summary": "Count wildlife-vehicle incidents",
+        "tags": ["Incidents"],
+        "description": "Returns the number of wildlife-vehicle collision incidents matching the same filters as GET /v1/incidents/, without the records.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of years (e.g. 2020,2021), required, max 10",
+              "example": "2020,2021"
+            },
+            "in": "query",
+            "name": "year",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated species IDs from GET /v1/incidents/filters",
+              "example": "10,18"
+            },
+            "in": "query",
+            "name": "species"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated service area IDs from GET /v1/incidents/filters",
+              "example": "16,17"
+            },
+            "in": "query",
+            "name": "serviceArea"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated values: MALE, FEMALE, UNKNOWN",
+              "example": "MALE,FEMALE,UNKNOWN"
+            },
+            "in": "query",
+            "name": "sex"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated values: DAY, DAWN, DUSK, DARK, UNKNOWN",
+              "example": "DAY,DAWN,DUSK,DARK,UNKNOWN"
+            },
+            "in": "query",
+            "name": "timeOfKill"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated values: ADULT, YOUNG, UNKNOWN",
+              "example": "ADULT,YOUNG,UNKNOWN"
+            },
+            "in": "query",
+            "name": "age"
+          },
+          {
+            "schema": {
+              "description": "Start date filter (inclusive, YYYY-MM-DD)",
+              "example": "2021-01-01",
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "in": "query",
+            "name": "startDate",
+            "description": "Start date filter (inclusive, YYYY-MM-DD)"
+          },
+          {
+            "schema": {
+              "description": "End date filter (inclusive, YYYY-MM-DD)",
+              "example": "2021-12-31",
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "in": "query",
+            "name": "endDate",
+            "description": "End date filter (inclusive, YYYY-MM-DD)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "GeoJSON geometry string for spatial filtering (e.g. Polygon)",
+              "example": "{\"type\":\"Polygon\",\"coordinates\":[[[-123.2,49.2],[-123.0,49.2],[-123.0,49.3],[-123.2,49.3],[-123.2,49.2]]]}"
+            },
+            "in": "query",
+            "name": "geometry"
+          },
+          {
+            "schema": {
+              "description": "Route corridor filter: start point longitude",
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "in": "query",
+            "name": "routeStartLng",
+            "description": "Route corridor filter: start point longitude"
+          },
+          {
+            "schema": {
+              "description": "Route corridor filter: start point latitude",
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "in": "query",
+            "name": "routeStartLat",
+            "description": "Route corridor filter: start point latitude"
+          },
+          {
+            "schema": {
+              "description": "Route corridor filter: end point longitude",
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "in": "query",
+            "name": "routeEndLng",
+            "description": "Route corridor filter: end point longitude"
+          },
+          {
+            "schema": {
+              "description": "Route corridor filter: end point latitude",
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "in": "query",
+            "name": "routeEndLat",
+            "description": "Route corridor filter: end point latitude"
+          },
+          {
+            "schema": {
+              "default": 250,
+              "description": "Route corridor filter: corridor width in metres",
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 20000
+            },
+            "in": "query",
+            "name": "routeCorridorM",
+            "description": "Route corridor filter: corridor width in metres"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentCount"
                 }
               }
             }

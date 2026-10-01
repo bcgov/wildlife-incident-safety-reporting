@@ -1,6 +1,8 @@
+import { IncidentFilterQuerySchema } from '@schemas/common/incident-query.schema.js'
 import { NotModifiedResponse } from '@schemas/common/not-modified.schema.js'
 import { IncidentFiltersResponseSchema } from '@schemas/incidents/filters.schema.js'
 import {
+  IncidentCountResponseSchema,
   IncidentErrorSchema,
   IncidentsQuerySchema,
   IncidentsResponseSchema,
@@ -71,6 +73,63 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           message: 'Failed to query incidents',
         })
         return reply.internalServerError('Failed to query incidents')
+      }
+    },
+  )
+
+  fastify.get(
+    '/count',
+    {
+      schema: {
+        summary: 'Count wildlife-vehicle incidents',
+        operationId: 'getIncidentCount',
+        description:
+          'Returns the number of wildlife-vehicle collision incidents matching the same filters as GET /v1/incidents/, without the records.',
+        querystring: IncidentFilterQuerySchema,
+        response: {
+          200: IncidentCountResponseSchema,
+          304: NotModifiedResponse,
+          400: IncidentErrorSchema,
+          422: IncidentErrorSchema,
+          500: IncidentErrorSchema,
+          502: IncidentErrorSchema,
+        },
+        tags: ['Incidents'],
+      },
+    },
+    async (request, reply) => {
+      try {
+        return await sendCached(
+          fastify,
+          request,
+          reply,
+          request.url,
+          async () => {
+            const routeLine = await fastify.routePlanner.resolveRouteLine(
+              request.query,
+            )
+            return {
+              total: await fastify.db.countIncidents({
+                ...request.query,
+                routeLine,
+              }),
+            }
+          },
+        )
+      } catch (error) {
+        if (error instanceof RouteNotFoundError) {
+          return reply.unprocessableEntity(error.message)
+        }
+        if (error instanceof RouteCorridorError) {
+          logRouteError(fastify.log, request, error, {
+            message: 'Failed to resolve route corridor',
+          })
+          return reply.badGateway(error.message)
+        }
+        logRouteError(fastify.log, request, error, {
+          message: 'Failed to count incidents',
+        })
+        return reply.internalServerError('Failed to count incidents')
       }
     },
   )

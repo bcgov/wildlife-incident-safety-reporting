@@ -1,3 +1,4 @@
+import type { IncidentFilterQuery } from '@schemas/common/incident-query.schema.js'
 import type {
   DensityQuery,
   DensityResponse,
@@ -50,11 +51,7 @@ export class DatabaseService {
   ): Promise<{ data: Incident[]; total: number }> {
     this.log.debug({ filters }, 'querying incidents')
 
-    const baseQuery = this.kysely
-      .selectFrom('incidents as wi')
-      .innerJoin('species as sp', 'sp.id', 'wi.species_id')
-      .leftJoin('service_areas as sa', 'sa.id', 'wi.service_area_id')
-      .where((eb) => applyFilters(eb, filters))
+    const baseQuery = this.incidentsBaseQuery(filters)
 
     const dataQuery = baseQuery.select([
       'wi.id',
@@ -113,6 +110,28 @@ export class DatabaseService {
       data: rows.map(toIncident),
       total: rows.length,
     }
+  }
+
+  async countIncidents(
+    filters: IncidentFilterQuery & ResolvedRouteLine,
+  ): Promise<number> {
+    this.log.debug({ filters }, 'counting incidents')
+
+    const result = await this.incidentsBaseQuery(filters)
+      .select((eb) => eb.fn.countAll<string>().as('total'))
+      .executeTakeFirstOrThrow()
+
+    const total = Number(result.total)
+    this.log.debug({ total }, 'incidents count complete')
+    return total
+  }
+
+  private incidentsBaseQuery(filters: IncidentFilterQuery & ResolvedRouteLine) {
+    return this.kysely
+      .selectFrom('incidents as wi')
+      .innerJoin('species as sp', 'sp.id', 'wi.species_id')
+      .leftJoin('service_areas as sa', 'sa.id', 'wi.service_area_id')
+      .where((eb) => applyFilters(eb, filters))
   }
 
   async findServiceAreaBoundaries(): Promise<BoundariesResponse> {
