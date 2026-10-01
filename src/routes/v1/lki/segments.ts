@@ -20,6 +20,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           200: LkiSegmentsResponseSchema,
           304: NotModifiedResponse,
           500: ErrorSchema,
+          503: ErrorSchema,
         },
         tags: ['LKI'],
       },

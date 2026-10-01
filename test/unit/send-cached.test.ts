@@ -1,3 +1,5 @@
+import sensible from '@fastify/sensible'
+import { BuildGate } from '@services/build-gate.js'
 import { ResponseCacheService } from '@services/response-cache.js'
 import { sendCached } from '@utils/send-compressed.js'
 import type { FastifyInstance } from 'fastify'
@@ -24,6 +26,8 @@ describe('sendCached', () => {
         },
       }),
     )
+    app.decorate('buildGate', new BuildGate())
+    await app.register(sensible)
     app.get('/thing', (request, reply) =>
       sendCached(app, request, reply, request.url, async () => {
         produced += 1
@@ -103,5 +107,85 @@ describe('sendCached', () => {
     expect(res.statusCode).toBe(200)
     expect(res.headers['content-encoding']).toBe('br')
     expect(produced).toBe(3)
+  })
+})
+
+describe('sendCached under load', () => {
+  let app: FastifyInstance
+  let gate: BuildGate
+  let produced: number
+  let finish: () => void
+
+  beforeAll(async () => {
+    produced = 0
+    gate = new BuildGate(1, 0)
+    app = Fastify({ logger: false })
+    app.decorate(
+      'responseCache',
+      new ResponseCacheService(app.log, {
+        read: async () => 1,
+        bump: async () => {},
+      }),
+    )
+    app.decorate('buildGate', gate)
+    await app.register(sensible)
+    app.addHook('preHandler', async (request) => {
+      if (request.headers['x-gone']) request.raw.destroy()
+    })
+    app.get('/slow', (request, reply) =>
+      sendCached(app, request, reply, request.url, async () => {
+        produced += 1
+        await new Promise<void>((resolve) => {
+          finish = resolve
+        })
+        return { slow: true }
+      }),
+    )
+    await app.ready()
+  })
+
+  afterAll(async () => {
+    await app?.close()
+  })
+
+  const gzip = { 'accept-encoding': 'gzip' }
+
+  async function waitForRunning(count: number): Promise<void> {
+    const deadline = Date.now() + 1000
+    while (gate.running !== count && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 5))
+    }
+    expect(gate.running).toBe(count)
+  }
+
+  it('rejects a second build with 503 while the only slot is held', async () => {
+    const first = app.inject({ url: '/slow', headers: gzip })
+    await waitForRunning(1)
+
+    const second = await app.inject({ url: '/slow', headers: gzip })
+
+    expect(second.statusCode).toBe(503)
+    expect(second.headers['retry-after']).toBe('2')
+    expect(produced).toBe(1)
+
+    finish()
+    const res = await first
+    expect(res.statusCode).toBe(200)
+    expect(gate.running).toBe(0)
+  })
+
+  it('skips the build when the client has already disconnected', async () => {
+    const before = produced
+
+    const res = await app.inject({
+      url: '/slow?gone',
+      headers: { ...gzip, 'x-gone': '1' },
+    })
+
+    expect(res.statusCode).toBe(503)
+    expect(res.json().message).toBe(
+      'Client disconnected before the response was built',
+    )
+    expect(produced).toBe(before)
   })
 })

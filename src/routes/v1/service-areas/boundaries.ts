@@ -20,6 +20,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           200: BoundariesResponseSchema,
           304: NotModifiedResponse,
           500: ErrorSchema,
+          503: ErrorSchema,
         },
         tags: ['Service Areas'],
       },

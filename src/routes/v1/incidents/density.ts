@@ -29,6 +29,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
           422: ErrorSchema,
           500: ErrorSchema,
           502: ErrorSchema,
+          503: ErrorSchema,
         },
         tags: ['Incidents'],
       },
