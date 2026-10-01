@@ -83,7 +83,6 @@ function locateColumn(densityMode: DensityMode): ColumnDef<DensityRow> {
                 useSegmentLocateStore.getState().locate({
                   segmentId: segment.segmentId,
                   segmentName: segment.segmentName,
-                  geometry: segment.geometry,
                 })
                 useLayerStore.getState().setLayerVisible('density', true)
                 useLayerStore.getState().setDensityMode(densityMode)

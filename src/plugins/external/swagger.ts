@@ -106,6 +106,10 @@ const createOpenapiConfig = (fastify: FastifyInstance) => {
           description: 'Highway maintenance service area boundaries',
         },
         {
+          name: 'LKI',
+          description: 'Landmark Kilometre Inventory highway segments',
+        },
+        {
           name: 'Internal',
           description: `No token authentication. ${CLUSTER_INTERNAL_NOTE}`,
         },

@@ -8,6 +8,7 @@ import type {
   Incident,
   IncidentsQuery,
 } from '@schemas/incidents/incidents.schema.js'
+import type { LkiSegmentsResponse } from '@schemas/lki/segments.schema.js'
 import type { BoundariesResponse } from '@schemas/service-areas/boundaries.schema.js'
 import type { LookupResponse } from '@schemas/service-areas/lookup.schema.js'
 import { withConnectionRetry } from '@utils/db-retry.js'
@@ -170,6 +171,36 @@ export class DatabaseService {
         },
       })),
     }
+  }
+
+  async findLkiSegments(): Promise<LkiSegmentsResponse> {
+    this.log.debug('querying LKI segments')
+
+    const rows = await this.kysely
+      .selectFrom('lki_segments')
+      .select((eb) => [
+        'chris_lki_segment_id' as const,
+        'lki_segment_name' as const,
+        'lki_segment_description' as const,
+        'highway_number' as const,
+        'lki_segment_length' as const,
+        asGeoJSON(eb, 'geom').as('geometry'),
+      ])
+      .orderBy('lki_segment_name')
+      .execute()
+
+    this.log.debug({ count: rows.length }, 'LKI segments query complete')
+
+    return rows.map((row) => ({
+      segmentId: row.chris_lki_segment_id,
+      segmentName: row.lki_segment_name,
+      segmentDescription: row.lki_segment_description,
+      highwayNumber: row.highway_number,
+      segmentLengthKm: row.lki_segment_length
+        ? Number(row.lki_segment_length)
+        : null,
+      geometry: JSON.parse(row.geometry),
+    }))
   }
 
   async findIncidentFilters(): Promise<IncidentFiltersResponse> {
@@ -751,13 +782,12 @@ export class DatabaseService {
       )
       .selectFrom('lki_segments as ls')
       .leftJoin('filtered as f', 'f.lki_segment_id', 'ls.chris_lki_segment_id')
-      .select((eb) => [
+      .select([
         'ls.chris_lki_segment_id as segment_id' as const,
         'ls.lki_segment_name as segment_name' as const,
         'ls.lki_segment_description as segment_description' as const,
         'ls.highway_number' as const,
         'ls.lki_segment_length as segment_length_km' as const,
-        asGeoJSON(eb, 'ls.geom').as('geometry'),
         sql<number>`coalesce(sum(f.quantity) filter (where f.body_size = 'SMALL'), 0)`.as(
           'small',
         ),
@@ -787,7 +817,6 @@ export class DatabaseService {
         'ls.lki_segment_description',
         'ls.highway_number',
         'ls.lki_segment_length',
-        'ls.geom',
       ])
       .execute()
 
@@ -799,7 +828,6 @@ export class DatabaseService {
       segmentDescription: r.segment_description,
       highwayNumber: r.highway_number,
       segmentLengthKm: r.segment_length_km ? Number(r.segment_length_km) : null,
-      geometry: JSON.parse(r.geometry),
       small: Number(r.small),
       medium: Number(r.medium),
       large: Number(r.large),
