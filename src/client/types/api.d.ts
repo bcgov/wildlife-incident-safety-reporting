@@ -712,6 +712,15 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      /** @description Default Response */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
     }
   }
   getIncidentCount: {
@@ -799,6 +808,15 @@ export interface operations {
       }
       /** @description Default Response */
       502: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      503: {
         headers: {
           [name: string]: unknown
         }
@@ -900,6 +918,15 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      /** @description Default Response */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
     }
   }
   getIncidentFilters: {
@@ -945,6 +972,15 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      /** @description Default Response */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
     }
   }
   getLkiSegments: {
@@ -983,6 +1019,15 @@ export interface operations {
       }
       /** @description Default Response */
       500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      503: {
         headers: {
           [name: string]: unknown
         }
@@ -1093,6 +1138,15 @@ export interface operations {
       }
       /** @description Default Response */
       500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      503: {
         headers: {
           [name: string]: unknown
         }
