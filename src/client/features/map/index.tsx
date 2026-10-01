@@ -11,6 +11,7 @@ import {
   useMap,
 } from '@/components/ui/map'
 import { useIncidents } from '@/hooks/use-incidents'
+import { useLkiSegments } from '@/hooks/use-lki-segments'
 import { speciesIcons } from '@/lib/species-icons'
 import { useIncidentLocateStore } from '@/stores/incident-locate-store'
 import { useSegmentLocateStore } from '@/stores/segment-locate-store'
@@ -164,9 +165,16 @@ function LocateSegment() {
   const { map, isLoaded } = useMap()
   const target = useSegmentLocateStore((s) => s.target)
   const clear = useSegmentLocateStore((s) => s.clear)
+  const { data } = useLkiSegments({ enabled: target !== null })
 
   useEffect(() => {
-    if (!target || !map || !isLoaded) return
+    if (!target || !map || !isLoaded || !data) return
+
+    const segment = data.find((s) => s.segmentId === target.segmentId)
+    if (!segment) {
+      clear()
+      return
+    }
 
     let cancelled = false
 
@@ -180,7 +188,7 @@ function LocateSegment() {
 
       const [minLng, minLat, maxLng, maxLat] = bbox({
         type: 'Feature',
-        geometry: target.geometry,
+        geometry: segment.geometry,
         properties: {},
       })
 
@@ -204,7 +212,7 @@ function LocateSegment() {
       cancelAnimationFrame(rafId)
       map.off('moveend', onMoveEnd)
     }
-  }, [target, map, isLoaded, clear])
+  }, [target, map, isLoaded, data, clear])
 
   return null
 }

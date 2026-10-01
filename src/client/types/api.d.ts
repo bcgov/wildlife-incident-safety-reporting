@@ -164,6 +164,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/v1/lki/segments': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get LKI highway segments
+     * @description Returns every LKI highway segment with its geometry. Join to GET /v1/incidents/density by segmentId.
+     */
+    get: operations['getLkiSegments']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/v1/route/': {
     parameters: {
       query?: never
@@ -248,7 +268,6 @@ export interface components {
       segmentDescription: string | null
       highwayNumber: string | null
       segmentLengthKm: number | null
-      geometry: components['schemas']['LineGeometry']
       small: number
       medium: number
       large: number
@@ -352,6 +371,17 @@ export interface components {
     }
     /** @description Per-segment incident density for the current filters */
     LkiDensity: components['schemas']['DensitySegment'][]
+    /** @description LKI highway segment with its geometry */
+    LkiSegment: {
+      segmentId: number
+      segmentName: string
+      segmentDescription: string | null
+      highwayNumber: string | null
+      segmentLengthKm: number | null
+      geometry: components['schemas']['LineGeometry']
+    }
+    /** @description All LKI highway segments */
+    LkiSegments: components['schemas']['LkiSegment'][]
     /** @description Counts from an LKI segment sync run */
     LkiSyncResult: {
       totalFetched: number
@@ -888,6 +918,51 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['IncidentFilters']
+        }
+      }
+      /** @description Not modified; the ETag the client sent still matches */
+      304: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Rate limit exceeded */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      /** @description Default Response */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  getLkiSegments: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LkiSegments']
         }
       }
       /** @description Not modified; the ETag the client sent still matches */

@@ -67,9 +67,6 @@
               }
             ]
           },
-          "geometry": {
-            "$ref": "#/components/schemas/LineGeometry"
-          },
           "small": {
             "type": "integer",
             "minimum": 0,
@@ -112,7 +109,6 @@
           "segmentDescription",
           "highwayNumber",
           "segmentLengthKm",
-          "geometry",
           "small",
           "medium",
           "large",
@@ -550,6 +546,56 @@
           "$ref": "#/components/schemas/DensitySegment"
         },
         "description": "Per-segment incident density for the current filters"
+      },
+      "LkiSegment": {
+        "type": "object",
+        "properties": {
+          "segmentId": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "segmentName": {
+            "type": "string"
+          },
+          "segmentDescription": {
+            "type": ["string", "null"]
+          },
+          "highwayNumber": {
+            "type": ["string", "null"]
+          },
+          "segmentLengthKm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/LineGeometry"
+          }
+        },
+        "required": [
+          "segmentId",
+          "segmentName",
+          "segmentDescription",
+          "highwayNumber",
+          "segmentLengthKm",
+          "geometry"
+        ],
+        "additionalProperties": false,
+        "description": "LKI highway segment with its geometry"
+      },
+      "LkiSegments": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/LkiSegment"
+        },
+        "description": "All LKI highway segments"
       },
       "LkiSyncResult": {
         "type": "object",
@@ -1685,6 +1731,49 @@
         }
       }
     },
+    "/v1/lki/segments": {
+      "get": {
+        "operationId": "getLkiSegments",
+        "summary": "Get LKI highway segments",
+        "tags": ["LKI"],
+        "description": "Returns every LKI highway segment with its geometry. Join to GET /v1/incidents/density by segmentId.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LkiSegments"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified; the ETag the client sent still matches"
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/route/": {
       "get": {
         "operationId": "getRoute",
@@ -1963,6 +2052,10 @@
     {
       "name": "Service Areas",
       "description": "Highway maintenance service area boundaries"
+    },
+    {
+      "name": "LKI",
+      "description": "Landmark Kilometre Inventory highway segments"
     },
     {
       "name": "Internal",

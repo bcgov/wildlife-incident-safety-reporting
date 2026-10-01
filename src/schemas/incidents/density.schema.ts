@@ -1,4 +1,3 @@
-import { LineGeometrySchema } from '@schemas/common/geojson.schema.js'
 import { IncidentFilterQuerySchema } from '@schemas/common/incident-query.schema.js'
 import { z } from 'zod'
 
@@ -13,7 +12,6 @@ export const DensitySegmentSchema = z
     segmentDescription: z.string().nullable(),
     highwayNumber: z.string().nullable(),
     segmentLengthKm: z.number().positive().nullable(),
-    geometry: LineGeometrySchema,
     small: z.number().int().nonnegative(),
     medium: z.number().int().nonnegative(),
     large: z.number().int().nonnegative(),

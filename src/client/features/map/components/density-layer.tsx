@@ -2,6 +2,7 @@ import type * as MapLibreGL from 'maplibre-gl'
 import { useEffect, useMemo, useState } from 'react'
 import { MapPopup, useMap } from '@/components/ui/map'
 import { useDensityData } from '@/hooks/use-density-data'
+import { useLkiSegments } from '@/hooks/use-lki-segments'
 import { DENSITY_COLORS } from '@/lib/density-colors'
 import type { components } from '@/types/api'
 import { ensureSlots, SLOTS } from '../lib/layer-slots'
@@ -9,13 +10,12 @@ import type { DensityMode } from '../store/layer-store'
 import { useLayerStore } from '../store/layer-store'
 
 type DensitySegment = components['schemas']['DensitySegment']
+type LkiSegment = components['schemas']['LkiSegment']
 
 const SOURCE_ID = 'density-source'
 const LINE_LAYER_ID = 'density-line'
 
-type DensityProperties = Omit<DensitySegment, 'geometry'> & {
-  rawDensityPerKm: number | null
-}
+type DensityProperties = DensitySegment & { rawDensityPerKm: number | null }
 
 type SegmentTarget = {
   coordinates: [number, number]
@@ -79,31 +79,40 @@ const COLOR_RAMPS: Record<DensityMode, MapLibreGL.ExpressionSpecification> = {
 }
 
 function toGeoJSON(
-  segments: DensitySegment[],
+  density: DensitySegment[] | undefined,
+  segments: LkiSegment[] | undefined,
 ): GeoJSON.FeatureCollection<GeoJSON.Geometry, DensityProperties> {
+  if (!density || !segments) return { type: 'FeatureCollection', features: [] }
+
+  const geometries = new Map(segments.map((s) => [s.segmentId, s.geometry]))
+
   return {
     type: 'FeatureCollection',
-    features: segments.map((s) => ({
-      type: 'Feature' as const,
-      geometry: s.geometry,
-      properties: {
-        segmentId: s.segmentId,
-        segmentName: s.segmentName,
-        segmentDescription: s.segmentDescription,
-        highwayNumber: s.highwayNumber,
-        segmentLengthKm: s.segmentLengthKm,
-        small: s.small,
-        medium: s.medium,
-        large: s.large,
-        totalAnimals: s.totalAnimals,
-        weighted: s.weighted,
-        densityPerKm: s.densityPerKm,
-        rawDensityPerKm:
-          s.segmentLengthKm && s.segmentLengthKm > 0
-            ? Math.round((s.totalAnimals / s.segmentLengthKm) * 100) / 100
-            : null,
-      },
-    })),
+    features: density.flatMap((s) => {
+      const geometry = geometries.get(s.segmentId)
+      if (!geometry) return []
+      return {
+        type: 'Feature' as const,
+        geometry,
+        properties: {
+          segmentId: s.segmentId,
+          segmentName: s.segmentName,
+          segmentDescription: s.segmentDescription,
+          highwayNumber: s.highwayNumber,
+          segmentLengthKm: s.segmentLengthKm,
+          small: s.small,
+          medium: s.medium,
+          large: s.large,
+          totalAnimals: s.totalAnimals,
+          weighted: s.weighted,
+          densityPerKm: s.densityPerKm,
+          rawDensityPerKm:
+            s.segmentLengthKm && s.segmentLengthKm > 0
+              ? Math.round((s.totalAnimals / s.segmentLengthKm) * 100) / 100
+              : null,
+        },
+      }
+    }),
   }
 }
 
@@ -111,11 +120,12 @@ export function DensityLayer() {
   const { map, isLoaded } = useMap()
   const visible = useLayerStore((s) => s.layers.density)
   const { data } = useDensityData({ enabled: visible })
+  const { data: segments } = useLkiSegments({ enabled: visible })
   const densityMode = useLayerStore((s) => s.densityMode)
   const [selected, setSelected] = useState<SegmentTarget | null>(null)
   const [hovered, setHovered] = useState<SegmentTarget | null>(null)
 
-  const geojson = useMemo(() => toGeoJSON(data ?? []), [data])
+  const geojson = useMemo(() => toGeoJSON(data, segments), [data, segments])
 
   useEffect(() => {
     if (!visible) {

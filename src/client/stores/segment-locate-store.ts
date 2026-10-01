@@ -1,11 +1,9 @@
-import type { Geometry } from 'geojson'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
 export type LocateTarget = {
   segmentId: number
   segmentName: string
-  geometry: Geometry
 }
 
 type SegmentLocateState = {
