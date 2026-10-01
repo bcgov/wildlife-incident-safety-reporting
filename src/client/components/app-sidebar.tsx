@@ -28,7 +28,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { NavUser } from '@/components/user-menu'
 import { useFilters } from '@/hooks/use-filters'
-import { useIncidents } from '@/hooks/use-incidents'
+import { useIncidentCount } from '@/hooks/use-incident-count'
 import { useFilterStore } from '@/stores/filter-store'
 import { useRouteStore } from '@/stores/route-store'
 
@@ -90,7 +90,7 @@ function DatePicker({
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { data: filters, isLoading } = useFilters()
-  const { data: incidents } = useIncidents()
+  const { data: count } = useIncidentCount()
   const store = useFilterStore()
   const hasRoutePoints = useRouteStore((s) => Boolean(s.start || s.end))
 
@@ -381,10 +381,10 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         )}
       </SidebarContent>
       <SidebarFooter className="gap-2.5 border-t bg-card px-4 py-3">
-        {incidents?.total !== undefined && (
+        {count?.total !== undefined && (
           <p className="text-xs text-muted-foreground">
             <span className="font-bold text-primary">
-              {incidents.total.toLocaleString()}
+              {count.total.toLocaleString()}
             </span>{' '}
             observations match current filters
           </p>

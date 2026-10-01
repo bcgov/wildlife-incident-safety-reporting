@@ -59,4 +59,16 @@ export const IncidentsResponseSchema = paginatedResponse(IncidentSchema).meta({
 
 export type IncidentsResponse = z.infer<typeof IncidentsResponseSchema>
 
+export const IncidentCountResponseSchema = z
+  .object({
+    total: z
+      .number()
+      .int()
+      .nonnegative()
+      .meta({ description: 'Incident records matching the filters' }),
+  })
+  .meta({ id: 'IncidentCount', description: 'Count of matching incidents' })
+
+export type IncidentCountResponse = z.infer<typeof IncidentCountResponseSchema>
+
 export const IncidentErrorSchema = ErrorSchema
