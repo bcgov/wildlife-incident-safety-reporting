@@ -42,6 +42,21 @@ on:
         description: Image tag for the seed Job container
         required: true
         type: string
+      backend_digest:
+        description: Optional immutable digest for the backend container
+        required: false
+        default: ""
+        type: string
+      migrations_digest:
+        description: Optional immutable digest for the migrations init container
+        required: false
+        default: ""
+        type: string
+      seed_digest:
+        description: Optional immutable digest for the seed Job container
+        required: false
+        default: ""
+        type: string
       triggers:
         description: Paths used to trigger a deployment; e.g. ('./backend/' './frontend/)
         required: false
@@ -214,8 +229,11 @@ jobs:
             helm upgrade \
               --set-string global.repository=${{ github.repository }} \
               --set-string backend.image.tag="${{ inputs.backend_tag }}" \
+              --set-string backend.image.digest="${{ inputs.backend_digest }}" \
               --set-string migrations.image.tag="${{ inputs.migrations_tag }}" \
+              --set-string migrations.image.digest="${{ inputs.migrations_digest }}" \
               --set-string seed.image.tag="${{ inputs.seed_tag }}" \
+              --set-string seed.image.digest="${{ inputs.seed_digest }}" \
               --set-string global.config.databaseUser="${{ inputs.db_user }}" \
               --set-string global.databaseAlias="${{ steps.deploy_crunchy.outputs.release }}-crunchy" \
               --set-string backend.config.keycloakUrl="${{ secrets.keycloak_url }}" \

@@ -10,9 +10,10 @@ on:
       - '!.github/workflows/**'
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Image tag to deploy; defaults to commit SHA"
-        type: string
+      force_build_all:
+        description: "Force rebuild all images regardless of changes"
+        type: boolean
+        default: false
         required: false
 
 concurrency:
@@ -22,109 +23,63 @@ concurrency:
 permissions: {}
 
 jobs:
-  changes:
-    name: Detect changed paths
+  build:
+    name: Build ${{ matrix.package }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
     runs-on: ubuntu-24.04
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      migrations: ${{ steps.filter.outputs.migrations }}
-      seed: ${{ steps.filter.outputs.seed }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: backend
+            build_context: .
+            build_file: Dockerfile
+            triggers: "('src/' 'package.json' 'bun.lock' 'vite.config.js' 'tsconfig.json' 'tsconfig.base.json' 'Dockerfile')"
+          - package: migrations
+            build_context: .
+            build_file: Dockerfile.migrations
+            triggers: "('migrations/' 'src/services/database/' 'Dockerfile.migrations')"
+          - package: seed
+            build_context: .
+            build_file: Dockerfile.seed
+            triggers: "('scripts/' 'src/services/database/' 'Dockerfile.seed' 'package.json' 'bun.lock')"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - id: filter
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        with:
-          filters: |
-            backend:
-              - 'src/**'
-              - 'package.json'
-              - 'bun.lock'
-              - 'vite.config.js'
-              - 'tsconfig.json'
-              - 'tsconfig.base.json'
-              - 'postcss.config.mjs'
-              - 'Dockerfile'
-            migrations:
-              - 'migrations/**'
-              - 'src/services/database/**'
-              - 'Dockerfile.migrations'
-            seed:
-              - 'scripts/**'
-              - 'src/services/database/**'
-              - 'Dockerfile.seed'
-              - 'package.json'
-              - 'bun.lock'
 
-  build-backend:
-    name: Build backend
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    permissions:
-      packages: write
-      id-token: write
-      attestations: write
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: bcgov/action-builder-ghcr@cb2629351c87dd1c2130073e4ebb7233a9653a63 # v4.4.1
-        with:
-          package: backend
-          build_context: .
-          build_file: Dockerfile
-          tags: |
-            ${{ inputs.tag || github.sha }}
-            latest
-          tag_fallback: latest
+      - name: Resolve triggers
+        id: triggers
+        run: |
+          if [[ "${{ inputs.force_build_all }}" == "true" ]]; then
+            echo "value=" >> $GITHUB_OUTPUT
+          else
+            echo "value=${{ matrix.triggers }}" >> $GITHUB_OUTPUT
+          fi
 
-  build-migrations:
-    name: Build migrations
-    needs: changes
-    if: needs.changes.outputs.migrations == 'true'
-    permissions:
-      packages: write
-      id-token: write
-      attestations: write
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: bcgov/action-builder-ghcr@cb2629351c87dd1c2130073e4ebb7233a9653a63 # v4.4.1
+      - name: Build or retag ${{ matrix.package }}
+        uses: bcgov/action-builder-ghcr@cb2629351c87dd1c2130073e4ebb7233a9653a63 # v4.4.1
         with:
-          package: migrations
-          build_context: .
-          build_file: Dockerfile.migrations
+          package: ${{ matrix.package }}
+          build_context: ${{ matrix.build_context }}
+          build_file: ${{ matrix.build_file }}
           tags: |
-            ${{ inputs.tag || github.sha }}
             latest
+            ${{ github.sha }}
           tag_fallback: latest
-
-  build-seed:
-    name: Build seed
-    needs: changes
-    if: needs.changes.outputs.seed == 'true'
-    permissions:
-      packages: write
-      id-token: write
-      attestations: write
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: bcgov/action-builder-ghcr@cb2629351c87dd1c2130073e4ebb7233a9653a63 # v4.4.1
-        with:
-          package: seed
-          build_context: .
-          build_file: Dockerfile.seed
-          tags: |
-            ${{ inputs.tag || github.sha }}
-            latest
-          tag_fallback: latest
+          diff_branch: 'HEAD^'
+          triggers: ${{ steps.triggers.outputs.value }}
 
   deploy:
     name: Deploy (DEV)
-    needs: [changes, build-backend, build-migrations, build-seed]
+    needs: build
     if: |
       always() &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.build.result, 'failure') &&
+      !contains(needs.build.result, 'cancelled')
     uses: ./.github/workflows/.deployer.yml
     secrets:
       oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -146,15 +101,15 @@ jobs:
       seed_s3_secret_key: ${{ secrets.SEED_S3_SECRET_KEY }}
     with:
       environment: dev
-      backend_tag: ${{ inputs.tag || (needs.build-backend.result == 'success' && github.sha || 'latest') }}
-      migrations_tag: ${{ inputs.tag || (needs.build-migrations.result == 'success' && github.sha || 'latest') }}
-      seed_tag: ${{ inputs.tag || (needs.build-seed.result == 'success' && github.sha || 'latest') }}
+      backend_tag: ${{ github.sha }}
+      migrations_tag: ${{ github.sha }}
+      seed_tag: ${{ github.sha }}
       params: --set global.secrets.persist=false --set backend.seed.enabled=true --set backend.ingress.host=wisr-dev.apps.gold.devops.gov.bc.ca
       db_triggers: ('charts/crunchy/')
 
   results:
     name: Dev Results
-    needs: [build-backend, build-migrations, build-seed, deploy]
+    needs: [build, deploy]
     if: always()
     runs-on: ubuntu-slim
     steps:

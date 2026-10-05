@@ -55,3 +55,39 @@ app.kubernetes.io/instance: {{ .root.Release.Name }}
 app.kubernetes.io/managed-by: {{ .root.Release.Service }}
 app.kubernetes.io/component: {{ .component }}
 {{- end }}
+
+{{/*
+Backend image reference, pinned by digest when one is set
+*/}}
+{{- define "backend.image" -}}
+{{- $base := printf "%s/%s/backend" (.Values.global.registry | default "ghcr.io") .Values.global.repository }}
+{{- if .Values.backend.image.digest }}
+{{- printf "%s@%s" $base .Values.backend.image.digest }}
+{{- else }}
+{{- printf "%s:%s" $base (.Values.backend.image.tag | default .Values.global.tag | default .Chart.AppVersion) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Migrations init container image reference, pinned by digest when one is set
+*/}}
+{{- define "backend.migrationsImage" -}}
+{{- $base := printf "%s/%s/migrations" (.Values.global.registry | default "ghcr.io") .Values.global.repository }}
+{{- if .Values.migrations.image.digest }}
+{{- printf "%s@%s" $base .Values.migrations.image.digest }}
+{{- else }}
+{{- printf "%s:%s" $base (.Values.migrations.image.tag | default .Values.global.tag | default .Chart.AppVersion) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Seed Job image reference, pinned by digest when one is set
+*/}}
+{{- define "backend.seedImage" -}}
+{{- $base := printf "%s/%s/seed" (.Values.global.registry | default "ghcr.io") .Values.global.repository }}
+{{- if .Values.seed.image.digest }}
+{{- printf "%s@%s" $base .Values.seed.image.digest }}
+{{- else }}
+{{- printf "%s:%s" $base (.Values.seed.image.tag | default .Values.global.tag | default .Chart.AppVersion) }}
+{{- end }}
+{{- end }}
