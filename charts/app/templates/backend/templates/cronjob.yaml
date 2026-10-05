@@ -19,8 +19,7 @@ spec:
       template:
         metadata:
           labels:
-            {{- include "backend.labels" $ | nindent 12 }}
-            app.kubernetes.io/component: cron
+            {{- include "backend.jobPodLabels" (dict "root" $ "component" "cron") | nindent 12 }}
         spec:
           restartPolicy: Never
           securityContext:

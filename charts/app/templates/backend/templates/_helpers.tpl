@@ -46,4 +46,12 @@ app.kubernetes.io/name: {{ include "backend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-
+{{/*
+Job pods carry a distinct name so the Deployment selector, Service, PDB, and HPA never count them
+*/}}
+{{- define "backend.jobPodLabels" -}}
+app.kubernetes.io/name: {{ include "backend.name" .root }}-{{ .component }}
+app.kubernetes.io/instance: {{ .root.Release.Name }}
+app.kubernetes.io/managed-by: {{ .root.Release.Service }}
+app.kubernetes.io/component: {{ .component }}
+{{- end }}
