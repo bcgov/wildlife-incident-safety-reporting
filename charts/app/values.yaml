@@ -22,13 +22,15 @@ global:
   domain: "apps.gold.devops.gov.bc.ca"
   databaseAlias: ~ # set using github action workflow during helm deploy.
 
-#-- per-component image tag overrides; deploy workflow sets these via --set-string. fall back to global.tag when unset.
+#-- per-component image tag and digest overrides; deploy workflow sets these via --set-string. a digest, when set, takes precedence over the tag. tags fall back to global.tag when unset.
 migrations:
   image:
     tag: ~
+    digest: ~
 seed:
   image:
     tag: ~
+    digest: ~
 
 #-- the components of the application, backend.
 backend:
@@ -36,6 +38,7 @@ backend:
   enabled: true
   image:
     tag: ~
+    digest: ~
   #-- runtime config rendered into {release}-app-config Secret. values supplied per environment via helm --set at deploy time.
   config:
     keycloakUrl: ~
