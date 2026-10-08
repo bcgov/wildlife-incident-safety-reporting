@@ -4,9 +4,25 @@ import { ResponseCacheService } from '@services/response-cache.js'
 import { sendCached } from '@utils/send-compressed.js'
 import type { FastifyInstance } from 'fastify'
 import Fastify from 'fastify'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 const FIRST_ETAG = '"g1-gzip"'
+
+async function waitForRunning(gate: BuildGate, count: number): Promise<void> {
+  const deadline = Date.now() + 1000
+  while (gate.running !== count && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 5))
+  }
+  expect(gate.running).toBe(count)
+}
+
+async function waitForQueued(gate: BuildGate, count: number): Promise<void> {
+  const deadline = Date.now() + 1000
+  while (gate.queued !== count && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 5))
+  }
+  expect(gate.queued).toBe(count)
+}
 
 describe('sendCached', () => {
   let app: FastifyInstance
@@ -150,17 +166,9 @@ describe('sendCached under load', () => {
 
   const gzip = { 'accept-encoding': 'gzip' }
 
-  async function waitForRunning(count: number): Promise<void> {
-    const deadline = Date.now() + 1000
-    while (gate.running !== count && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 5))
-    }
-    expect(gate.running).toBe(count)
-  }
-
   it('rejects a second build with 503 while the only slot is held', async () => {
     const first = app.inject({ url: '/slow', headers: gzip })
-    await waitForRunning(1)
+    await waitForRunning(gate, 1)
 
     const second = await app.inject({ url: '/slow', headers: gzip })
 
@@ -187,5 +195,84 @@ describe('sendCached under load', () => {
       'Client disconnected before the response was built',
     )
     expect(produced).toBe(before)
+  })
+})
+
+describe('sendCached superseding queued builds', () => {
+  let app: FastifyInstance
+  let gate: BuildGate
+  let finish: () => void
+  let held: Promise<void>
+
+  beforeAll(async () => {
+    gate = new BuildGate(1, 8)
+    app = Fastify({ logger: false })
+    app.decorate(
+      'responseCache',
+      new ResponseCacheService(app.log, {
+        read: async () => 1,
+        bump: async () => {},
+      }),
+    )
+    app.decorate('buildGate', gate)
+    await app.register(sensible)
+    app.addHook('preHandler', async (request) => {
+      const user = request.headers['x-user']
+      if (typeof user === 'string') {
+        request.user = { sub: user, identity_provider: 'test' }
+      }
+    })
+    app.get('/slow', (request, reply) =>
+      sendCached(app, request, reply, request.url, async () => {
+        await held
+        return { slow: true }
+      }),
+    )
+    await app.ready()
+  })
+
+  beforeEach(() => {
+    held = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+  })
+
+  afterAll(async () => {
+    await app?.close()
+  })
+
+  function asUser(user: string) {
+    return { 'accept-encoding': 'gzip', 'x-user': user }
+  }
+
+  it("supersedes the same user's earlier queued request on a route", async () => {
+    const a = app.inject({ url: '/slow?a', headers: asUser('u1') })
+    await waitForRunning(gate, 1)
+    const b = app.inject({ url: '/slow?b', headers: asUser('u1') })
+    await waitForQueued(gate, 1)
+    const c = app.inject({ url: '/slow?c', headers: asUser('u1') })
+
+    const superseded = await b
+    expect(superseded.statusCode).toBe(503)
+    expect(superseded.json().message).toBe('Superseded by a newer request')
+    expect(superseded.headers['retry-after']).toBeUndefined()
+
+    finish()
+    expect((await a).statusCode).toBe(200)
+    expect((await c).statusCode).toBe(200)
+  })
+
+  it("keeps another user's queued request", async () => {
+    const a = app.inject({ url: '/slow?d', headers: asUser('u1') })
+    await waitForRunning(gate, 1)
+    const b = app.inject({ url: '/slow?e', headers: asUser('u2') })
+    await waitForQueued(gate, 1)
+    const c = app.inject({ url: '/slow?f', headers: asUser('u1') })
+    await waitForQueued(gate, 2)
+
+    finish()
+    expect((await a).statusCode).toBe(200)
+    expect((await b).statusCode).toBe(200)
+    expect((await c).statusCode).toBe(200)
   })
 })
