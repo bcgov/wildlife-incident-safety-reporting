@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 const SLOW_BUILD_MS = 2000
 const CLIENT_GONE = 'Client disconnected before the response was built'
+const SUPERSEDED = 'Superseded by a newer request'
 
 export function negotiateEncoding(
   header: string | string[] | undefined,
@@ -65,12 +66,18 @@ async function buildGated<T>(
   encoding: Encoding | undefined,
   produce: () => Promise<T>,
 ): Promise<T | FastifyReply> {
-  const release = await fastify.buildGate.acquire()
-  if (!release) {
+  const acquired = await fastify.buildGate.acquire(
+    `${request.user?.sub ?? request.ip}:${request.routeOptions.url}`,
+  )
+  if (!acquired.ok) {
+    if (acquired.reason === 'superseded') {
+      return reply.serviceUnavailable(SUPERSEDED)
+    }
     fastify.log.warn({ cacheKey }, 'response build queue full')
     reply.header('retry-after', '2')
     return reply.serviceUnavailable('Server busy, retry shortly')
   }
+  const { release } = acquired
 
   const started = performance.now()
   const logIfSlow = (bytes: number) => {
