@@ -146,7 +146,7 @@ jobs:
   deploy:
     name: Stack
     environment: ${{ inputs.environment }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       triggered: ${{ steps.deploy.outputs.triggered }}
     steps:

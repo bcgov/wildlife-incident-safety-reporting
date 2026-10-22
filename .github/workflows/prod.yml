@@ -21,7 +21,7 @@ permissions:
 jobs:
   resolve-images:
     name: Resolve immutable images
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
       commit_sha: ${{ steps.commit.outputs.sha }}
