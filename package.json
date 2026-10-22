@@ -109,7 +109,7 @@
     "lucide-react": "^1.0.0",
     "maplibre-gl": "^6.0.0",
     "minimatch": "^10.2.4",
-    "msw": "^2.12.10",
+    "msw": "^3.0.0",
     "openapi-fetch": "^0.17.0",
     "openapi-react-query": "^0.5.4",
     "openapi-types": "^12.1.3",
