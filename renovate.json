@@ -1,6 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>bcgov/renovate-config#2026.9.26"],
+  "extends": [
+    "github>bcgov/renovate-config#2026.9.26",
+    "customManagers:biomeVersions"
+  ],
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "branchConcurrentLimit": 0,
@@ -9,16 +12,6 @@
     "schedule": ["before 4am on monday"]
   },
   "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Update Biome schema version in biome.json to match CLI",
-      "managerFilePatterns": ["/^biome\\.json$/"],
-      "matchStrings": [
-        "biomejs\\.dev/schemas/(?<currentValue>[\\d.]+)/schema\\.json"
-      ],
-      "depNameTemplate": "@biomejs/biome",
-      "datasourceTemplate": "npm"
-    },
     {
       "customType": "regex",
       "description": "Update SchemaSpy Docker image referenced in workflow run steps",
@@ -54,16 +47,15 @@
       ]
     },
     {
-      "description": "Keep biome.json schema in sync with @biomejs/biome package",
+      "description": "Force biome.json schema update into Build tools group",
       "matchPackageNames": ["@biomejs/biome"],
       "matchFileNames": ["biome.json"],
-      "groupName": "Build tools",
-      "rangeStrategy": "bump"
+      "groupName": "Build tools"
     },
     {
-      "description": "Bump Biome range so package.json and biome.json stay in sync",
+      "description": "Pin Biome to an exact version so lock file maintenance can't move it past the biome.json schema",
       "matchPackageNames": ["@biomejs/biome"],
-      "rangeStrategy": "bump"
+      "rangeStrategy": "pin"
     },
     {
       "description": "Group Fastify ecosystem",

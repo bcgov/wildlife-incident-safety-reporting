@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - '*.md'
-      - '.github/graphics/**'
-      - '.github/**'
-      - '!.github/workflows/**'
+      - "*.md"
+      - ".github/graphics/**"
+      - ".github/**"
+      - "!.github/workflows/**"
   workflow_dispatch:
     inputs:
       force_build_all:
@@ -70,7 +70,7 @@ jobs:
             latest
             ${{ github.sha }}
           tag_fallback: latest
-          diff_branch: 'HEAD^'
+          diff_branch: "HEAD^"
           triggers: ${{ steps.triggers.outputs.value }}
 
   deploy:

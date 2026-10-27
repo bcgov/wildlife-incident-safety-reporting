@@ -10,13 +10,13 @@ Web application for analyzing wildlife-vehicle collision data on BC highways.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Fastify, Kysely, PostgreSQL + PostGIS |
-| Frontend | React, Vite, TailwindCSS |
-| Auth | Keycloak / JWT |
-| Testing | Vitest, MSW |
-| CI/CD | GitHub Actions, Helm, OpenShift |
+| Layer    | Technology                            |
+| -------- | ------------------------------------- |
+| Backend  | Fastify, Kysely, PostgreSQL + PostGIS |
+| Frontend | React, Vite, TailwindCSS              |
+| Auth     | Keycloak / JWT                        |
+| Testing  | Vitest, MSW                           |
+| CI/CD    | GitHub Actions, Helm, OpenShift       |
 
 ## Getting Started
 
@@ -43,18 +43,18 @@ Interactive API docs (Scalar) are available at [localhost:3033/api/docs](http://
 
 ### Common Commands
 
-| Command | Description |
-|---------|-------------|
-| `bun run migrate` | Run database migrations |
-| `bun run migrate:rollback` | Rollback last migration |
-| `bun run seed` | Seed database (service areas + incidents) |
-| `bun run seed:dry-run` | Preview seed without writing to DB |
-| `bun run seed:upload` | Upload local seed CSV (`WARS_SEED_FILE`) to the configured S3 bucket |
-| `bun run test` | Run tests in watch mode |
-| `bun run test:run` | Run tests once (CI) |
-| `bun run typecheck` | Type check server and client |
-| `bun run openapi:types` | Regenerate the OpenAPI spec and client contract types |
-| `bun run fix` | Format and lint (Biome) |
+| Command                    | Description                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| `bun run migrate`          | Run database migrations                                              |
+| `bun run migrate:rollback` | Rollback last migration                                              |
+| `bun run seed`             | Seed database (service areas + incidents)                            |
+| `bun run seed:dry-run`     | Preview seed without writing to DB                                   |
+| `bun run seed:upload`      | Upload local seed CSV (`WARS_SEED_FILE`) to the configured S3 bucket |
+| `bun run test`             | Run tests in watch mode                                              |
+| `bun run test:run`         | Run tests once (CI)                                                  |
+| `bun run typecheck`        | Type check server and client                                         |
+| `bun run openapi:types`    | Regenerate the OpenAPI spec and client contract types                |
+| `bun run fix`              | Format and lint (Biome)                                              |
 
 ## Contributing
 

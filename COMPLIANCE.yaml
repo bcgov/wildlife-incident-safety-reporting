@@ -5,7 +5,7 @@ description: |
 spec:
   - name: PIA
     status: TBD
-    last-updated: '2026-03-09'
+    last-updated: "2026-03-09"
   - name: STRA
     status: TBD
-    last-updated: '2026-03-09'
+    last-updated: "2026-03-09"
