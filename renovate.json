@@ -73,8 +73,7 @@
         "/^fastify/",
         "fastify-zod-openapi",
         "get-jwks",
-        "!fastify-cli",
-        "!fastify-tsconfig"
+        "fast-jwt"
       ]
     },
     {
@@ -83,18 +82,11 @@
       "matchPackageNames": [
         "react",
         "react-dom",
-        "react-hook-form",
         "react-router-dom",
-        "@hookform/resolvers",
         "zod",
         "@types/react",
         "@types/react-dom"
       ]
-    },
-    {
-      "description": "Group Radix UI components",
-      "groupName": "Radix UI",
-      "matchPackageNames": ["/^@radix-ui//", "radix-ui"]
     },
     {
       "description": "Group TanStack packages",
@@ -108,7 +100,6 @@
         "tailwindcss",
         "@tailwindcss/postcss",
         "postcss",
-        "autoprefixer",
         "tailwind-merge",
         "class-variance-authority",
         "tw-animate-css"
