@@ -58,8 +58,8 @@ export default {
               priority: 15,
             },
             {
-              name: 'forms',
-              test: /[\\/]node_modules[\\/](react-hook-form|@hookform[\\/]resolvers|zod)[\\/]/,
+              name: 'zod',
+              test: /[\\/]node_modules[\\/]zod[\\/]/,
               priority: 15,
             },
           ],
