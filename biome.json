@@ -10,7 +10,8 @@
       "!**/src/client/dist",
       "!**/tmp",
       "!**/fixes",
-      "!**/coverage"
+      "!**/coverage",
+      "!**/charts/**/templates"
     ]
   },
   "formatter": {

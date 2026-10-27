@@ -3,9 +3,9 @@ name: Deploy to TEST
 on:
   push:
     tags:
-      - 'v*-rc.*'
+      - "v*-rc.*"
       # pre-merge workflow test: runs this branch's workflow and chart against the latest successful dev images
-      - 'test-workflow-*'
+      - "test-workflow-*"
   workflow_dispatch:
     inputs:
       revision:

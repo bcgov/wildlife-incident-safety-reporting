@@ -30,8 +30,8 @@ crunchy: # base values are sized for PR/dev/test; prod deploys use values-prod.y
     replicas: 1 # PR/dev/test default; values-prod.yml runs 2
     metadata:
       annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/port: '9187'
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
     dataVolumeClaimSpec:
       storage: 3Gi
       storageClassName: netapp-block-standard
@@ -112,7 +112,7 @@ crunchy: # base values are sized for PR/dev/test; prod deploys use values-prod.y
         cpu: 5m
         memory: 32Mi
       maxConnections: 100 # make sure less than postgres max connections
-      poolMode: 'transaction'
+      poolMode: "transaction"
 
   # Postgres Cluster resource values:
   # disabled because postgres_exporter does not support PG18
