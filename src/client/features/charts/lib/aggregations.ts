@@ -238,3 +238,22 @@ export function summarizeDensity(
 
   return { segmentsWithData, highestSegment, averageDensity }
 }
+
+export function rankDescending(
+  entries: { id: number; value: number | null }[],
+): { ranks: Map<number, number>; rankedCount: number } {
+  const ranked = entries
+    .filter(
+      (e): e is { id: number; value: number } => e.value != null && e.value > 0,
+    )
+    .sort((a, b) => b.value - a.value)
+
+  const ranks = new Map<number, number>()
+  let rank = 0
+  ranked.forEach((entry, i) => {
+    if (entry.value !== ranked[i - 1]?.value) rank = i + 1
+    ranks.set(entry.id, rank)
+  })
+
+  return { ranks, rankedCount: ranked.length }
+}
