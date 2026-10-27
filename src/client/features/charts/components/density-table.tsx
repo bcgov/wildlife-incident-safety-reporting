@@ -38,11 +38,13 @@ import { useLayerStore } from '@/features/map/store/layer-store'
 import { useSegmentLocateStore } from '@/stores/segment-locate-store'
 import { useTabStore } from '@/stores/tab-store'
 import type { components } from '@/types/api'
+import { rankDescending } from '../lib/aggregations'
 
 type DensitySegment = components['schemas']['DensitySegment']
 
 type DensityRow = DensitySegment & {
   rawDensityPerKm: number | null
+  rank: number | null
 }
 
 const nullCell = <span className="text-muted-foreground">-</span>
@@ -96,6 +98,42 @@ function locateColumn(densityMode: DensityMode): ColumnDef<DensityRow> {
         <TooltipContent>Locate on map</TooltipContent>
       </Tooltip>
     ),
+  }
+}
+
+function rankColumn(
+  densityMode: DensityMode,
+  rankedCount: number,
+): ColumnDef<DensityRow> {
+  return {
+    id: 'rank',
+    accessorFn: (row) => row.rank ?? undefined,
+    sortUndefined: 'last',
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={
+          densityMode === 'weighted'
+            ? 'Rank (weighted/km)'
+            : 'Rank (animals/km)'
+        }
+      />
+    ),
+    cell: ({ row }) => {
+      const { rank } = row.original
+      if (rank == null) return nullCell
+      return (
+        <Tooltip>
+          <TooltipTrigger render={<span className="tabular-nums" />}>
+            {rank}
+          </TooltipTrigger>
+          <TooltipContent>
+            {rank} of {rankedCount} segments with incidents, for the current
+            filters
+          </TooltipContent>
+        </Tooltip>
+      )
+    },
   }
 }
 
@@ -208,6 +246,7 @@ const dataColumns: ColumnDef<DensityRow>[] = [
 ]
 
 const skeletonColumns: ColumnConfig[] = [
+  { type: 'text', width: 'w-10' },
   { type: 'text', width: 'w-28' },
   { type: 'text', width: 'w-12' },
   { type: 'text', width: 'w-14' },
@@ -228,7 +267,14 @@ type DensityTableProps = {
   highlightedSegment: string | null
 }
 
-const DEFAULT_SORTING: SortingState = [{ id: 'densityPerKm', desc: true }]
+function defaultSorting(densityMode: DensityMode): SortingState {
+  return [
+    {
+      id: densityMode === 'weighted' ? 'densityPerKm' : 'rawDensityPerKm',
+      desc: true,
+    },
+  ]
+}
 const DEFAULT_VISIBILITY: VisibilityState = {
   small: false,
   medium: false,
@@ -251,26 +297,46 @@ export function DensityTable({
   highlightedSegment,
 }: DensityTableProps) {
   const highlightRef = useRef<HTMLTableRowElement>(null)
-  const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
+  const [sorting, setSorting] = useState<SortingState>(() =>
+    defaultSorting(densityMode),
+  )
+  const [sortingMode, setSortingMode] = useState(densityMode)
+  if (sortingMode !== densityMode) {
+    setSortingMode(densityMode)
+    setSorting(defaultSorting(densityMode))
+  }
   const [columnVisibility, setColumnVisibility] =
     useState<VisibilityState>(DEFAULT_VISIBILITY)
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const rows: DensityRow[] = useMemo(
-    () =>
-      segments.map((s) => ({
-        ...s,
-        rawDensityPerKm:
-          s.segmentLengthKm && s.segmentLengthKm > 0
-            ? Math.round((s.totalAnimals / s.segmentLengthKm) * 100) / 100
-            : null,
+  const { rows, rankedCount } = useMemo(() => {
+    const withRaw = segments.map((s) => ({
+      ...s,
+      rawDensityPerKm:
+        s.segmentLengthKm && s.segmentLengthKm > 0
+          ? Math.round((s.totalAnimals / s.segmentLengthKm) * 100) / 100
+          : null,
+    }))
+    const { ranks, rankedCount } = rankDescending(
+      withRaw.map((s) => ({
+        id: s.segmentId,
+        value: densityMode === 'weighted' ? s.densityPerKm : s.rawDensityPerKm,
       })),
-    [segments],
-  )
+    )
+    const rows: DensityRow[] = withRaw.map((s) => ({
+      ...s,
+      rank: ranks.get(s.segmentId) ?? null,
+    }))
+    return { rows, rankedCount }
+  }, [segments, densityMode])
 
   const columns = useMemo(
-    () => [...dataColumns, locateColumn(densityMode)],
-    [densityMode],
+    () => [
+      rankColumn(densityMode, rankedCount),
+      ...dataColumns,
+      locateColumn(densityMode),
+    ],
+    [densityMode, rankedCount],
   )
 
   const visibleKeys = useMemo(
@@ -354,7 +420,8 @@ export function DensityTable({
   const visibleSkeletonColumns = skeletonColumns.filter((_, i) => {
     const col = columns[i]
     if (!col) return false
-    const key = 'accessorKey' in col ? (col.accessorKey as string) : undefined
+    const key =
+      col.id ?? ('accessorKey' in col ? (col.accessorKey as string) : undefined)
     return key ? columnVisibility[key] !== false : true
   })
 
@@ -369,6 +436,7 @@ export function DensityTable({
         searchPlaceholder="Search segment, highway..."
         exportFilename="wisr-lki-density.csv"
         columnLabels={{
+          rank: 'Rank',
           segmentName: 'Segment',
           highwayNumber: 'Highway',
           segmentLengthKm: 'Length (km)',
