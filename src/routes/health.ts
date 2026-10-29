@@ -1,4 +1,5 @@
 import { HealthCheckResponseSchema } from '@schemas/health/health.schema.js'
+import { rejectPublicRequest } from '@utils/cluster-internal.js'
 import { CLUSTER_INTERNAL_NOTE } from '@utils/route-docs.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
@@ -6,6 +7,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
   fastify.get(
     '/health',
     {
+      onRequest: rejectPublicRequest,
       schema: {
         security: [],
         summary: 'Health check endpoint',

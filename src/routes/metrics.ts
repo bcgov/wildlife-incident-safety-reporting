@@ -1,4 +1,5 @@
 import { MetricsResponseSchema } from '@schemas/metrics/metrics.schema.js'
+import { rejectPublicRequest } from '@utils/cluster-internal.js'
 import { CLUSTER_INTERNAL_NOTE } from '@utils/route-docs.js'
 import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi'
 
@@ -8,6 +9,7 @@ const plugin: FastifyPluginAsyncZodOpenApi = async (fastify) => {
   fastify.get(
     '/metrics',
     {
+      onRequest: rejectPublicRequest,
       schema: {
         security: [],
         summary: 'Prometheus metrics exposition',

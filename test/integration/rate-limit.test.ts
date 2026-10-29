@@ -65,6 +65,20 @@ describe('Rate Limit', () => {
     expect(res.headers['x-ratelimit-remaining']).toBeUndefined()
   })
 
+  it('limits repeated requests to unknown routes', async () => {
+    const statuses: number[] = []
+    for (let i = 0; i < 12; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/unknown-route',
+        remoteAddress: '10.30.0.1',
+      })
+      statuses.push(res.statusCode)
+    }
+    expect(statuses.slice(0, 10).every((status) => status === 404)).toBe(true)
+    expect(statuses.at(-1)).toBe(429)
+  })
+
   it('exempts /metrics and does not crash the limiter', async () => {
     const res = await app.inject({ method: 'GET', url: '/metrics' })
     expect(res.statusCode).not.toBe(500)
