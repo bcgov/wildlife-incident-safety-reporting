@@ -1,10 +1,13 @@
 import serviceApp from '@root/app.js'
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, onRouteHookHandler } from 'fastify'
 import Fastify from 'fastify'
 import type { TestContext } from 'vitest'
 import { initializeTestDatabase } from './database.js'
 
-export async function build(t?: TestContext): Promise<FastifyInstance> {
+export async function build(
+  t?: TestContext,
+  onRoute?: onRouteHookHandler,
+): Promise<FastifyInstance> {
   await initializeTestDatabase()
 
   const app = Fastify({
@@ -17,6 +20,10 @@ export async function build(t?: TestContext): Promise<FastifyInstance> {
       },
     },
   })
+
+  if (onRoute) {
+    app.addHook('onRoute', onRoute)
+  }
 
   await app.register(serviceApp)
 

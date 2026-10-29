@@ -21,7 +21,10 @@ const createRateLimitConfig = (fastify: FastifyInstance) => ({
   // A custom generator opts out of the plugin's /64 collapsing, so redo it here
   keyGenerator: (req: FastifyRequest) =>
     req.user?.sub ?? (req.ip ? normalizeIP(req.ip, 64) : 'unknown'),
-  allowList: (req: FastifyRequest) => !req.url.split('?')[0].startsWith('/v1/'),
+  // The not-found limiter inherits this allowList, so unmatched requests must not be exempt
+  allowList: (req: FastifyRequest) =>
+    req.routeOptions.url !== undefined &&
+    !req.routeOptions.url.startsWith('/v1/'),
 })
 
 export default fp(
