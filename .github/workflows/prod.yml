@@ -82,7 +82,7 @@ jobs:
 
       - name: Resolve package digests
         id: tracker
-        uses: bcgov/actions/image-tracker@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/image-tracker@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           package: |
             backend
