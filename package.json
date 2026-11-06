@@ -106,7 +106,7 @@
     "kysely-codegen": "^0.20.0",
     "lucide-react": "^1.0.0",
     "maplibre-gl": "^6.0.0",
-    "minimatch": "^10.2.4",
+    "minimatch": "^11.0.0",
     "msw": "^3.0.0",
     "openapi-fetch": "^0.17.0",
     "openapi-react-query": "^0.5.4",
