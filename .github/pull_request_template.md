@@ -31,7 +31,6 @@ Fixes # (issue)
 - [ ] Manual tests (description below)
 - [ ] Updated existing tests
 
-
 ## Checklist
 
 <!-- Go over all the following points, and put an `x` in all the boxes that apply. -->
@@ -45,7 +44,6 @@ Fixes # (issue)
 - [x] I have added tests that prove my fix is effective or that my feature works
 - [x] New and existing unit tests pass locally with my changes
 - [x] Any dependent changes have already been accepted and merged
-
 
 ## Further comments
 
