@@ -4,7 +4,6 @@
 
 This product currently has no support and is experimental. That could change in future.
 
-
 ## Reporting a Vulnerability
 
 Please report security vulnerabilities privately using [GitHub Security Advisories](https://github.com/bcgov/wildlife-incident-safety-reporting/security/advisories/new).
