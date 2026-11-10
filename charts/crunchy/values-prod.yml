@@ -54,11 +54,11 @@ crunchy:
     clusterCounter: 1 # this is the number to identify what is the current counter for the cluster, each time it is cloned it should be incremented.
     # If retention-full-type set to 'count' then the oldest backups will expire when the number of backups reach the number defined in retention
     # If retention-full-type set to 'time' then the number defined in retention will take that many days worth of full backups before expiration
-    retentionFullType: count
+    retentionFullType: time
     s3:
       # the deployer-passed BACKUP_S3_* secrets enable s3 at deploy time
       enabled: false
-      retention: 7 # one weeks backup in object store.
+      retention: 30 # days of full backups kept in object store; applies to repo2 via retentionFullType above
       bucket: ~
       endpoint: ~
       accessKey: ~
