@@ -34,7 +34,7 @@
     "openapi:types": "bun run --bun scripts/generate-openapi.ts",
     "migrate": "bun run --bun migrations/migrate.ts && bun run db:codegen",
     "migrate:rollback": "bun run --bun migrations/rollback.ts && bun run db:codegen",
-    "db:codegen": "DATABASE_URL=postgres://postgres:postgres@localhost:5432/wisr bun run --bun kysely-codegen --dialect postgres --include-pattern 'public.*' --out-file src/services/database/types/database.ts"
+    "db:codegen": "bun run --bun scripts/db-codegen.ts --dialect postgres --include-pattern 'public.*' --out-file src/services/database/types/database.ts"
   },
   "repository": {
     "type": "git",

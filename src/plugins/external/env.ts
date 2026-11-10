@@ -34,23 +34,18 @@ const schema = {
     },
     DB_HOST: {
       type: 'string',
-      default: 'localhost',
     },
     DB_PORT: {
       type: 'number',
-      default: 5432,
     },
     DB_NAME: {
       type: 'string',
-      default: 'wisr',
     },
     DB_USER: {
       type: 'string',
-      default: 'postgres',
     },
     DB_PASSWORD: {
       type: 'string',
-      default: 'postgres',
     },
     DATABASE_URL: {
       type: 'string',
@@ -130,11 +125,11 @@ interface RawEnv {
   BASE_URL: string
   PORT: number
   LISTEN_PORT: number
-  DB_HOST: string
-  DB_PORT: number
-  DB_NAME: string
-  DB_USER: string
-  DB_PASSWORD: string
+  DB_HOST?: string
+  DB_PORT?: number
+  DB_NAME?: string
+  DB_USER?: string
+  DB_PASSWORD?: string
   DATABASE_URL: string
   DB_POOL_SIZE: number
   DB_IDLE_TIMEOUT: number
@@ -231,6 +226,10 @@ export default fp(
 
       if (!config.dbHost || config.dbHost.trim() === '') {
         throw new Error('DB_HOST is required.')
+      }
+
+      if (!config.dbPort) {
+        throw new Error('DB_PORT is required.')
       }
 
       if (!config.dbName || config.dbName.trim() === '') {
