@@ -26,6 +26,7 @@ const PLACEHOLDER_ENV = [
 for (const key of PLACEHOLDER_ENV) {
   process.env[key] ??= 'openapi-codegen-placeholder'
 }
+process.env.DATABASE_URL ||= 'postgres://openapi-codegen-placeholder'
 
 const app = Fastify({
   logger: false,

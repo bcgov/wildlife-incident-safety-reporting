@@ -2,11 +2,11 @@ export interface Config {
   baseUrl: string
   port: number
   listenPort: number
-  dbHost: string
-  dbPort: number
-  dbName: string
-  dbUser: string
-  dbPassword: string
+  dbHost?: string
+  dbPort?: number
+  dbName?: string
+  dbUser?: string
+  dbPassword?: string
   databaseUrl: string
   dbPoolSize: number
   dbIdleTimeout: number

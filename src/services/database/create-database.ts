@@ -15,6 +15,14 @@ interface CreateDatabaseOptions {
   maxLifetime?: number
 }
 
+export function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value || value.trim() === '') {
+    throw new Error(`${name} is required when DATABASE_URL is not set.`)
+  }
+  return value
+}
+
 export function createDatabase(options?: CreateDatabaseOptions): Kysely<DB> {
   const url = options?.url ?? process.env.DATABASE_URL
   // Capped so total across replicas fits under PgBouncer's per-user pool.
@@ -36,12 +44,11 @@ export function createDatabase(options?: CreateDatabaseOptions): Kysely<DB> {
       postgres: url
         ? new SQL({ url, ...pool })
         : new SQL({
-            hostname: options?.hostname ?? process.env.DB_HOST ?? 'localhost',
-            port: options?.port ?? (Number(process.env.DB_PORT) || 5432),
-            username: options?.username ?? process.env.DB_USER ?? 'postgres',
-            password:
-              options?.password ?? process.env.DB_PASSWORD ?? 'postgres',
-            database: options?.database ?? process.env.DB_NAME ?? 'wisr',
+            hostname: options?.hostname ?? requireEnv('DB_HOST'),
+            port: options?.port ?? Number(requireEnv('DB_PORT')),
+            username: options?.username ?? requireEnv('DB_USER'),
+            password: options?.password ?? requireEnv('DB_PASSWORD'),
+            database: options?.database ?? requireEnv('DB_NAME'),
             ...pool,
           }),
     }),
