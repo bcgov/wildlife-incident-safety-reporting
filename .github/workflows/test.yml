@@ -96,7 +96,7 @@ jobs:
         id: tracker
         uses: bcgov/actions/image-tracker@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
         with:
-          package: |
+          packages: |
             backend
             migrations
             seed
